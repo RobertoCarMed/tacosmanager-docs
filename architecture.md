@@ -652,11 +652,54 @@ user.role === "waiter"     →  WaiterStack
 
 ---
 
+## Products Module — ETAPA 4.5.2
+
+```txt
+useProducts(taqueriaId)
+ └── productService.subscribeToProducts(taqueriaId, onData, onError)
+       ├── onData(cached) immediately if cache hit
+       ├── GET /products → fresh data → onData(products)
+       └── returns cancellation function (no realtime)
+
+useCreateProduct
+ ├── uploadProductImage(imageUri) → Firebase Storage → imageUrl
+ └── productService.createProduct(payload) → POST /products
+
+useEditProduct
+ ├── useProducts(taqueriaId) → product list
+ ├── uploadProductImage(newImageUri) → Firebase Storage → imageUrl
+ └── productService.updateProduct(payload) → PATCH /products/:id
+
+productService
+ ├── API calls via apiClient (axios, JWT auto-injected)
+ ├── in-memory cache (Map<taqueriaId, Product[]>, sorted by name)
+ └── Firebase Storage (image uploads only — no backend upload endpoint)
+```
+
+## Image Strategy — ETAPA 4.5.2
+
+```txt
+createProduct / updateProduct
+        ↓
+uploadProductImage(imageUri)
+        ↓
+Firebase Storage → putFile → getDownloadURL → imageUrl
+        ↓
+POST /products  { name, price, complements, imageUrl }
+PATCH /products/:id  { name, price, imageUrl? }
+        ↓
+NestJS persists imageUrl in PostgreSQL
+```
+
+taqueriaId is never sent in the request body — backend extracts it from JWT.
+
+---
+
 # Future Architecture
 
-Etapa 4.5.2
+Etapa 4.5.3
 
-Products API Migration — products module → NestJS.
+Orders API Migration — orders module → NestJS.
 
 ---
 

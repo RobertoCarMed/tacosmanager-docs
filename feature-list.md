@@ -120,16 +120,44 @@ Each taquería contains:
 
 # 🍽️ Product Management
 
-## ✅ Product Creation
+## ✅ Product Creation (NestJS API — ETAPA 4.5.2)
 
-Cooks can create products.
+Cooks can create products via `POST /products`.
 
 Each product supports:
 
 - product name
 - price
-- image
-- complements
+- image (Firebase Storage → imageUrl persisted via API)
+- complements (max 3)
+
+---
+
+## ✅ Product Listing (NestJS API — ETAPA 4.5.2)
+
+Products are loaded from `GET /products`.
+
+- Cache-first strategy with background refresh on screen focus
+- Only products from the current taquería are returned (multi-tenant enforced by JWT)
+
+---
+
+## ✅ Product Edit (NestJS API — ETAPA 4.5.2)
+
+Cooks can update existing products via `PATCH /products/:id`.
+
+- Partial update: only changed fields are sent
+- New image uploaded to Firebase Storage before patching
+- Old image deleted from Firebase Storage after successful upload
+
+---
+
+## ✅ Product Delete (NestJS API — ETAPA 4.5.2)
+
+`DELETE /products/:id` is implemented in the service layer.
+
+- Cache is updated immediately after successful deletion
+- UI for delete not yet exposed (planned for future stage)
 
 ---
 
@@ -137,7 +165,7 @@ Each product supports:
 
 Products may contain:
 
-- uploaded image
+- uploaded image (stored in Firebase Storage, URL persisted via API)
 - fallback placeholder image
 
 If no image is selected:
@@ -148,12 +176,13 @@ If no image is selected:
 
 ## ✅ Product Ownership
 
-Products are linked to the taquería.
+Products are linked to the taquería via JWT.
 
 Rules:
 - A taquería can have many products
 - Different taquerías can have products with same name
 - Each taquería can define its own prices
+- `taqueriaId` is never sent from the frontend — backend extracts it from the JWT
 
 ---
 
@@ -234,10 +263,10 @@ PLATE 2
 
 ## ✅ Product Selector
 
-Products are loaded dynamically from Firestore.
+Products are loaded dynamically from the NestJS API (`GET /products`).
 
 Products shown:
-- only products from current taquería
+- only products from current taquería (enforced server-side via JWT)
 
 ---
 
@@ -399,11 +428,12 @@ Current actions:
 
 # ☁️ Firebase Integration
 
-Current Firebase services (pending migration in ETAPA 4.5.2–4.5.5):
+Current Firebase services (pending migration in ETAPA 4.5.3–4.5.5):
 
 - ~~Firebase Auth~~ → **Migrated to NestJS JWT (ETAPA 4.5.1)**
-- Firestore (products, orders — pending migration)
-- Firebase Storage (pending migration)
+- ~~Firestore (products)~~ → **Migrated to NestJS API (ETAPA 4.5.2)**
+- Firestore (orders — pending migration in ETAPA 4.5.3)
+- Firebase Storage (images only — kept intentionally; no backend upload endpoint)
 
 ---
 
@@ -442,8 +472,9 @@ Both cook and waiter screens support:
 
 ## Current Backend
 
-- NestJS (Auth — ETAPA 4.5.1)
-- Firebase Firestore (products, orders — pending migration)
+- NestJS (Auth — ETAPA 4.5.1, Products — ETAPA 4.5.2)
+- Firebase Firestore (orders — pending migration in ETAPA 4.5.3)
+- Firebase Storage (product images — kept intentionally)
 
 ---
 
@@ -452,7 +483,9 @@ Both cook and waiter screens support:
 - JWT authentication via NestJS API
 - AsyncStorage token persistence
 - Context API (AuthContext) — session management
-- Firestore snapshots (products, orders — pending migration)
+- NestJS API (products — ETAPA 4.5.2)
+- Firestore snapshots (orders — pending migration)
+- Firebase Storage (product images)
 - role-based rendering
 - taquería-based multi-tenancy
 

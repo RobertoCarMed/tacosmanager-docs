@@ -45,14 +45,14 @@ Tecnologías principales:
 - Socket.IO Foundation
 - Kitchen Realtime
 - 4.5.1 Frontend Authentication Migration
+- 4.5.2 Products API Migration
 
 ## En Progreso
 
-- 4.5.2 Products API Migration
+- 4.5.3 Orders API Migration
 
 ## Pendiente
 
-- 4.5.3 Orders API Migration
 - 4.5.4 Socket.IO Realtime Integration
 - 4.5.5 Firebase Removal & Cleanup
 - 4.6 Realtime Reliability
@@ -508,13 +508,42 @@ Reemplazar por autenticación JWT del backend NestJS.
 
 Estado:
 
-⬜ PENDIENTE
+✅ COMPLETADA
 
 ---
 
 ## Objetivos
 
 Migrar módulo de productos de Firestore a la API NestJS.
+
+Mantener Firebase Storage para imágenes.
+
+---
+
+## Implementado
+
+- GET /products → fetchProducts + subscribeToProducts (cache-first, forceRefresh en cada focus)
+- POST /products → createProduct (imagen a Firebase Storage → imageUrl al backend)
+- PATCH /products/:id → updateProduct (sube nueva imagen a Firebase Storage si aplica)
+- DELETE /products/:id → deleteProduct (implementado en servicio, pendiente de UI)
+- Firestore eliminado del módulo Products
+- Cache en memoria conservado (keyed por taqueriaId)
+- subscribeToProducts migrado a fetch con cancellation flag (useProducts.ts sin cambios)
+- taqueriaId extraído del JWT por el backend (no se envía en el body)
+- Firebase Storage conservado para imágenes de productos
+
+## Archivos modificados
+
+- src/features/products/services/productService.ts
+
+## Archivos sin cambios
+
+- src/features/products/hooks/useProducts.ts
+- src/features/products/hooks/useCreateProduct.ts
+- src/features/products/hooks/useEditProduct.ts
+- src/features/products/screens/CreateProductScreen.tsx
+- src/features/products/screens/EditProductScreen.tsx
+- src/features/products/types.ts
 
 ---
 
@@ -782,10 +811,10 @@ Una etapa se considera completada cuando:
 
 # Próxima Etapa
 
-ETAPA 4.5.2
+ETAPA 4.5.3
 
-Products API Migration
+Orders API Migration
 
 Objetivo:
 
-Migrar el módulo de productos de Firestore a la API NestJS.
+Migrar el módulo de órdenes de Firestore a la API NestJS.
