@@ -575,23 +575,112 @@ Si Socket.IO falla al emitir:
 
 ---
 
-# Future Architecture
+# Frontend Architecture (React Native)
 
-Etapa 4.5
+## Auth Module — ETAPA 4.5.1
 
-React Native Socket Migration — conectar frontend a Socket.IO.
+```txt
+AppProviders
+ └── AuthProvider (AuthContext)
+       ├── restoreSession() on mount → GET /auth/me
+       ├── signIn(user, taqueria)    → called by useLogin / useRegister
+       └── signOut()                 → clears token + context
+
+useLogin
+ ├── authService.login(email, password) → POST /auth/login
+ └── signIn(user, taqueria)
+
+useRegister
+ ├── authService.registerDiscoverTaqueria(values) → POST /auth/register (Phase 1)
+ ├── authService.registerJoinTaqueria(values, restaurantCode) → POST /auth/register (Phase 2A)
+ ├── authService.registerCreateTaqueria(values) → POST /auth/register (Phase 2B)
+ └── signIn(user, taqueria)
+
+authService
+ ├── API calls via apiClient (axios)
+ ├── token management (applyToken → apiClient.defaults.headers)
+ └── tokenStorage (AsyncStorage persistence)
+```
+
+## Token Management
+
+```txt
+Login / Register success
+        ↓
+authService.applyToken(accessToken)
+        ├── memoryToken = accessToken
+        └── apiClient.defaults.headers.Authorization = "Bearer <token>"
+        ↓
+tokenStorage.setToken(accessToken)  ← AsyncStorage persistence
+        ↓
+AuthContext.signIn(user, taqueria)  ← context update → navigation
+
+App start
+        ↓
+tokenStorage.getToken()             ← AsyncStorage read
+        ↓
+apiClient.defaults.headers.Authorization = "Bearer <token>"
+        ↓
+GET /auth/me
+        ├── success → signIn(user, taqueria)
+        └── failure → clearToken() + removeToken() → Login screen
+
+Logout
+        ↓
+authService.signOut()
+        ├── clearToken() → remove Authorization header
+        └── tokenStorage.removeToken() ← AsyncStorage clear
+        ↓
+AuthContext → user = null, taqueria = null → Login screen
+```
+
+## Role Mapping
+
+```txt
+API (backend)   →   Frontend (app)
+"WAITER"        →   "waiter"
+"COOK"          →   "cook"
+```
+
+## Navigation after auth
+
+```txt
+AuthContext.user === null  →  AuthStack (Login / Register)
+user.role === "cook"       →  KitchenStack
+user.role === "waiter"     →  WaiterStack
+```
 
 ---
 
-Etapa 4.5
+# Future Architecture
 
-Frontend Socket Integration
+Etapa 4.5.2
+
+Products API Migration — products module → NestJS.
+
+---
+
+Etapa 4.5.3
+
+Orders API Migration — orders module → NestJS.
+
+---
+
+Etapa 4.5.4
+
+Socket.IO Realtime Integration — connect frontend to Socket.IO.
+
+---
+
+Etapa 4.5.5
+
+Firebase Removal & Cleanup — remove all Firebase from project.
 
 ---
 
 Etapa 4.6
 
-Realtime Reliability
+Realtime Reliability.
 
 ---
 

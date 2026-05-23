@@ -45,10 +45,17 @@ Tecnologías principales:
 - Socket.IO Foundation
 - Kitchen Realtime
 
+## En Progreso
+
+- 4.5.1 Frontend Authentication Migration
+
 ## Pendiente
 
-- Frontend Migration
-- Realtime Reliability
+- 4.5.2 Products API Migration
+- 4.5.3 Orders API Migration
+- 4.5.4 Socket.IO Realtime Integration
+- 4.5.5 Firebase Removal & Cleanup
+- 4.6 Realtime Reliability
 - Analytics
 - Production Deployment
 
@@ -446,8 +453,56 @@ Actualización instantánea cocina y meseros.
 
 ---
 
-# ETAPA 4.5
-# React Native Socket Migration
+# ETAPA 4.5.1
+# Frontend Authentication Migration
+
+Estado:
+
+🟡 EN PROGRESO
+
+---
+
+## Objetivos
+
+Eliminar Firebase Authentication del frontend.
+
+Reemplazar por autenticación JWT del backend NestJS.
+
+---
+
+## Implementado
+
+- POST /auth/login → Login exclusivo via API
+- POST /auth/register (Fase 1 + Fase 2A + Fase 2B) → Registro multi-taquería via API
+- GET /auth/me → Session Restore al iniciar la app
+- Logout completo: elimina token, limpia contexto, redirige a Login
+- Persistencia JWT con AsyncStorage
+- AuthContext con signIn, signOut, taqueria
+- Mapeo de roles API (WAITER/COOK) → frontend (waiter/cook)
+- Manejo de múltiples coincidencias de taquería en el registro
+- Firebase Auth eliminado de Login, Register, Session Restore y Logout
+
+---
+
+## Archivos creados
+
+- src/services/storage/tokenStorage.ts
+- (dependencia) @react-native-async-storage/async-storage
+
+## Archivos modificados
+
+- src/features/auth/services/authService.ts
+- src/features/auth/context/AuthContext.tsx
+- src/features/auth/hooks/useLogin.ts
+- src/features/auth/hooks/useRegister.ts
+- src/features/auth/screens/RegisterScreen.tsx
+- src/features/auth/types.ts
+- src/shared/types/domain.ts
+
+---
+
+# ETAPA 4.5.2
+# Products API Migration
 
 Estado:
 
@@ -457,7 +512,37 @@ Estado:
 
 ## Objetivos
 
-Conectar frontend a Socket.IO.
+Migrar módulo de productos de Firestore a la API NestJS.
+
+---
+
+# ETAPA 4.5.3
+# Orders API Migration
+
+Estado:
+
+⬜ PENDIENTE
+
+---
+
+## Objetivos
+
+Migrar módulo de órdenes de Firestore a la API NestJS.
+
+---
+
+# ETAPA 4.5.4
+# Socket.IO Realtime Integration
+
+Estado:
+
+⬜ PENDIENTE
+
+---
+
+## Objetivos
+
+Conectar frontend a Socket.IO del backend.
 
 ---
 
@@ -476,6 +561,33 @@ Actualización instantánea entre:
 
 - Cocina
 - Meseros
+
+---
+
+# ETAPA 4.5.5
+# Firebase Removal & Cleanup
+
+Estado:
+
+⬜ PENDIENTE
+
+---
+
+## Objetivos
+
+Eliminar completamente Firebase del proyecto.
+
+---
+
+## Acciones
+
+- Remover @react-native-firebase/auth
+- Remover @react-native-firebase/firestore (si se migró en 4.5.2-4.5.3)
+- Remover @react-native-firebase/storage
+- Remover @react-native-firebase/app
+- Eliminar src/services/firebase/
+- Limpiar src/config/env.ts (variables Firebase)
+- Eliminar servicios Firestore de features/auth/
 
 ---
 

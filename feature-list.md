@@ -42,12 +42,32 @@ Responsible for:
 
 # 🔐 Authentication System
 
-## ✅ Email & Password Login
+## ✅ Email & Password Login (NestJS JWT — ETAPA 4.5.1)
 Users authenticate using:
 - email
 - password
 
-Authentication is currently handled with Firebase Auth.
+Authentication is handled exclusively by the NestJS backend via `POST /auth/login`.
+
+On success, the backend returns:
+- `accessToken` (JWT, 1 day expiration)
+- `user` (id, name, email, role, taqueriaId)
+- `taqueria` (id, name, restaurantCode, address, city, state)
+
+The token is persisted locally with AsyncStorage for session restore.
+
+## ✅ Session Restore
+On app start, the frontend:
+- Reads the stored accessToken from AsyncStorage
+- Calls `GET /auth/me` to validate the session
+- Restores user and taqueria context if token is valid
+- Redirects to Login if token is missing or expired
+
+## ✅ Logout
+On logout:
+- accessToken is removed from AsyncStorage
+- User and taqueria are cleared from AuthContext
+- App navigates to Login screen
 
 ---
 
@@ -60,27 +80,40 @@ Authentication is currently handled with Firebase Auth.
 
 ---
 
-## ✅ Taquería Creation Flow
+## ✅ Taquería Registration Flow (Smart Multi-Match — ETAPA 4.5.1)
 
-During registration:
+During registration, the backend is called in 2 phases:
 
-- User writes taquería name
-- If taquería already exists:
-  - user is linked automatically
-- If taquería does not exist:
-  - app asks for taquería information
-  - new taquería is created
+**Phase 1 — Discovery (no side effects):**
+- User fills: name, email, password, role, taqueriaName
+- Backend returns match count and available taquerías
 
----
+**Phase 2A — Join existing taquería:**
+- User selects a taquería by restaurantCode
+- Backend creates the user linked to the existing taquería
+- Returns accessToken + user + taquería
+
+**Phase 2B — Create new taquería:**
+- User fills optional: address, city, state
+- Backend creates a new taquería with unique restaurantCode
+- Returns accessToken + user + taquería
+
+**Match scenarios:**
+- 0 matches → directly go to create flow
+- 1 match → show the match, offer join or create new
+- N matches → show list with restaurantCode, user selects
 
 ## ✅ Taquería Fields
 
 Each taquería contains:
 
+- id
 - name
-- address
-- city
-- state
+- restaurantCode (unique tenant identifier)
+- address (optional)
+- city (optional)
+- state (optional)
+- phone (optional)
 - createdAt
 
 ---
@@ -366,11 +399,11 @@ Current actions:
 
 # ☁️ Firebase Integration
 
-Current Firebase services:
+Current Firebase services (pending migration in ETAPA 4.5.2–4.5.5):
 
-- Firebase Auth
-- Firestore
-- Firebase Storage
+- ~~Firebase Auth~~ → **Migrated to NestJS JWT (ETAPA 4.5.1)**
+- Firestore (products, orders — pending migration)
+- Firebase Storage (pending migration)
 
 ---
 
@@ -409,14 +442,17 @@ Both cook and waiter screens support:
 
 ## Current Backend
 
-- Firebase
+- NestJS (Auth — ETAPA 4.5.1)
+- Firebase Firestore (products, orders — pending migration)
 
 ---
 
 ## Current Architecture
 
-- realtime listeners
-- Firestore snapshots
+- JWT authentication via NestJS API
+- AsyncStorage token persistence
+- Context API (AuthContext) — session management
+- Firestore snapshots (products, orders — pending migration)
 - role-based rendering
 - taquería-based multi-tenancy
 
