@@ -44,18 +44,20 @@ Tecnologías principales:
 - Kitchen Queue Logic
 - Socket.IO Foundation
 - Kitchen Realtime
+- 4.5.1 Frontend Authentication Migration
 
 ## En Progreso
 
-- 4.5.1 Frontend Authentication Migration
+- 4.5.2 Products API Migration
 
 ## Pendiente
 
-- 4.5.2 Products API Migration
 - 4.5.3 Orders API Migration
 - 4.5.4 Socket.IO Realtime Integration
 - 4.5.5 Firebase Removal & Cleanup
 - 4.6 Realtime Reliability
+- 4.7 History & Filters
+- 4.8 Performance Optimization
 - Analytics
 - Production Deployment
 
@@ -458,7 +460,7 @@ Actualización instantánea cocina y meseros.
 
 Estado:
 
-🟡 EN PROGRESO
+✅ COMPLETADA
 
 ---
 
@@ -780,10 +782,10 @@ Una etapa se considera completada cuando:
 
 # Próxima Etapa
 
-ETAPA 4.5
+ETAPA 4.5.2
 
-React Native Socket Migration
+Products API Migration
 
 Objetivo:
 
-Crear la infraestructura realtime que sustituirá completamente Firebase.
+Migrar el módulo de productos de Firestore a la API NestJS.
