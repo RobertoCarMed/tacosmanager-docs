@@ -385,6 +385,54 @@ Current priority order:
 
 ---
 
+# 🔧 Kitchen Queue Refinements (Pendiente — ETAPA 4.5.6)
+
+Two problems detected during post-migration functional testing (ETAPA 4.5.3):
+
+## ⬜ Diferenciar actualización de pedido antes y después del servicio
+
+The backend will apply different logic to `PATCH /orders/:id` depending on the current order status:
+
+- If status is `PENDING` → keep `PENDING`, no `isNew`, no `priorityTimestamp` update
+- If status is `PREPARING` or higher → promote to `UPDATED`, activate `isNew`, update `priorityTimestamp`
+
+---
+
+## ⬜ Evitar promoción automática a UPDATED cuando el pedido continúa en PENDING
+
+A `PENDING` order that receives new products must remain `PENDING`.
+
+This prevents the order from jumping ahead of older `PENDING` orders in the kitchen queue.
+
+---
+
+## ⬜ Mantener posición FIFO original para pedidos PENDING actualizados
+
+When a `PENDING` order receives new products, its `priorityTimestamp` must NOT be updated.
+
+The order must keep its original position in the FIFO queue within the `PENDING` group.
+
+---
+
+## ⬜ Priorizar visualmente pedidos PREPARING
+
+Orders currently being prepared by the cook must appear at the top of the kitchen queue.
+
+Proposed new priority:
+
+1. PREPARANDO
+2. ACTUALIZADA
+3. PENDIENTE
+4. LISTO
+
+---
+
+## ⬜ Mantener FIFO independiente dentro de cada grupo de estado
+
+FIFO ordering by `priorityTimestamp ASC` is maintained independently within each status group, regardless of the priority reordering above.
+
+---
+
 # ✨ Realtime Order Updates
 
 When waiter edits an order:

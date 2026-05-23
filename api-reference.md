@@ -225,7 +225,7 @@ su propia taquería
 
 # Kitchen Queue Rules
 
-Orden global:
+Orden global (implementación actual):
 
 ```txt
 UPDATED
@@ -235,6 +235,8 @@ READY
 DELIVERED
 CANCELLED
 ```
+
+> **Nota — ETAPA 4.5.6 (planificado):** El orden cambiará a `PREPARING > UPDATED > PENDING > READY > DELIVERED > CANCELLED`. Además, la promoción automática a `UPDATED` al hacer `PATCH /orders/:id` será condicional: solo ocurrirá si el pedido estaba en `PREPARING` o superior. Un pedido en `PENDING` permanecerá en `PENDING` al recibir nuevos productos.
 
 ---
 

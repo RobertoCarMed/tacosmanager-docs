@@ -307,11 +307,13 @@ socket.on('order-updated', ({ order }) => {
 ```
 
 **Estado de la orden al emitir:**
-- `status`: `UPDATED` (automático — el servidor lo impone)
+- `status`: `UPDATED` (automático — el servidor lo impone si el pedido estaba en `PREPARING` o superior)
 - `revision`: incrementado (era N, ahora N+1)
 - `priorityTimestamp`: actualizado a `now()` (la orden sube en la cola de cocina)
 - Los plates e items anteriores: presentes con `isNew: false`, `createdInRevision` del momento original
 - Los plates e items nuevos: presentes con `isNew: true`, `createdInRevision` igual al nuevo `revision`
+
+> **Nota — ETAPA 4.5.6 (planificado):** El comportamiento cambiará según el status del pedido al momento del append. Si el pedido está en `PENDING`, el evento `order-updated` seguirá emitiéndose pero la orden conservará `status: PENDING`, los nuevos items tendrán `isNew: false` y `priorityTimestamp` no se actualizará.
 
 **Quién recibe:** todos los usuarios conectados de la taquería (COOK y WAITER).
 

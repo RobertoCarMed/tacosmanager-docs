@@ -639,7 +639,7 @@ La orden se crea con `status: PENDING`, `revision: 1`, todos los items con `isNe
 
 **COOK — todas las órdenes de la taquería, ordenadas por prioridad de cocina:**
 
-Orden de prioridad:
+Orden de prioridad (implementación actual):
 1. `UPDATED`
 2. `PENDING`
 3. `PREPARING`
@@ -648,6 +648,8 @@ Orden de prioridad:
 6. `CANCELLED`
 
 Dentro de cada grupo: FIFO por `priorityTimestamp ASC`. La orden que lleva más tiempo esperando en su estado aparece primero.
+
+> **Nota — ETAPA 4.5.6 (planificado):** El orden cambiará a `PREPARING(1) > UPDATED(2) > PENDING(3) > READY(4) > DELIVERED(5) > CANCELLED(6)`. Los pedidos en preparación activa pasarán a tener la prioridad más alta.
 
 **WAITER — solo sus propias órdenes, ordenadas por `createdAt DESC`.**
 
@@ -711,6 +713,8 @@ El campo `plateNumber` debe ser un número que **no exista** en la orden actual.
 **Response `200`:** estructura completa de la orden actualizada.
 
 El status cambia automáticamente a `UPDATED`. La revisión se incrementa. Los nuevos items tienen `isNew: true`. `priorityTimestamp` se actualiza a `now()`.
+
+> **Nota — ETAPA 4.5.6 (planificado):** Este comportamiento será condicional. Si el status actual del pedido es `PENDING`, el status permanecerá en `PENDING`, `isNew` no se activará en los items nuevos y `priorityTimestamp` no se actualizará. La promoción a `UPDATED` solo ocurrirá si el pedido estaba en `PREPARING` o superior.
 
 **Errores:**
 

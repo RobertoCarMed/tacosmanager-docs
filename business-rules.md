@@ -464,7 +464,7 @@ Pedido cancelado.
 
 # 14. Prioridad de Cocina
 
-Prioridades globales:
+Prioridades globales (implementación actual):
 
 1. UPDATED
 2. PENDING
@@ -472,6 +472,8 @@ Prioridades globales:
 4. READY
 5. DELIVERED
 6. CANCELLED
+
+> **Nota — ETAPA 4.5.6 (planificado):** El orden de prioridad cambiará a PREPARING > UPDATED > PENDING > READY > DELIVERED > CANCELLED. Los pedidos PREPARING representan trabajo activo del cocinero y deben mantenerse en la cima de la cola. Ver ETAPA 4.5.6 en el roadmap.
 
 ---
 
@@ -499,7 +501,7 @@ Pedido B
 
 # 16. Prioridad de Pedidos Actualizados
 
-Los pedidos actualizados siempre tienen prioridad sobre pedidos pendientes.
+Los pedidos actualizados siempre tienen prioridad sobre pedidos pendientes (implementación actual).
 
 Ejemplo:
 
@@ -516,6 +518,13 @@ Pedido C
 Pedido A
 
 Pedido B
+
+> **Nota — ETAPA 4.5.6 (planificado):** La promoción a UPDATED será condicional según el estado actual del pedido al recibir `PATCH /orders/:id`:
+>
+> - Si el pedido está en **PENDING**: mantener PENDING, no activar `isNew`, no actualizar `priorityTimestamp`. El pedido conserva su posición FIFO original.
+> - Si el pedido está en **PREPARING** o superior: promover a UPDATED, activar `isNew` en los items nuevos, actualizar `priorityTimestamp`.
+>
+> Esto evita que un pedido PENDING salte por delante de otros pedidos PENDING que llegaron antes.
 
 ---
 

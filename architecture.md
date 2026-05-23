@@ -319,7 +319,7 @@ CANCELLED
 
 # Kitchen Priority
 
-Orden global:
+Orden global (implementación actual):
 
 ```txt
 UPDATED
@@ -329,6 +329,8 @@ READY
 DELIVERED
 CANCELLED
 ```
+
+> **Nota — ETAPA 4.5.6 (planificado):** El orden cambiará a `PREPARING > UPDATED > PENDING > READY > DELIVERED > CANCELLED`.
 
 ---
 
