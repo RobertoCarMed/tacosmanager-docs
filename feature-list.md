@@ -142,22 +142,39 @@ Products are loaded from `GET /products`.
 
 ---
 
-## ✅ Product Edit (NestJS API — ETAPA 4.5.2)
+## ✅ Product Edit — Fields available from UI (NestJS API — ETAPA 4.5.2)
 
 Cooks can update existing products via `PATCH /products/:id`.
 
-- Partial update: only changed fields are sent
-- New image uploaded to Firebase Storage before patching
-- Old image deleted from Firebase Storage after successful upload
+Fields editable from the current UI:
+- name
+- price
+- image (Firebase Storage → new imageUrl persisted via API)
+
+Notes:
+- Only changed fields are sent in the PATCH request
+- New image is uploaded to Firebase Storage before patching
+- Old image is deleted from Firebase Storage after successful upload
 
 ---
 
-## ✅ Product Delete (NestJS API — ETAPA 4.5.2)
+## ⬜ Product Edit — Complement editing from UI (Pendiente — ETAPA 4.5.2.1)
 
-`DELETE /products/:id` is implemented in the service layer.
+The backend supports updating `complements` via `PATCH /products/:id`.
 
-- Cache is updated immediately after successful deletion
-- UI for delete not yet exposed (planned for future stage)
+The current `EditProductScreen` does NOT expose complement editing.
+
+This is a known pending feature — the service layer already supports it.
+
+---
+
+## ⬜ Product Delete from UI (Pendiente — ETAPA 4.5.2.1)
+
+`DELETE /products/:id` is fully implemented in the service layer (`productService.deleteProduct`).
+
+The current UI has NO button or flow to delete a product.
+
+This is a known pending feature — the service layer already supports it.
 
 ---
 

@@ -53,6 +53,7 @@ Tecnologías principales:
 
 ## Pendiente
 
+- 4.5.2.1 Product Management Improvements (complement editing + delete UI)
 - 4.5.4 Socket.IO Realtime Integration
 - 4.5.5 Firebase Removal & Cleanup
 - 4.6 Realtime Reliability
@@ -544,6 +545,44 @@ Mantener Firebase Storage para imágenes.
 - src/features/products/screens/CreateProductScreen.tsx
 - src/features/products/screens/EditProductScreen.tsx
 - src/features/products/types.ts
+
+---
+
+# ETAPA 4.5.2.1
+# Product Management Improvements
+
+Estado:
+
+⬜ PENDIENTE
+
+---
+
+## Contexto
+
+Durante las pruebas manuales de ETAPA 4.5.2 se verificó que:
+
+- La API soporta edición de complements vía PATCH /products/:id.
+- La API soporta eliminación de productos vía DELETE /products/:id.
+- El servicio frontend (productService) ya implementa ambas operaciones.
+- El frontend NO tiene interfaz de usuario para editar complements de un producto existente.
+- El frontend NO tiene interfaz de usuario para eliminar un producto.
+
+No existe un bug ni problema de integración.
+
+Se trata de funcionalidades pendientes de UI que nunca fueron implementadas.
+
+---
+
+## Pendiente
+
+- Agregar edición de complements en EditProductScreen
+- Agregar botón o flujo de eliminación de producto en EditProductScreen o SettingsScreen
+
+## Notas técnicas
+
+- productService.updateProduct() admite complements en el payload — solo requiere exponer el campo en el formulario.
+- productService.deleteProduct() está implementado y listo — solo requiere UI.
+- No se requieren cambios en backend ni en el service layer.
 
 ---
 
