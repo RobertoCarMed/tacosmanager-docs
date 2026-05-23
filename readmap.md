@@ -46,10 +46,11 @@ Tecnologías principales:
 - Kitchen Realtime
 - 4.5.1 Frontend Authentication Migration
 - 4.5.2 Products API Migration
+- 4.5.3 Orders API Migration
 
 ## En Progreso
 
-- 4.5.3 Orders API Migration
+(ninguna)
 
 ## Pendiente
 
@@ -553,13 +554,45 @@ Mantener Firebase Storage para imágenes.
 
 Estado:
 
-⬜ PENDIENTE
+✅ COMPLETADA
 
 ---
 
 ## Objetivos
 
 Migrar módulo de órdenes de Firestore a la API NestJS.
+
+---
+
+## Implementado
+
+### Archivos creados / modificados
+
+- `src/shared/types/domain.ts` — OrderStatus UPPERCASE, OrderItem con productId/selectedComplements, Plate con plateNumber, Order con tableNumber + alias table
+- `src/features/orders/services/ordersService.ts` — Reescrito completo, sin Firestore. Implementa createOrder, getOrder, appendPlatesToOrder, subscribeToOrders, updateOrderStatus usando apiClient
+- `src/features/orders/hooks/useOrders.ts` — Eliminado taqueriaId/user.id de llamadas al servicio
+- `src/features/orders/hooks/useCreateOrder.ts` — NewOrderItem con productId, saveOrder construye payload API con tableNumber + plateNumber
+- `src/features/orders/hooks/useEditOrder.ts` — getOrder sin taqueriaId, appendPlatesToOrder con cálculo de plateNumber
+- `src/features/kitchen/components/OrderCard.tsx` — Estados UPPERCASE
+- `src/features/kitchen/screens/KitchenScreen.tsx` — statusPriority UPPERCASE, filtro DELIVERED/CANCELLED
+- `src/features/kitchen/screens/KitchenDashboardScreen.tsx` — Comparaciones de estado UPPERCASE
+- `src/shared/components/OrderCard.tsx` — statusLabels/statusColors UPPERCASE
+
+### Endpoints consumidos
+
+- `POST /orders` — Crear pedido
+- `GET /orders` — Listar pedidos (con filtro de fecha client-side)
+- `GET /orders/:id` — Obtener pedido individual
+- `PATCH /orders/:id` — Agregar plates (append-only)
+- `PATCH /orders/:id/status` — Cambiar estado
+
+### Reglas respetadas
+
+- Backend extrae taqueriaId del JWT — nunca se envía en el body
+- Backend es fuente de verdad para isNew, revision, createdInRevision
+- Frontend NO genera lógica de kitchen ordering — respeta el orden de la API
+- Append-only editing preservado
+- Product cache se pre-carga en paralelo con orders para resolver nombres de productos en cocina
 
 ---
 
@@ -852,10 +885,10 @@ Una etapa se considera completada cuando:
 
 # Próxima Etapa
 
-ETAPA 4.5.3
+ETAPA 4.5.4
 
-Orders API Migration
+Socket.IO Realtime Integration
 
 Objetivo:
 
-Migrar el módulo de órdenes de Firestore a la API NestJS.
+Conectar el frontend a Socket.IO del backend para actualización en tiempo real entre cocina y meseros.

@@ -445,11 +445,11 @@ Current actions:
 
 # ☁️ Firebase Integration
 
-Current Firebase services (pending migration in ETAPA 4.5.3–4.5.5):
+Current Firebase services (pending migration in ETAPA 4.5.4–4.5.5):
 
 - ~~Firebase Auth~~ → **Migrated to NestJS JWT (ETAPA 4.5.1)**
 - ~~Firestore (products)~~ → **Migrated to NestJS API (ETAPA 4.5.2)**
-- Firestore (orders — pending migration in ETAPA 4.5.3)
+- ~~Firestore (orders)~~ → **Migrated to NestJS API (ETAPA 4.5.3)**
 - Firebase Storage (images only — kept intentionally; no backend upload endpoint)
 
 ---
@@ -489,8 +489,8 @@ Both cook and waiter screens support:
 
 ## Current Backend
 
-- NestJS (Auth — ETAPA 4.5.1, Products — ETAPA 4.5.2)
-- Firebase Firestore (orders — pending migration in ETAPA 4.5.3)
+- NestJS (Auth — ETAPA 4.5.1, Products — ETAPA 4.5.2, Orders — ETAPA 4.5.3)
+- ~~Firebase Firestore~~ → fully migrated to NestJS API (Auth 4.5.1, Products 4.5.2, Orders 4.5.3)
 - Firebase Storage (product images — kept intentionally)
 
 ---
@@ -500,9 +500,8 @@ Both cook and waiter screens support:
 - JWT authentication via NestJS API
 - AsyncStorage token persistence
 - Context API (AuthContext) — session management
-- NestJS API (products — ETAPA 4.5.2)
-- Firestore snapshots (orders — pending migration)
-- Firebase Storage (product images)
+- NestJS API (products — ETAPA 4.5.2, orders — ETAPA 4.5.3)
+- Firebase Storage (product images — kept intentionally)
 - role-based rendering
 - taquería-based multi-tenancy
 

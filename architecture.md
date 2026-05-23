@@ -695,19 +695,64 @@ taqueriaId is never sent in the request body — backend extracts it from JWT.
 
 ---
 
+## Orders Module — ETAPA 4.5.3
+
+```txt
+useOrders(options)
+ └── ordersService.subscribeToOrders({ dateFilter, taqueriaId }, onData, onError)
+       ├── GET /products (cache warm — parallel, cache-first)
+       ├── GET /orders → filter by dateFilter client-side
+       ├── mapApiOrder() → resolves product name/price/complements from cache
+       └── returns cancellation function
+
+useCreateOrder
+ ├── local NewOrderItem { productId, name, price, quantity, selectedComplements }
+ └── ordersService.createOrder({ tableNumber, plates[{ plateNumber, items[{ productId, quantity, selectedComplements }] }] })
+       └── POST /orders
+
+useEditOrder(orderId)
+ ├── ordersService.getOrder(orderId) → GET /orders/:id
+ └── ordersService.appendPlatesToOrder(orderId, plates[{ plateNumber, items }])
+       └── PATCH /orders/:id
+           (plateNumber = max(existing) + index + 1)
+
+useOrders.updateOrderStatus
+ └── ordersService.updateOrderStatus(orderId, status)
+       └── PATCH /orders/:id/status { status: "PREPARING" | "READY" | "DELIVERED" | "CANCELLED" }
+```
+
+## OrderStatus Values — ETAPA 4.5.3
+
+API uses UPPERCASE values:
+
+```txt
+UPDATED    → kitchen priority 1
+PENDING    → kitchen priority 2
+PREPARING  → kitchen priority 3
+READY      → kitchen priority 4
+DELIVERED  → filtered out of active kitchen view
+CANCELLED  → filtered out of active kitchen view
+```
+
+UPDATED cannot be set manually — backend sets it when plates are appended.
+
+## Product Name Resolution — ETAPA 4.5.3
+
+API items contain only productId (not name/price).
+
+Resolution strategy:
+```txt
+subscribeToOrders
+ ├── GET /products (parallel, cache-first — warms productService cache)
+ └── mapApiOrder
+       └── productMap.get(apiItem.productId)
+             ├── hit  → item.name = product.name, item.price = product.price
+             └── miss → item.name = productId (fallback)
+```
+
+---
+
 # Future Architecture
-
-Etapa 4.5.3
-
-Orders API Migration — orders module → NestJS.
-
----
-
-Etapa 4.5.3
-
-Orders API Migration — orders module → NestJS.
-
----
 
 Etapa 4.5.4
 
