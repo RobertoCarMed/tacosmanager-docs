@@ -158,7 +158,7 @@ Notes:
 
 ---
 
-## ⬜ Product Edit — Complement editing from UI (Pendiente — ETAPA 4.5.2.1)
+## ⬜ Product Edit — Complement editing from UI (Pendiente — ETAPA 4.9)
 
 The backend supports updating `complements` via `PATCH /products/:id`.
 
@@ -168,7 +168,7 @@ This is a known pending feature — the service layer already supports it.
 
 ---
 
-## ⬜ Product Delete from UI (Pendiente — ETAPA 4.5.2.1)
+## ⬜ Product Delete from UI (Pendiente — ETAPA 4.9)
 
 `DELETE /products/:id` is fully implemented in the service layer (`productService.deleteProduct`).
 

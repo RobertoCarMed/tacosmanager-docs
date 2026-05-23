@@ -53,12 +53,12 @@ Tecnologías principales:
 
 ## Pendiente
 
-- 4.5.2.1 Product Management Improvements (complement editing + delete UI)
 - 4.5.4 Socket.IO Realtime Integration
 - 4.5.5 Firebase Removal & Cleanup
 - 4.6 Realtime Reliability
 - 4.7 History & Filters
 - 4.8 Performance Optimization
+- 4.9 Product Management Improvements
 - Analytics
 - Production Deployment
 
@@ -548,44 +548,6 @@ Mantener Firebase Storage para imágenes.
 
 ---
 
-# ETAPA 4.5.2.1
-# Product Management Improvements
-
-Estado:
-
-⬜ PENDIENTE
-
----
-
-## Contexto
-
-Durante las pruebas manuales de ETAPA 4.5.2 se verificó que:
-
-- La API soporta edición de complements vía PATCH /products/:id.
-- La API soporta eliminación de productos vía DELETE /products/:id.
-- El servicio frontend (productService) ya implementa ambas operaciones.
-- El frontend NO tiene interfaz de usuario para editar complements de un producto existente.
-- El frontend NO tiene interfaz de usuario para eliminar un producto.
-
-No existe un bug ni problema de integración.
-
-Se trata de funcionalidades pendientes de UI que nunca fueron implementadas.
-
----
-
-## Pendiente
-
-- Agregar edición de complements en EditProductScreen
-- Agregar botón o flujo de eliminación de producto en EditProductScreen o SettingsScreen
-
-## Notas técnicas
-
-- productService.updateProduct() admite complements en el payload — solo requiere exponer el campo en el formulario.
-- productService.deleteProduct() está implementado y listo — solo requiere UI.
-- No se requieren cambios en backend ni en el service layer.
-
----
-
 # ETAPA 4.5.3
 # Orders API Migration
 
@@ -769,6 +731,46 @@ Optimizar sistema completo.
 ## Resultado esperado
 
 Capacidad para operar múltiples taquerías simultáneamente.
+
+---
+
+# ETAPA 4.9
+# Product Management Improvements
+
+Estado:
+
+⬜ PENDIENTE
+
+---
+
+## Contexto
+
+Durante las pruebas manuales de ETAPA 4.5.2 se verificó que:
+
+- La API soporta edición de complements vía PATCH /products/:id.
+- La API soporta eliminación de productos vía DELETE /products/:id.
+- El servicio frontend (productService) ya implementa ambas operaciones.
+- El frontend NO tiene interfaz de usuario para editar complements de un producto existente.
+- El frontend NO tiene interfaz de usuario para eliminar un producto.
+
+No existe un bug ni problema de integración.
+
+Se trata de funcionalidades pendientes de UI que nunca fueron implementadas en el frontend.
+
+---
+
+## Pendiente
+
+- Agregar edición de complements en EditProductScreen
+- Agregar botón o flujo de eliminación de producto en EditProductScreen o SettingsScreen
+
+---
+
+## Notas técnicas
+
+- productService.updateProduct() admite complements en el payload — solo requiere exponer el campo en el formulario.
+- productService.deleteProduct() está implementado y listo — solo requiere UI.
+- No se requieren cambios en backend ni en el service layer.
 
 ---
 
