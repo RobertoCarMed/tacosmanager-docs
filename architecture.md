@@ -229,21 +229,6 @@ createdAt
 updatedAt
 ```
 
-Campos planificados — ETAPA 4.6.1:
-
-```txt
-orderType       (DINE_IN | TAKEAWAY | DELIVERY)
-reference       (reemplaza conceptualmente tableNumber)
-deliveryAddress (solo para DELIVERY — nullable)
-```
-
-Migración automática al agregar los campos:
-
-```txt
-tableNumber → reference
-tipo implícito → orderType = DINE_IN
-```
-
 ---
 
 ## Plate
@@ -816,20 +801,22 @@ OrderType = modalidad de consumo del pedido.
 
 # Order Classification System — Impacto por capa
 
-## Impacto Backend (ETAPA 4.6.1)
+## Impacto Backend (ETAPA 4.6.1) ✅ COMPLETADA
 
-- Prisma Schema: nuevo enum `OrderType`, campos `orderType`, `reference`, `deliveryAddress`
-- DTOs: validaciones condicionales según `orderType`
+- Prisma Schema: nuevo enum `OrderType`, campos `type`, `reference`, `deliveryAddress`
+- DTOs: validaciones condicionales según `type`
 - Servicios y controladores: aplican reglas por tipo
 - Realtime payload: incluye los tres nuevos campos
-- Migración automática: `tableNumber → reference`, `orderType = DINE_IN`
+- Migración automática: `tableNumber → reference`, `type = DINE_IN`
 
-## Impacto Frontend — Crear y Editar Pedido (ETAPA 4.6.2)
+## Impacto Frontend — Crear y Editar Pedido (ETAPA 4.6.2) ✅ COMPLETADA
 
-- `CreateOrderScreen`: selector de tipo + campo dinámico por tipo
-- `EditOrderScreen`: muestra tipo actual; permite cambiar tipo; muestra `deliveryAddress` para DELIVERY
-- `ordersService`: envía `orderType`, `reference`, `deliveryAddress` en el payload
-- `domain.ts`: nuevos tipos `OrderType`, campos en `Order` y `CreateOrderPayload`
+- `CreateOrderScreen`: selector de tipo (3 botones) + campo dinámico por tipo
+- `EditOrderScreen`: muestra tipo actual; permite cambiar tipo (DINE_IN ↔ TAKEAWAY ↔ DELIVERY); muestra `deliveryAddress` para DELIVERY
+- `useCreateOrder` / `useEditOrder`: gestionan `orderType`, `reference`, `deliveryAddress` con validaciones dinámicas
+- `ordersService.appendPlatesToOrder`: acepta `classification?` opcional para cambios de tipo sin nuevos plates
+- `domain.ts`: `OrderType`, `reference`, `deliveryAddress` en `Order` y `CreateOrderPayload`
+- `OrderCard` (waiter): `getOrderHeaderLabel` muestra emoji + referencia según tipo
 
 ## Impacto Kitchen (ETAPA 4.6.3)
 
@@ -855,12 +842,10 @@ Kitchen Queue Refinements — conditional UPDATED promotion, PREPARING as highes
 
 ---
 
-Etapa 4.6 (Épica)
-
-Order Classification System:
-- 4.6.1 — Backend Schema & API
-- 4.6.2 — Frontend Create/Edit Order
-- 4.6.3 — Kitchen Integration
+Etapa 4.6 (Épica) — Order Classification System:
+- 4.6.1 ✅ — Backend Schema & API (completada)
+- 4.6.2 ✅ — Frontend Create/Edit Order (completada)
+- 4.6.3 🟡 — Kitchen Integration (siguiente etapa activa)
 
 ---
 

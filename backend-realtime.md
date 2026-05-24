@@ -375,22 +375,15 @@ interface OrderRealtimePayload {
   taqueriaId: string;            // UUID — siempre filtra a la room correcta
   waiterId: string;              // UUID del mesero que creó la orden
   type: OrderType;               // "DINE_IN" | "TAKEAWAY" | "DELIVERY"
-  reference: string | null;      // Número/nombre de mesa o cliente. Null para DELIVERY
-  deliveryAddress: string | null; // Dirección de entrega. Null para DINE_IN y TAKEAWAY
+  reference: string | null;      // Número/nombre de mesa o cliente. Opcional para DELIVERY (nombre del cliente).
+  deliveryAddress: string | null; // Dirección de entrega. Null para DINE_IN y TAKEAWAY.
   status: OrderStatus;           // "PENDING" | "UPDATED" | "PREPARING" | "READY" | "DELIVERED" | "CANCELLED"
   revision: number;              // Empieza en 1, incrementa con cada PATCH /orders/:id
   priorityTimestamp: Date;       // ISO 8601 string en JSON. Actualizado en cada append.
   createdAt: Date;               // ISO 8601 string en JSON
   updatedAt: Date;               // ISO 8601 string en JSON
   plates: OrderPlatePayload[];   // Ordenados por plateNumber ASC
-  // ETAPA 4.6.1 — campos planificados:
-  // orderType: "DINE_IN" | "TAKEAWAY" | "DELIVERY"
-  // reference: string | null
-  // deliveryAddress: string | null
 }
-```
-
-> **ETAPA 4.6.1 (planificado):** El payload incluirá `orderType`, `reference` y `deliveryAddress` una vez que el backend sea actualizado. `orderType` es independiente de `status`. Representan dimensiones distintas del pedido.
 
 ### `OrderPlatePayload`
 
@@ -919,4 +912,4 @@ No se realiza refetch REST tras eventos. El payload completo del socket se usa d
 
 ---
 
-*Generado analizando el código fuente del backend. Fuentes: `src/realtime/**`, `src/orders/orders.service.ts`, `src/realtime/interfaces/`, `src/auth/auth.module.ts`. Última actualización: ETAPA 4.5.4.*
+*Generado analizando el código fuente del backend. Fuentes: `src/realtime/**`, `src/orders/orders.service.ts`, `src/realtime/interfaces/`, `src/auth/auth.module.ts`. Última actualización: ETAPA 4.6.1 ✅ (payload actualizado con type/reference/deliveryAddress).*

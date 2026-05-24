@@ -237,7 +237,7 @@ Entrega a domicilio.
 
 Campo requerido: `deliveryAddress` (dirección de entrega).
 
-`reference` queda en null.
+`reference` es opcional (nombre del cliente que recibe el pedido).
 
 Ejemplos: `Av. Insurgentes 123 Col. Roma`.
 
@@ -249,7 +249,7 @@ Campo `String?` (nullable). Renombrado de `tableNumber` en Etapa 4.6.1.
 
 Requerido para DINE_IN y TAKEAWAY.
 
-Null para DELIVERY.
+Opcional para DELIVERY (nombre del cliente que recibe el pedido).
 
 ---
 
@@ -269,7 +269,7 @@ Null para DINE_IN y TAKEAWAY.
 |-----------|------------|-----------------|------------------------------|
 | DINE_IN   | requerido  | ignorado        | Error si reference está vacío |
 | TAKEAWAY  | requerido  | ignorado        | Error si reference está vacío |
-| DELIVERY  | ignorado   | requerido       | Error si deliveryAddress vacío |
+| DELIVERY  | opcional   | requerido       | Error si deliveryAddress vacío |
 
 ---
 
@@ -845,7 +845,7 @@ Ejemplos válidos:
 - Av. Juárez #123
 - Calle Hidalgo #45, Col. Centro
 
-reference: opcional para futuras extensiones.
+reference: opcional (nombre del cliente que recibe el pedido).
 
 ---
 

@@ -395,9 +395,9 @@ The Order Classification System is divided into three independent sub-stages:
 
 ---
 
-## ⬜ OrderType — Clasificación de pedido (4.6.1)
+## ✅ OrderType — Clasificación de pedido (4.6.1 — COMPLETADA)
 
-Each order will have an `orderType` field that determines its consumption modality:
+Each order has an `orderType` field that determines its consumption modality:
 
 - `DINE_IN` — consume inside the restaurant
 - `TAKEAWAY` — customer picks up at the counter
@@ -410,22 +410,22 @@ Each order will have an `orderType` field that determines its consumption modali
 
 ---
 
-## ⬜ Reference Field — Identificador visual del pedido (4.6.1)
+## ✅ Reference Field — Identificador visual del pedido (4.6.1 — COMPLETADA)
 
-The `tableNumber` field is replaced conceptually by a `reference` field.
+The `tableNumber` field is replaced by a `reference` field via `RENAME COLUMN` (data preserved).
 
 `reference` represents the visual label used by staff to locate an order.
 
 Examples by type:
 - `DINE_IN`: "Mesa 4", "Terraza 2", "Barra 3"
 - `TAKEAWAY`: "Roberto", "Juan Pérez"
-- `DELIVERY`: optional (address is the primary identifier)
+- `DELIVERY`: optional (customer name who receives the order)
 
 ---
 
-## ⬜ Delivery Address — Dirección de entrega (4.6.1)
+## ✅ Delivery Address — Dirección de entrega (4.6.1 — COMPLETADA)
 
-A new `deliveryAddress` field will be added for `DELIVERY` orders.
+A `deliveryAddress` field exists for `DELIVERY` orders.
 
 Rules:
 - Required for `DELIVERY`
@@ -433,18 +433,18 @@ Rules:
 
 ---
 
-## ⬜ Data Migration — tableNumber → reference (4.6.1)
+## ✅ Data Migration — tableNumber → reference (4.6.1 — COMPLETADA)
 
-All existing orders are automatically migrated:
+All existing orders were automatically migrated:
 
-- `tableNumber` → `reference`
+- `tableNumber` → `reference` (RENAME COLUMN — data preserved)
 - implicit type → `orderType = DINE_IN`
 
-No historical data is lost. No manual intervention required.
+No historical data was lost. No manual intervention was required.
 
 ---
 
-## ⬜ OrderType Selector — UI al crear pedido (4.6.2)
+## ✅ OrderType Selector — UI al crear pedido (4.6.2 — COMPLETADA)
 
 When creating an order, the waiter selects the modality first:
 
@@ -456,14 +456,14 @@ When creating an order, the waiter selects the modality first:
 
 The displayed input field changes dynamically:
 - `DINE_IN` → "Referencia" (placeholder: Mesa 4) — required
-- `TAKEAWAY` → "Nombre cliente" (placeholder: Roberto) — required
+- `TAKEAWAY` → "Nombre de quien recogerá" (placeholder: Roberto) — required
 - `DELIVERY` → "Dirección" (placeholder: Av. Juárez #123) — required; reference optional
 
 The input field clears when the user switches order type.
 
 ---
 
-## ⬜ Editable Order Type — Cambio de tipo en edición (4.6.2)
+## ✅ Editable Order Type — Cambio de tipo en edición (4.6.2 — COMPLETADA)
 
 The waiter can change the order type when editing an existing order:
 
@@ -471,13 +471,30 @@ The waiter can change the order type when editing an existing order:
 DINE_IN ↔ TAKEAWAY ↔ DELIVERY
 ```
 
-Validations corresponding to the new type are applied immediately.
+Validations corresponding to the new type are applied immediately. Type can be changed without adding new plates.
 
 ---
 
-## ⬜ Delivery Visibility — Dirección visible para meseros (4.6.2)
+## ✅ Delivery Visibility — Dirección visible para meseros (4.6.2 — COMPLETADA)
 
-When a waiter opens a `DELIVERY` order for editing, the full `deliveryAddress` is displayed inside the current edit flow. No additional screen is required.
+When a waiter opens a `DELIVERY` order for editing, the full `deliveryAddress` is displayed inside the current edit flow (multiline input). No additional screen is required.
+
+---
+
+## ✅ MVP Delivery Scope — Captura interna (4.6.1 / 4.6.2 — COMPLETADA)
+
+`DELIVERY` orders are captured by internal staff only.
+
+```
+Customer calls the restaurant
+      ↓
+Waiter captures the order in the system
+      ↓
+System registers DELIVERY order with deliveryAddress
+```
+
+No customer-facing portals, QR ordering, or self-ordering in ETAPA 4.6.
+These features may be evaluated after production launch.
 
 ---
 

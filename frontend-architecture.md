@@ -1,7 +1,7 @@
 # TacosManager — Frontend Architecture
 
-Version: 1.0
-Última actualización: ETAPA 4.5.3
+Version: 1.1
+Última actualización: ETAPA 4.6.2
 
 ---
 
@@ -185,15 +185,18 @@ useOrders(options)
        └── returns cancellation function
 
 useCreateOrder
+ ├── states: orderType (DINE_IN default), reference, deliveryAddress
  ├── local NewOrderItem { productId, name, price, quantity, selectedComplements }
- └── ordersService.createOrder({ tableNumber, plates[{ plateNumber, items[{ productId, quantity, selectedComplements }] }] })
+ └── ordersService.createOrder({ type, reference?, deliveryAddress?, plates[{ plateNumber, items[{ productId, quantity, selectedComplements }] }] })
        └── POST /orders
 
 useEditOrder(orderId)
  ├── ordersService.getOrder(orderId) → GET /orders/:id
- └── ordersService.appendPlatesToOrder(orderId, plates[{ plateNumber, items }])
+ ├── states: orderType, reference, deliveryAddress (synced from existingOrder on load)
+ └── ordersService.appendPlatesToOrder(orderId, plates[{ plateNumber, items }], classification?)
        └── PATCH /orders/:id
            (plateNumber = max(existing) + index + 1)
+           (classification sent only when type/reference/deliveryAddress changed)
 
 useOrders.updateOrderStatus
  └── ordersService.updateOrderStatus(orderId, status)
@@ -215,45 +218,54 @@ ordersSlice
 
 ## Orders Architecture — ETAPA 4.6 (épica — tres subetapas)
 
-### ETAPA 4.6.1 — Backend Schema & API (sin cambios en frontend)
+### ETAPA 4.6.1 — Backend Schema & API ✅ COMPLETADA
 
-El backend agrega `orderType`, `reference`, `deliveryAddress`.
+El backend agregó `type` (OrderType), `reference`, `deliveryAddress`.
 
-El frontend recibe estos campos en los payloads REST y realtime desde esta etapa,
-pero no los usa aún en la UI hasta ETAPA 4.6.2.
+El frontend recibe estos campos en los payloads REST y realtime.
 
-### ETAPA 4.6.2 — Nuevos campos en CreateOrderPayload y Edit
+### ETAPA 4.6.2 — Nuevos campos en CreateOrderPayload y Edit ✅ COMPLETADA
 
 ```txt
-CreateOrderPayload (ETAPA 4.6.2)
- ├── orderType: 'DINE_IN' | 'TAKEAWAY' | 'DELIVERY'
+CreateOrderPayload
+ ├── type: 'DINE_IN' | 'TAKEAWAY' | 'DELIVERY'
  ├── reference?: string        ← obligatorio para DINE_IN y TAKEAWAY
- ├── deliveryAddress?: string  ← obligatorio para DELIVERY
+ ├── deliveryAddress?: string  ← obligatorio para DELIVERY; opcional reference para nombre cliente
  └── plates: [...]
 ```
 
-### Selector UI en CreateOrderScreen (ETAPA 4.6.2)
+### Selector UI en CreateOrderScreen ✅ COMPLETADA
 
 ```txt
 CreateOrderScreen
- ├── OrderTypeSelector
- │     ├── 🍽 Comer aquí  → orderType = DINE_IN
- │     ├── 🥡 Para llevar → orderType = TAKEAWAY
- │     └── 🛵 Delivery    → orderType = DELIVERY
+ ├── OrderTypeSelector (3 Pressable buttons)
+ │     ├── 🍽 Comer aquí  → type = DINE_IN
+ │     ├── 🥡 Para llevar → type = TAKEAWAY
+ │     └── 🛵 Delivery    → type = DELIVERY
  └── Campo dinámico según tipo
        ├── DINE_IN   → label: "Referencia",     placeholder: "Mesa 4"     (obligatorio)
-       ├── TAKEAWAY  → label: "Nombre cliente",  placeholder: "Roberto"    (obligatorio)
+       ├── TAKEAWAY  → label: "Nombre quien recogerá", placeholder: "Roberto" (obligatorio)
        └── DELIVERY  → label: "Dirección",       placeholder: "Av. Juárez #123" (obligatorio)
-                       + campo opcional: reference (nombre del cliente)
+                       + campo opcional: reference (nombre del cliente que recibe)
 ```
 
-### EditOrderScreen — Edición de tipo (ETAPA 4.6.2)
+### EditOrderScreen — Edición de tipo ✅ COMPLETADA
 
 ```txt
 EditOrderScreen
- ├── Muestra y permite editar tipo actual
- ├── DINE_IN ↔ TAKEAWAY ↔ DELIVERY (con validaciones por tipo)
- └── Pedido DELIVERY: deliveryAddress visible completa en el flujo actual
+ ├── Muestra tipo actual y permite editarlo (selector 3 opciones)
+ ├── DINE_IN ↔ TAKEAWAY ↔ DELIVERY (validaciones dinámicas por tipo)
+ ├── Pedido DELIVERY: deliveryAddress visible completa + campo opcional de reference
+ └── canSave = isClassificationValid && (classificationChanged || hasNewItems)
+```
+
+### OrderCard waiter variant ✅ COMPLETADA
+
+```txt
+getOrderHeaderLabel(order)
+ ├── DELIVERY  → 🛵 deliveryAddress (o reference, o tableNumber como fallback)
+ ├── TAKEAWAY  → 🥡 reference (o tableNumber como fallback)
+ └── DINE_IN   → 🍽 reference (o tableNumber como fallback)
 ```
 
 ### Kitchen OrderCard (ETAPA 4.6.3)
@@ -445,4 +457,4 @@ src/
 
 ---
 
-*Última actualización: ETAPA 4.5.4*
+*Última actualización: ETAPA 4.6.2*

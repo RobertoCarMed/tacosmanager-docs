@@ -49,18 +49,16 @@ Tecnologías principales:
 - 4.5.3 Orders API Migration
 - 4.5.4 Socket.IO Realtime Integration
 - 4.5.5 Firebase Removal & Cleanup
+- 4.6.1 Backend Schema & API
+- 4.6.2 Frontend Create/Edit Order
 
 ## En Progreso
 
-(ninguna etapa actualmente en progreso)
+- 4.6.3 Kitchen Integration
 
 ## Pendiente
 
 - 4.5.6 Kitchen Queue Refinements
-- 4.6 Order Classification System (Épica)
-  - 4.6.1 Backend Schema & API (🟡 en validación)
-  - 4.6.2 Frontend Create/Edit Order
-  - 4.6.3 Kitchen Integration
 - 4.7 Realtime Reliability
 - 4.8 History & Filters
 - 4.9 Performance Optimization
@@ -923,7 +921,7 @@ No se perdió información histórica.
 
 Estado:
 
-🟡 EN VALIDACIÓN
+✅ COMPLETADA
 
 ---
 
@@ -969,7 +967,34 @@ src/realtime/interfaces/order-payload.interface.ts
 
 Estado:
 
-🟡 EN PROGRESO
+✅ COMPLETADA
+
+---
+
+## Implementado
+
+- Selector de tipo de pedido (🍽 Comer aquí / 🥡 Para llevar / 🛵 Delivery)
+- Formularios dinámicos por tipo (label, placeholder y campo cambian según el tipo)
+- Validaciones dinámicas: DINE_IN y TAKEAWAY bloquean sin reference; DELIVERY bloquea sin deliveryAddress
+- Campo opcional de nombre de referencia para pedidos DELIVERY
+- Creación de pedidos con type, reference, deliveryAddress en el payload
+- Edición de pedidos: permite cambiar DINE_IN ↔ TAKEAWAY ↔ DELIVERY sin agregar plates nuevos
+- Visualización de dirección DELIVERY completa (campo multiline) en el flujo de edición
+- OrderCard (variante mesero): muestra emoji + reference o deliveryAddress según type
+- Compatibilidad con pedidos históricos migrados (type = DINE_IN, reference = tableNumber anterior)
+- 10 pruebas manuales ejecutadas exitosamente
+
+## Archivos modificados
+
+```
+src/shared/types/domain.ts
+src/features/orders/services/ordersService.ts
+src/features/orders/hooks/useCreateOrder.ts
+src/features/orders/hooks/useEditOrder.ts
+src/features/orders/screens/CreateOrderScreen.tsx
+src/features/orders/screens/EditOrderScreen.tsx
+src/shared/components/OrderCard.tsx
+```
 
 ---
 
@@ -1058,7 +1083,7 @@ Frontend:
 
 Estado:
 
-⬜ PENDIENTE
+🟡 SIGUIENTE ETAPA ACTIVA
 
 ---
 
@@ -1066,7 +1091,7 @@ Estado:
 
 Adaptar el Kitchen Display System (KDS) para mostrar correctamente los tipos de pedido.
 
-Requiere que ETAPA 4.6.1 esté completada.
+Requiere que ETAPA 4.6.1 y 4.6.2 estén completadas. ✅ Ambas completadas.
 
 ---
 
@@ -1378,15 +1403,25 @@ Una etapa se considera completada cuando:
 
 # Próxima Etapa
 
-ETAPA 4.5.6
+ETAPA 4.6.3
 
-Kitchen Queue Refinements
+Kitchen Integration
 
 Objetivo:
 
-Crear la infraestructura realtime que sustituirá completamente Firebase.
+Adaptar el Kitchen Display System (KDS) para mostrar correctamente los tipos de pedido con emoji + referencia.
+
+```txt
+DINE_IN   →  🍽 Mesa 4
+TAKEAWAY  →  🥡 Roberto
+DELIVERY  →  🛵 Av. Juárez #123...
+```
+
+Kitchen NO agrupa por tipo. FIFO y priorización de estados sin cambios.
 
 ---
+
+Tras 4.6.3:
 
 ETAPA 4.5.6
 
@@ -1395,13 +1430,3 @@ Kitchen Queue Refinements
 Objetivo:
 
 Implementar promoción condicional a UPDATED según el estado del pedido, y cambiar el orden de prioridad de cocina a PREPARING > UPDATED > PENDING > READY > DELIVERED > CANCELLED.
-
----
-
-ETAPA 4.6 (en paralelo / tras 4.5)
-
-Order Classification System
-
-Objetivo:
-
-Validar la clasificación de pedidos en el frontend y asegurar que la cocina distingue DINE_IN, TAKEAWAY y DELIVERY.

@@ -1,7 +1,7 @@
 # TacosManager — UI Flows
 
-Version: 1.1
-Última actualización: ETAPA 4.6 (diseño 4.6.1 / 4.6.2 / 4.6.3)
+Version: 1.2
+Última actualización: ETAPA 4.6.2 ✅ (4.6.1 ✅ completada / 4.6.2 ✅ completada / 4.6.3 siguiente etapa)
 
 ---
 
@@ -75,7 +75,7 @@ WaiterStack
              └── failure → show error
 ```
 
-### Flujo planificado — ETAPA 4.6.2
+### Flujo implementado — ETAPA 4.6.2 ✅ COMPLETADA
 
 Se agrega un selector de tipo de pedido al inicio del flujo.
 
@@ -213,7 +213,7 @@ Los plates e items existentes son inmutables.
 
 Solo se pueden agregar nuevos plates con nuevos items.
 
-### Flujo planificado — ETAPA 4.6.2
+### Flujo implementado — ETAPA 4.6.2 ✅ COMPLETADA
 
 Se agrega la capacidad de cambiar el tipo de pedido durante la edición.
 
@@ -379,4 +379,4 @@ RootNavigator
 
 ---
 
-*Última actualización: ETAPA 4.6 — flujos de 4.6.1 / 4.6.2 / 4.6.3 documentados.*
+*Última actualización: ETAPA 4.6.2 — 4.6.1 ✅ y 4.6.2 ✅ implementadas. 4.6.3 Kitchen Integration es la siguiente etapa activa.*
