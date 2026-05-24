@@ -280,22 +280,140 @@ Regla: el `taqueriaId` nunca se envía desde el frontend — el backend lo extra
 
 ---
 
-## Realtime Architecture (ETAPA 4.5.4 — planificado)
+## Realtime Architecture (ETAPA 4.5.4)
 
-Ver `docs/backend-realtime.md` para el contrato del servidor.
+### Dependencia
 
-El frontend se conectará via Socket.IO:
+`socket.io-client@^4.8.3`
 
-```typescript
-const socket = io(BACKEND_URL, {
-  auth: { token: accessToken }
-});
+### Estructura
 
-socket.on('order-created', ({ order }) => { ... });
-socket.on('order-updated', ({ order }) => { ... });
-socket.on('order-status-changed', ({ order }) => { ... });
+```txt
+src/
+├── services/
+│   └── realtime/
+│       └── socketService.ts      ← singleton Socket.IO manager
+└── features/
+    └── realtime/
+        ├── RealtimeProvider.tsx  ← React provider
+        └── index.ts
+```
+
+### socketService
+
+Singleton que gestiona la conexión Socket.IO.
+
+```txt
+socketService
+ ├── connect(token)   → crea/reutiliza socket; conecta a APP_CONFIG.baseApiUrl
+ ├── disconnect()     → desconecta y limpia listeners
+ └── getSocket()      → retorna socket actual o null
+```
+
+Reglas:
+- Si el socket ya está conectado, `connect()` lo reutiliza.
+- `disconnect()` llama `removeAllListeners()` antes de desconectar para evitar leaks.
+
+### RealtimeProvider
+
+Componente React que vive dentro de `AuthProvider` en el árbol de providers.
+
+```txt
+AppProviders
+ └── AuthProvider
+       └── RealtimeProvider   ← nuevo
+             └── children (RootNavigator)
+```
+
+Ciclo de vida:
+- Cuando `user` cambia de `null` → authenticated: conecta socket con token de `authService.getMemoryToken()`
+- Cuando `user` cambia a `null` (logout): desconecta socket
+- Registra handlers para `order-created`, `order-updated`, `order-status-changed`
+- Limpia handlers al desmontar o re-ejecutar (no listeners duplicados)
+
+### Flujo de evento
+
+```txt
+Backend emite evento (ej. order-created)
+      ↓
+socket.on('order-created', handler)
+      ↓
+handler({ order: ApiOrder })
+      ↓
+ordersService.parseOrder(order)   ← mapea ApiOrder → Order (resuelve nombres de producto del cache)
+      ↓
+dispatch(addOrder(mapped))        ← Redux actualizado
+      ↓
+KitchenScreen re-renderiza con LayoutAnimation
+```
+
+### Redux — nuevos reducers
+
+```txt
+addOrder(order)    → inserta si el id no existe (idempotente para order-created)
+upsertOrder(order) → reemplaza si existe, inserta si no (para order-updated y order-status-changed)
+```
+
+### Estrategia REST + Socket.IO
+
+```txt
+Pantalla se enfoca
+      ↓
+useOrders → useFocusEffect → GET /orders (estado completo desde BD)
+      ↓
+setOrders(orders) → reemplaza todo en Redux
+
+En paralelo (permanente):
+Socket.IO recibe eventos → addOrder / upsertOrder → actualizaciones incrementales
+```
+
+No se realiza refetch REST después de eventos realtime.
+
+### Reconexión
+
+Socket.IO client tiene reconexión automática habilitada por defecto:
+- `reconnectionAttempts: Infinity`
+- `reconnectionDelay: 1000ms → 5000ms` (con jitter)
+
+Cada reconexión ejecuta `handleConnection` en el servidor (re-valida JWT, re-une a room).
+
+### Cleanup
+
+`socket.removeAllListeners()` se llama en `socketService.disconnect()`.
+
+`socket.off(event, handler)` se llama en el cleanup del `useEffect` del provider.
+
+---
+
+### Estructura de carpetas actualizada
+
+```txt
+src/
+├── config/
+│   └── env.ts
+├── features/
+│   ├── auth/
+│   ├── kitchen/
+│   ├── orders/
+│   │   ├── hooks/
+│   │   ├── screens/
+│   │   ├── services/
+│   │   │   └── ordersService.ts    ← parseOrder exportado
+│   │   └── store/
+│   │       └── ordersSlice.ts      ← addOrder, upsertOrder agregados
+│   ├── products/
+│   └── realtime/                   ← nuevo
+│       ├── RealtimeProvider.tsx
+│       └── index.ts
+├── services/
+│   ├── api/client.ts
+│   ├── realtime/                   ← nuevo
+│   │   └── socketService.ts
+│   └── storage/tokenStorage.ts
+├── shared/
+└── store/
 ```
 
 ---
 
-*Última actualización: ETAPA 4.5.3*
+*Última actualización: ETAPA 4.5.4*

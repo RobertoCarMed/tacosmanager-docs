@@ -50,7 +50,7 @@ Tecnologías principales:
 
 ## En Progreso
 
-(ninguna)
+- 4.5.4 Socket.IO Realtime Integration
 
 ## Pendiente
 
@@ -603,13 +603,46 @@ Migrar módulo de órdenes de Firestore a la API NestJS.
 
 Estado:
 
-⬜ PENDIENTE
+🟡 EN PROGRESO
 
 ---
 
 ## Objetivos
 
 Conectar frontend a Socket.IO del backend.
+
+---
+
+## Implementado
+
+### Nuevos archivos
+
+- `src/services/realtime/socketService.ts` — singleton Socket.IO manager (connect, disconnect, getSocket)
+- `src/features/realtime/RealtimeProvider.tsx` — React provider que conecta el socket y sincroniza Redux
+- `src/features/realtime/index.ts` — barrel export
+
+### Archivos modificados
+
+- `src/features/orders/store/ordersSlice.ts` — reducers `addOrder` y `upsertOrder` para actualizaciones incrementales
+- `src/features/orders/services/ordersService.ts` — tipos `ApiOrder`, `ApiPlate`, `ApiItem` exportados; método `parseOrder` en el service
+- `src/app/AppProviders.tsx` — `RealtimeProvider` integrado dentro de `AuthProvider`
+
+### Dependencia instalada
+
+- `socket.io-client@^4.8.3` (compatible con servidor `socket.io@^4.8.3`)
+
+### Eventos integrados
+
+- `order-created` → `addOrder` (inserta si no existe)
+- `order-updated` → `upsertOrder` (reemplaza o inserta)
+- `order-status-changed` → `upsertOrder` (reemplaza o inserta)
+
+### Estrategia
+
+- REST: carga inicial + sync al enfocar pantalla (sin cambios)
+- Socket.IO: actualizaciones incrementales en tiempo real
+- No se realiza refetch tras eventos realtime
+- El payload del socket se mapea con `ordersService.parseOrder()` (misma lógica que REST)
 
 ---
 

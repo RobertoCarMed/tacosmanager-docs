@@ -594,14 +594,19 @@ Current Firebase services (pending migration in ETAPA 4.5.4–4.5.5):
 
 # 🔄 Realtime Features
 
-## ✅ Realtime Synchronization
+## ✅ Realtime Synchronization (Socket.IO — ETAPA 4.5.4)
+
+Frontend connected to backend Socket.IO via `socket.io-client@4`.
 
 Realtime updates include:
 
-- order creation
-- order updates
-- order status changes
-- kitchen updates
+- `order-created` → new order inserted in Redux without REST refetch
+- `order-updated` → existing order replaced in Redux (append-only payload)
+- `order-status-changed` → order status updated in Redux instantly
+
+Kitchen screen reacts to all events automatically via LayoutAnimation.
+
+No polling. No manual refresh. No redundant GET /orders after socket events.
 
 ---
 

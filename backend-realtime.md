@@ -890,4 +890,23 @@ socket.on('connect', () => {
 
 ---
 
-*Generado analizando el código fuente del backend. Fuentes: `src/realtime/**`, `src/orders/orders.service.ts`, `src/realtime/interfaces/`, `src/auth/auth.module.ts`. Última actualización: ETAPA 4.4.*
+---
+
+## Estado de integración Frontend
+
+**ETAPA 4.5.4 — Integrado.**
+
+El frontend conecta via `socket.io-client@4` en `src/services/realtime/socketService.ts`.
+
+El token se obtiene de `authService.getMemoryToken()` y se envía en `auth.token` del handshake (Opción A — recomendada).
+
+Eventos integrados:
+- `order-created` → `addOrder` en Redux
+- `order-updated` → `upsertOrder` en Redux
+- `order-status-changed` → `upsertOrder` en Redux
+
+No se realiza refetch REST tras eventos. El payload completo del socket se usa directamente.
+
+---
+
+*Generado analizando el código fuente del backend. Fuentes: `src/realtime/**`, `src/orders/orders.service.ts`, `src/realtime/interfaces/`, `src/auth/auth.module.ts`. Última actualización: ETAPA 4.5.4.*

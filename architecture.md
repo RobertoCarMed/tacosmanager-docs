@@ -436,6 +436,27 @@ Tenant Isolation
 
 ---
 
+# Realtime Architecture Frontend (Etapa 4.5.4)
+
+```txt
+AppProviders
+ └── AuthProvider
+       └── RealtimeProvider
+             ├── socketService.connect(token) → io(APP_CONFIG.baseApiUrl, {auth: {token}})
+             ├── socket.on('order-created')        → dispatch(addOrder(parseOrder(payload)))
+             ├── socket.on('order-updated')         → dispatch(upsertOrder(parseOrder(payload)))
+             └── socket.on('order-status-changed') → dispatch(upsertOrder(parseOrder(payload)))
+```
+
+Reglas:
+- Conexión creada cuando user deja de ser null (post-login).
+- Desconexión cuando user vuelve a ser null (logout).
+- Listeners registrados con referencias named para cleanup limpio.
+- No se realiza refetch REST tras eventos realtime.
+- REST mantiene responsabilidad de carga inicial y sync al re-enfocar pantallas.
+
+---
+
 # Realtime Architecture (Etapa 4.3)
 
 ## WebSocket Gateway
