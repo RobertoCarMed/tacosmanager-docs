@@ -969,7 +969,7 @@ src/realtime/interfaces/order-payload.interface.ts
 
 Estado:
 
-⬜ PENDIENTE
+🟡 EN PROGRESO
 
 ---
 
