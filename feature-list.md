@@ -498,9 +498,9 @@ These features may be evaluated after production launch.
 
 ---
 
-## ⬜ Kitchen Classification — Identificación visual en cocina (4.6.3)
+## 🟡 Kitchen Classification — Identificación visual en cocina (4.6.3)
 
-The KDS shows a badge combining emoji + reference for each order:
+The KDS shows a label combining emoji + reference for each order via `getOrderDisplayLabel(order)`:
 
 ```
 DINE_IN   →  🍽 Mesa 4
@@ -510,16 +510,18 @@ DELIVERY (with reference):
   🛵 Roberto - Enviar
 
 DELIVERY (without reference):
-  🛵 Av. Juárez #123...  (truncated if long)
+  🛵 Av. Juárez #123...  (truncated at 20 chars)
 ```
 
 No extra text labels. The emoji alone identifies the modality at a glance.
 
 Kitchen does NOT group orders by type. FIFO and priority ordering remain unchanged.
 
+Implemented in `src/shared/utils/orderDisplay.ts`. Applied to `kitchen/components/OrderCard.tsx` and `shared/components/OrderCard.tsx` (waiter + kitchen variants).
+
 ---
 
-## ⬜ READY is universal — Sin estados adicionales por tipo (4.6.3)
+## 🟡 READY is universal — Sin estados adicionales por tipo (4.6.3)
 
 The `READY` status means the same thing for all order types:
 

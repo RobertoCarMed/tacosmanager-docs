@@ -818,13 +818,15 @@ OrderType = modalidad de consumo del pedido.
 - `domain.ts`: `OrderType`, `reference`, `deliveryAddress` en `Order` y `CreateOrderPayload`
 - `OrderCard` (waiter): `getOrderHeaderLabel` muestra emoji + referencia según tipo
 
-## Impacto Kitchen (ETAPA 4.6.3)
+## Impacto Kitchen (ETAPA 4.6.3) 🟡 EN PROGRESO
 
-- `OrderCard`: muestra emoji + referencia según tipo
-- DINE_IN: `🍽 Mesa 4`
-- TAKEAWAY: `🥡 Roberto`
-- DELIVERY con reference: `🛵 Roberto - Enviar`
-- DELIVERY sin reference: `🛵 Av. Juárez #123...` (truncado)
+- `src/shared/utils/orderDisplay.ts`: nuevo helper `getOrderDisplayLabel(order)` con reglas por tipo y truncamiento
+- `kitchen/components/OrderCard.tsx`: reemplaza `Mesa {order.table}` con `getOrderDisplayLabel`
+- `shared/components/OrderCard.tsx`: ambas variantes (waiter y kitchen) usan `getOrderDisplayLabel`
+- DINE_IN: `🍽 {reference}`
+- TAKEAWAY: `🥡 {reference}`
+- DELIVERY con reference: `🛵 {reference} - Enviar`
+- DELIVERY sin reference: `🛵 {deliveryAddress truncada a 20 chars}...`
 - No se agrupan pedidos por tipo — el FIFO y la priorización no cambian
 
 ## Impacto Realtime
@@ -845,7 +847,7 @@ Kitchen Queue Refinements — conditional UPDATED promotion, PREPARING as highes
 Etapa 4.6 (Épica) — Order Classification System:
 - 4.6.1 ✅ — Backend Schema & API (completada)
 - 4.6.2 ✅ — Frontend Create/Edit Order (completada)
-- 4.6.3 🟡 — Kitchen Integration (siguiente etapa activa)
+- 4.6.3 🟡 — Kitchen Integration (en progreso)
 
 ---
 

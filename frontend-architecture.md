@@ -268,16 +268,19 @@ getOrderHeaderLabel(order)
  └── DINE_IN   → 🍽 reference (o tableNumber como fallback)
 ```
 
-### Kitchen OrderCard (ETAPA 4.6.3)
+### Kitchen OrderCard — getOrderDisplayLabel (ETAPA 4.6.3) 🟡 EN PROGRESO
 
 ```txt
-OrderCard
- └── OrderTypeBadge
-       ├── DINE_IN          → 🍽 Mesa 4
-       ├── TAKEAWAY         → 🥡 Roberto
-       ├── DELIVERY + ref   → 🛵 Roberto - Enviar
-       └── DELIVERY sin ref → 🛵 Av. Juárez #123... (truncado)
+src/shared/utils/orderDisplay.ts → getOrderDisplayLabel(order)
+  ├── DINE_IN          → 🍽 {reference}
+  ├── TAKEAWAY         → 🥡 {reference}
+  ├── DELIVERY + ref   → 🛵 {reference} - Enviar
+  └── DELIVERY sin ref → 🛵 {deliveryAddress truncada a 20 chars}...
 ```
+
+Helper importado por:
+- `src/features/kitchen/components/OrderCard.tsx` (KitchenScreen — grid de 2 columnas)
+- `src/shared/components/OrderCard.tsx` (KitchenDashboardScreen + WaiterOrdersScreen)
 
 Kitchen NO agrupa por tipo. FIFO y priorización sin cambios.
 

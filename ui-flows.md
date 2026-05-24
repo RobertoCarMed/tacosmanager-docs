@@ -292,12 +292,12 @@ KitchenScreen
              └── READY             → [Entregado]          → PATCH /orders/:id/status DELIVERED
 ```
 
-### Kitchen OrderCard — ETAPA 4.6.3 (planificado)
+### Kitchen OrderCard — ETAPA 4.6.3 🟡 EN PROGRESO
 
-El encabezado del OrderCard mostrará el badge de tipo con emoji.
+El encabezado del OrderCard muestra emoji + referencia via `getOrderDisplayLabel(order)`.
 
 ```txt
-OrderCard header (ETAPA 4.6.3)
+OrderCard header
  ├── DINE_IN
  │     🍽 Mesa 4
  │
@@ -308,7 +308,7 @@ OrderCard header (ETAPA 4.6.3)
  │     🛵 Roberto - Enviar
  │
  └── DELIVERY (sin reference)
-       🛵 Av. Juárez #123...   (truncado si el texto es largo)
+       🛵 Av. Juárez #123...   (truncado a 20 chars)
 ```
 
 Sin texto adicional. Sin etiquetas redundantes.
@@ -316,6 +316,8 @@ Sin texto adicional. Sin etiquetas redundantes.
 El cocinero identifica la modalidad a distancia con solo ver el emoji.
 
 Kitchen NO agrupa pedidos por tipo. El FIFO y la priorización de estados no cambian.
+
+Implementado en `src/shared/utils/orderDisplay.ts`. Aplicado a kitchen/components/OrderCard y shared/components/OrderCard (waiter y kitchen variants).
 
 ### Kitchen Dashboard — KitchenDashboardScreen
 
@@ -379,4 +381,4 @@ RootNavigator
 
 ---
 
-*Última actualización: ETAPA 4.6.2 — 4.6.1 ✅ y 4.6.2 ✅ implementadas. 4.6.3 Kitchen Integration es la siguiente etapa activa.*
+*Última actualización: ETAPA 4.6.3 🟡 — 4.6.1 ✅ y 4.6.2 ✅ completadas. 4.6.3 Kitchen Integration en progreso.*

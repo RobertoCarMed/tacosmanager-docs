@@ -54,7 +54,7 @@ Tecnologías principales:
 
 ## En Progreso
 
-- 4.6.3 Kitchen Integration
+- 4.6.3 Kitchen Integration 🟡
 
 ## Pendiente
 
@@ -1083,7 +1083,7 @@ Frontend:
 
 Estado:
 
-🟡 SIGUIENTE ETAPA ACTIVA
+🟡 EN PROGRESO
 
 ---
 
@@ -1160,13 +1160,20 @@ Estas funcionalidades podrán evaluarse en etapas posteriores a producción.
 
 ---
 
+## Implementado
+
+- `src/shared/utils/orderDisplay.ts` — helper `getOrderDisplayLabel(order)` con reglas de visualización por tipo y truncamiento de dirección (máx. 20 chars)
+- `src/features/kitchen/components/OrderCard.tsx` — reemplaza `Mesa {order.table}` y bloque `orderType` crudo con `getOrderDisplayLabel`
+- `src/shared/components/OrderCard.tsx` — reemplaza `getOrderHeaderLabel` local y `Mesa ${order.table}` (variante kitchen) con `getOrderDisplayLabel`; waiter y kitchen usan ahora el mismo helper
+
 ## Archivos afectados
 
 Frontend:
 
+- `src/shared/utils/orderDisplay.ts` (nuevo)
+- `src/shared/utils/index.ts`
 - `src/features/kitchen/components/OrderCard.tsx`
-- `src/features/kitchen/screens/KitchenScreen.tsx`
-- `src/features/kitchen/screens/KitchenDashboardScreen.tsx`
+- `src/shared/components/OrderCard.tsx`
 
 ---
 
