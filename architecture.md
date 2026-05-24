@@ -227,12 +227,19 @@ createdAt
 updatedAt
 ```
 
-Campos planificados — ETAPA 4.6:
+Campos planificados — ETAPA 4.6.1:
 
 ```txt
 orderType       (DINE_IN | TAKEAWAY | DELIVERY)
 reference       (reemplaza conceptualmente tableNumber)
 deliveryAddress (solo para DELIVERY — nullable)
+```
+
+Migración automática al agregar los campos:
+
+```txt
+tableNumber → reference
+tipo implícito → orderType = DINE_IN
 ```
 
 ---
@@ -785,7 +792,7 @@ subscribeToOrders
 
 ---
 
-# OrderType Enum — ETAPA 4.6
+# OrderType Enum — ETAPA 4.6.1
 
 ```txt
 enum OrderType {
@@ -799,21 +806,45 @@ Clasifica la modalidad de consumo del pedido.
 
 Independiente de OrderStatus.
 
+OrderStatus = etapa de preparación de cocina.
+OrderType = modalidad de consumo del pedido.
+
+---
+
+# Order Classification System — Impacto por capa
+
+## Impacto Backend (ETAPA 4.6.1)
+
+- Prisma Schema: nuevo enum `OrderType`, campos `orderType`, `reference`, `deliveryAddress`
+- DTOs: validaciones condicionales según `orderType`
+- Servicios y controladores: aplican reglas por tipo
+- Realtime payload: incluye los tres nuevos campos
+- Migración automática: `tableNumber → reference`, `orderType = DINE_IN`
+
+## Impacto Frontend — Crear y Editar Pedido (ETAPA 4.6.2)
+
+- `CreateOrderScreen`: selector de tipo + campo dinámico por tipo
+- `EditOrderScreen`: muestra tipo actual; permite cambiar tipo; muestra `deliveryAddress` para DELIVERY
+- `ordersService`: envía `orderType`, `reference`, `deliveryAddress` en el payload
+- `domain.ts`: nuevos tipos `OrderType`, campos en `Order` y `CreateOrderPayload`
+
+## Impacto Kitchen (ETAPA 4.6.3)
+
+- `OrderCard`: muestra emoji + referencia según tipo
+- DINE_IN: `🍽 Mesa 4`
+- TAKEAWAY: `🥡 Roberto`
+- DELIVERY con reference: `🛵 Roberto - Enviar`
+- DELIVERY sin reference: `🛵 Av. Juárez #123...` (truncado)
+- No se agrupan pedidos por tipo — el FIFO y la priorización no cambian
+
+## Impacto Realtime
+
+- Los eventos `order-created`, `order-updated`, `order-status-changed` incluirán `orderType`, `reference`, `deliveryAddress` a partir de ETAPA 4.6.1
+- El frontend en ETAPA 4.6.2 y 4.6.3 usará estos campos para actualizar el store y la UI
+
 ---
 
 # Future Architecture
-
-Etapa 4.5.4
-
-Socket.IO Realtime Integration — connect frontend to Socket.IO.
-
----
-
-Etapa 4.5.5
-
-Firebase Removal & Cleanup — remove all Firebase from project.
-
----
 
 Etapa 4.5.6
 
@@ -821,9 +852,12 @@ Kitchen Queue Refinements — conditional UPDATED promotion, PREPARING as highes
 
 ---
 
-Etapa 4.6
+Etapa 4.6 (Épica)
 
-Order Classification System — OrderType enum (DINE_IN, TAKEAWAY, DELIVERY), reference field, deliveryAddress field.
+Order Classification System:
+- 4.6.1 — Backend Schema & API
+- 4.6.2 — Frontend Create/Edit Order
+- 4.6.3 — Kitchen Integration
 
 ---
 

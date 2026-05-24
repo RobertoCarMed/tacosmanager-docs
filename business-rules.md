@@ -835,10 +835,19 @@ Sin texto adicional ni etiquetas redundantes.
 ```txt
 DINE_IN   →  🍽 Mesa 4
 TAKEAWAY  →  🥡 Roberto
-DELIVERY  →  🛵 Av. Juárez #123
+
+DELIVERY (con reference):
+  🛵 Roberto - Enviar
+
+DELIVERY (sin reference):
+  🛵 Av. Juárez #123...   (truncado si el texto es largo)
 ```
 
-El emoji y la referencia visual son suficientes para identificar la modalidad.
+El emoji identifica la modalidad a distancia.
+
+Kitchen NO agrupa por tipo. Los pedidos permanecen mezclados en la misma cola.
+
+Se mantienen el FIFO y la priorización de estados existentes sin cambios.
 
 ---
 
@@ -880,9 +889,54 @@ No existe en ETAPA 4.6:
 - Self-ordering
 - App de repartidores
 
+Estas funcionalidades podrán evaluarse en etapas posteriores a producción.
+
 ---
 
-# 29. Visibilidad de Pedidos — Filtro Activo
+# 28. Edición del tipo de pedido
+
+El mesero puede cambiar el tipo de un pedido existente:
+
+```txt
+DINE_IN ↔ TAKEAWAY ↔ DELIVERY
+```
+
+Validaciones correspondientes al nuevo tipo seleccionado se aplican al momento de editar.
+
+Implementado en ETAPA 4.6.2.
+
+---
+
+# 29. Visualización de dirección DELIVERY para meseros
+
+Cuando un mesero abre un pedido de tipo DELIVERY para editarlo:
+
+La dirección completa (`deliveryAddress`) se muestra dentro del flujo de edición actual.
+
+No se requiere pantalla adicional para ver la dirección.
+
+Implementado en ETAPA 4.6.2.
+
+---
+
+# 30. Migración de datos existentes — tableNumber → reference
+
+Todos los pedidos existentes antes de ETAPA 4.6.1 deben migrarse automáticamente:
+
+```txt
+tableNumber → reference
+tipo implícito → orderType = DINE_IN
+```
+
+La migración ocurre en la misma operación de Prisma que agrega los nuevos campos.
+
+No se pierde información histórica.
+
+No se requiere intervención manual.
+
+---
+
+# 31. Visibilidad de Pedidos — Filtro Activo
 
 ## Problema
 
@@ -946,7 +1000,7 @@ El filtro por defecto en `WaiterOrdersScreen` y `KitchenScreen` es `active`.
 
 ---
 
-# 28. Principios Arquitectónicos
+# 32. Principios Arquitectónicos
 
 Mantener siempre:
 

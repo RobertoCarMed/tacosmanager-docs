@@ -48,15 +48,19 @@ Tecnologías principales:
 - 4.5.2 Products API Migration
 - 4.5.3 Orders API Migration
 - 4.5.4 Socket.IO Realtime Integration
+- 4.5.5 Firebase Removal & Cleanup
 
 ## En Progreso
 
-- 4.5.5 Firebase Removal & Cleanup
+(ninguna etapa actualmente en progreso)
 
 ## Pendiente
 
 - 4.5.6 Kitchen Queue Refinements
-- 4.6 Order Classification System
+- 4.6 Order Classification System (Épica)
+  - 4.6.1 Backend Schema & API
+  - 4.6.2 Frontend Create/Edit Order
+  - 4.6.3 Kitchen Integration
 - 4.7 Realtime Reliability
 - 4.8 History & Filters
 - 4.9 Performance Optimization
@@ -668,7 +672,7 @@ Actualización instantánea entre:
 
 Estado:
 
-🟡 EN PROGRESO
+✅ COMPLETADA
 
 ---
 
@@ -860,6 +864,7 @@ Ninguno. El frontend ya respeta el orden retornado por la API.
 
 # ETAPA 4.6
 # Order Classification System
+# (Épica Principal)
 
 Estado:
 
@@ -879,117 +884,133 @@ No existe clasificación funcional que distinga:
 
 Esta clasificación aporta valor operativo para meseros, cocina, repartidores, reportes futuros y la operación diaria del restaurante.
 
+La épica se divide en tres subetapas independientes para facilitar la entrega incremental y la validación por capas.
+
 ---
 
-## Nuevo campo — OrderType
-
-```txt
-enum OrderType {
-  DINE_IN
-  TAKEAWAY
-  DELIVERY
-}
-```
+## OrderType vs OrderStatus — Conceptos Independientes
 
 OrderType NO reemplaza OrderStatus.
 
-Son conceptos independientes.
+Son dimensiones distintas de un mismo pedido.
+
+```txt
+OrderStatus — etapa de preparación:
+  PENDING | UPDATED | PREPARING | READY | DELIVERED | CANCELLED
+
+OrderType — modalidad de consumo:
+  DINE_IN | TAKEAWAY | DELIVERY
+```
+
+Un pedido puede ser DINE_IN y estar en PREPARING al mismo tiempo.
 
 ---
 
-## Evolución del modelo Order
+## Migración de datos existentes
 
-El campo `tableNumber` se reemplaza conceptualmente por:
-
-```txt
-reference: string | null
-```
-
-Representa el identificador visual utilizado por el personal para localizar el pedido.
-
-Se agrega además:
+Todos los pedidos actuales deben migrarse automáticamente:
 
 ```txt
-deliveryAddress: string | null
+tableNumber → reference
+tipo implícito → orderType = DINE_IN
 ```
 
-Para pedidos tipo DELIVERY.
+No se pierde información histórica.
+
+La migración se ejecuta junto con el schema de Prisma en ETAPA 4.6.1.
 
 ---
 
-## Validaciones
+# ETAPA 4.6.1
+# Backend Schema & API
+
+Estado:
+
+⬜ PENDIENTE
+
+---
+
+## Objetivo
+
+Implementar toda la infraestructura backend necesaria para soportar clasificación de pedidos.
+
+El frontend y la cocina no cambian en esta subetapa.
+
+El backend queda completamente preparado para soportar los tres tipos de pedido.
+
+---
+
+## Incluye
+
+- Enum `OrderType` en Prisma Schema
+- Campos `orderType`, `reference`, `deliveryAddress` en modelo `Order`
+- Migración Prisma (incluyendo migración automática de datos)
+- DTOs actualizados con validaciones condicionales por `orderType`
+- Servicios y controladores actualizados
+- Payload realtime (`OrderRealtimePayload`) actualizado con los nuevos campos
+- Compatibilidad con pedidos existentes (migración tableNumber → reference, DINE_IN por defecto)
+
+---
+
+## Nuevos campos en el modelo Order
+
+```txt
+orderType       — enum: DINE_IN | TAKEAWAY | DELIVERY
+reference       — string | null (reemplaza conceptualmente tableNumber)
+deliveryAddress — string | null (exclusivo para DELIVERY)
+```
+
+El campo `tableNumber` permanece en el esquema durante la transición para compatibilidad.
+
+---
+
+## Validaciones condicionales por orderType
 
 DINE_IN:
 
-- reference: obligatorio (ej. "Mesa 4", "Terraza 2")
-- deliveryAddress: no aplica
+```txt
+reference: obligatorio (ej. "Mesa 4", "Terraza 2")
+deliveryAddress: no aplica
+```
 
 TAKEAWAY:
 
-- reference: obligatorio — nombre del cliente (ej. "Roberto", "Juan Pérez")
-- deliveryAddress: no aplica
+```txt
+reference: obligatorio — nombre de quien recoge (ej. "Roberto", "Juan Pérez")
+deliveryAddress: no aplica
+```
 
 DELIVERY:
 
-- deliveryAddress: obligatoria (ej. "Av. Juárez #123")
-- reference: opcional
-
----
-
-## Comportamiento UI
-
-Selector al crear pedido:
-
 ```txt
-🍽 Comer aquí  →  campo "Referencia"     placeholder: Mesa 4
-🥡 Para llevar  →  campo "Nombre cliente" placeholder: Roberto
-🛵 Delivery     →  campo "Dirección"      placeholder: Av. Juárez #123
+deliveryAddress: obligatoria (ej. "Av. Juárez #123")
+reference: opcional
 ```
 
 ---
 
-## Comportamiento Kitchen
+## Payload Realtime actualizado
 
-Los pedidos se identifican visualmente mediante emoji + referencia:
+Los eventos `order-created`, `order-updated`, `order-status-changed` incluirán:
 
 ```txt
-🍽 Mesa 4
-🥡 Roberto
-🛵 Av. Juárez #123
+{
+  order: {
+    ...campos actuales...
+    orderType: "DINE_IN" | "TAKEAWAY" | "DELIVERY"
+    reference: string | null
+    deliveryAddress: string | null
+  }
+}
 ```
 
-No se muestra el tipo de forma textual explícita.
-
-El emoji y la referencia visual son suficientes para identificar la modalidad.
-
 ---
 
-## Regla READY
+## Resultado esperado
 
-READY mantiene el mismo significado para todos los tipos:
-
-"Pedido completamente preparado y listo para ser entregado."
-
-- Mesero puede llevarlo a la mesa (DINE_IN).
-- Cliente puede recogerlo (TAKEAWAY).
-- Repartidor puede salir a entregarlo (DELIVERY).
-
-No se agregan estados adicionales para ningún tipo en esta etapa.
-
----
-
-## Alcance MVP
-
-Los pedidos DELIVERY son capturados exclusivamente por personal interno.
-
-No existe:
-
-- Integración con clientes externos
-- Portal web
-- QR Ordering
-- Self-ordering
-
-Estas funcionalidades podrán evaluarse en etapas posteriores a producción.
+- Frontend puede consumir los nuevos campos sin cambios propios aún
+- Kitchen puede mostrar los nuevos campos sin cambios propios aún
+- Backend completamente listo para los siguientes dos subetapas
 
 ---
 
@@ -997,18 +1018,194 @@ Estas funcionalidades podrán evaluarse en etapas posteriores a producción.
 
 Backend:
 
+- `prisma/schema.prisma` — enum `OrderType`, campos `orderType`, `reference`, `deliveryAddress`
+- Nueva migración Prisma (con migración de datos existentes)
+- `src/orders/dto/create-order.dto.ts`
+- `src/orders/dto/update-order.dto.ts`
 - `src/orders/orders.service.ts`
 - `src/orders/orders.controller.ts`
-- `src/orders/dto/create-order.dto.ts`
-- `prisma/schema.prisma`
-- Nueva migración Prisma
+- `src/realtime/interfaces/order-payload.interface.ts`
+
+---
+
+# ETAPA 4.6.2
+# Frontend Create/Edit Order
+
+Estado:
+
+⬜ PENDIENTE
+
+---
+
+## Objetivo
+
+Permitir a los meseros crear y editar pedidos clasificados por tipo.
+
+Requiere que ETAPA 4.6.1 esté completada.
+
+---
+
+## Pantalla Crear Pedido
+
+Selector de tipo (obligatorio, primer paso):
+
+```txt
+🍽 Comer aquí  →  DINE_IN
+🥡 Para llevar  →  TAKEAWAY
+🛵 Delivery     →  DELIVERY
+```
+
+Campo dinámico según tipo seleccionado:
+
+```txt
+DINE_IN
+  label:       "Referencia"
+  placeholder: "Mesa 4"
+  obligatorio: sí
+
+TAKEAWAY
+  label:       "Nombre cliente"
+  placeholder: "Roberto"
+  obligatorio: sí
+
+DELIVERY
+  label:       "Dirección"
+  placeholder: "Av. Juárez #123"
+  obligatorio: sí (deliveryAddress)
+  reference:   campo adicional opcional
+```
+
+El placeholder cambia dinámicamente al cambiar el tipo.
+
+El campo se limpia al cambiar de tipo para evitar confusión.
+
+---
+
+## Edición de pedidos
+
+La edición de un pedido existente permite cambiar el tipo:
+
+```txt
+DINE_IN ↔ TAKEAWAY ↔ DELIVERY
+```
+
+Manteniendo validaciones correspondientes al nuevo tipo seleccionado.
+
+---
+
+## Visualización de dirección DELIVERY
+
+Cuando un mesero abre un pedido DELIVERY para editarlo:
+
+La dirección completa se muestra dentro del flujo de edición actual.
+
+No se requiere pantalla adicional.
+
+---
+
+## Archivos afectados
 
 Frontend:
 
-- `src/shared/types/domain.ts`
+- `src/shared/types/domain.ts` — tipo `OrderType`, campos en `Order`, `CreateOrderPayload`
 - `src/features/orders/hooks/useCreateOrder.ts`
+- `src/features/orders/hooks/useEditOrder.ts`
+- `src/features/orders/services/ordersService.ts`
 - `src/features/orders/screens/CreateOrderScreen.tsx`
+- `src/features/orders/screens/EditOrderScreen.tsx`
+- `src/shared/components/OrderCard.tsx` (visualización en vista mesero)
+
+---
+
+# ETAPA 4.6.3
+# Kitchen Integration
+
+Estado:
+
+⬜ PENDIENTE
+
+---
+
+## Objetivo
+
+Adaptar el Kitchen Display System (KDS) para mostrar correctamente los tipos de pedido.
+
+Requiere que ETAPA 4.6.1 esté completada.
+
+---
+
+## Visualización por tipo en cocina
+
+```txt
+DINE_IN   →  🍽 Mesa 4
+TAKEAWAY  →  🥡 Roberto
+
+DELIVERY (con reference):
+  🛵 Roberto - Enviar
+
+DELIVERY (sin reference):
+  🛵 Av. Juárez #123...   (con truncamiento si el texto es largo)
+```
+
+---
+
+## Reglas de visualización Kitchen
+
+- Kitchen NO agrupa pedidos por tipo.
+- Se mantiene el FIFO existente.
+- Se mantiene la priorización actual de estados.
+- Los pedidos continúan mezclados en la misma cola.
+- El emoji identifica el tipo a distancia sin texto adicional.
+
+---
+
+## Regla READY — Significado unificado
+
+READY tiene el mismo significado para todos los tipos de pedido:
+
+"Pedido completamente preparado y listo para ser entregado."
+
+```txt
+DINE_IN   → mesero puede llevarlo a la mesa
+TAKEAWAY  → cliente puede recogerlo
+DELIVERY  → repartidor puede salir a entregarlo
+```
+
+No se agregan estados adicionales por tipo en ETAPA 4.6.
+
+---
+
+## Alcance MVP — Delivery
+
+Los pedidos DELIVERY son capturados exclusivamente por personal interno.
+
+```txt
+Cliente llama al restaurante
+      ↓
+Mesero captura el pedido en el sistema
+      ↓
+Sistema registra pedido DELIVERY con deliveryAddress
+```
+
+No existe en ETAPA 4.6:
+
+- Self Ordering
+- QR Ordering
+- Portal Web
+- Pedidos realizados por clientes directamente
+- App de repartidores
+
+Estas funcionalidades podrán evaluarse en etapas posteriores a producción.
+
+---
+
+## Archivos afectados
+
+Frontend:
+
 - `src/features/kitchen/components/OrderCard.tsx`
+- `src/features/kitchen/screens/KitchenScreen.tsx`
+- `src/features/kitchen/screens/KitchenDashboardScreen.tsx`
 
 ---
 
@@ -1245,10 +1442,10 @@ Una etapa se considera completada cuando:
 
 # Próxima Etapa
 
-ETAPA 4.5.4
+ETAPA 4.5.6
 
-Socket.IO Realtime Integration
+Kitchen Queue Refinements
 
 Objetivo:
 
-Conectar el frontend a Socket.IO del backend para actualización en tiempo real entre cocina y meseros.
+Implementar promoción condicional a UPDATED según el estado del pedido, y cambiar el orden de prioridad de cocina a PREPARING > UPDATED > PENDING > READY > DELIVERED > CANCELLED.

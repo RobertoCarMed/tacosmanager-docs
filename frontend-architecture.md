@@ -213,41 +213,61 @@ ordersSlice
 
 ---
 
-## Orders Architecture — ETAPA 4.6 (planificado)
+## Orders Architecture — ETAPA 4.6 (épica — tres subetapas)
 
-### Nuevos campos en CreateOrderPayload
+### ETAPA 4.6.1 — Backend Schema & API (sin cambios en frontend)
+
+El backend agrega `orderType`, `reference`, `deliveryAddress`.
+
+El frontend recibe estos campos en los payloads REST y realtime desde esta etapa,
+pero no los usa aún en la UI hasta ETAPA 4.6.2.
+
+### ETAPA 4.6.2 — Nuevos campos en CreateOrderPayload y Edit
 
 ```txt
-CreateOrderPayload (ETAPA 4.6)
+CreateOrderPayload (ETAPA 4.6.2)
  ├── orderType: 'DINE_IN' | 'TAKEAWAY' | 'DELIVERY'
  ├── reference?: string        ← obligatorio para DINE_IN y TAKEAWAY
  ├── deliveryAddress?: string  ← obligatorio para DELIVERY
  └── plates: [...]
 ```
 
-### Selector UI en CreateOrderScreen
+### Selector UI en CreateOrderScreen (ETAPA 4.6.2)
 
 ```txt
-CreateOrderScreen (ETAPA 4.6)
+CreateOrderScreen
  ├── OrderTypeSelector
  │     ├── 🍽 Comer aquí  → orderType = DINE_IN
  │     ├── 🥡 Para llevar → orderType = TAKEAWAY
  │     └── 🛵 Delivery    → orderType = DELIVERY
- └── ReferenceInput (dynamic based on orderType)
-       ├── DINE_IN   → label: "Referencia",     placeholder: "Mesa 4"
-       ├── TAKEAWAY  → label: "Nombre cliente",  placeholder: "Roberto"
-       └── DELIVERY  → label: "Dirección",       placeholder: "Av. Juárez #123"
+ └── Campo dinámico según tipo
+       ├── DINE_IN   → label: "Referencia",     placeholder: "Mesa 4"     (obligatorio)
+       ├── TAKEAWAY  → label: "Nombre cliente",  placeholder: "Roberto"    (obligatorio)
+       └── DELIVERY  → label: "Dirección",       placeholder: "Av. Juárez #123" (obligatorio)
+                       + campo opcional: reference (nombre del cliente)
 ```
 
-### Kitchen OrderCard (ETAPA 4.6)
+### EditOrderScreen — Edición de tipo (ETAPA 4.6.2)
+
+```txt
+EditOrderScreen
+ ├── Muestra y permite editar tipo actual
+ ├── DINE_IN ↔ TAKEAWAY ↔ DELIVERY (con validaciones por tipo)
+ └── Pedido DELIVERY: deliveryAddress visible completa en el flujo actual
+```
+
+### Kitchen OrderCard (ETAPA 4.6.3)
 
 ```txt
 OrderCard
  └── OrderTypeBadge
-       ├── DINE_IN   → 🍽 + reference
-       ├── TAKEAWAY  → 🥡 + reference
-       └── DELIVERY  → 🛵 + deliveryAddress
+       ├── DINE_IN          → 🍽 Mesa 4
+       ├── TAKEAWAY         → 🥡 Roberto
+       ├── DELIVERY + ref   → 🛵 Roberto - Enviar
+       └── DELIVERY sin ref → 🛵 Av. Juárez #123... (truncado)
 ```
+
+Kitchen NO agrupa por tipo. FIFO y priorización sin cambios.
 
 ---
 
@@ -264,7 +284,7 @@ export type OrderStatus =
 
 export type OrderDateFilter = 'active' | 'today' | '7d' | '1m' | '3m';
 
-// ETAPA 4.6 (planificado)
+// ETAPA 4.6.1 (backend) — ETAPA 4.6.2 (frontend UI)
 export type OrderType = 'DINE_IN' | 'TAKEAWAY' | 'DELIVERY';
 
 export type OrderItem = { ... };

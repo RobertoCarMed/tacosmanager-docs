@@ -381,8 +381,14 @@ interface OrderRealtimePayload {
   createdAt: Date;               // ISO 8601 string en JSON
   updatedAt: Date;               // ISO 8601 string en JSON
   plates: OrderPlatePayload[];   // Ordenados por plateNumber ASC
+  // ETAPA 4.6.1 — campos planificados:
+  // orderType: "DINE_IN" | "TAKEAWAY" | "DELIVERY"
+  // reference: string | null
+  // deliveryAddress: string | null
 }
 ```
+
+> **ETAPA 4.6.1 (planificado):** El payload incluirá `orderType`, `reference` y `deliveryAddress` una vez que el backend sea actualizado. `orderType` es independiente de `status`. Representan dimensiones distintas del pedido.
 
 ### `OrderPlatePayload`
 

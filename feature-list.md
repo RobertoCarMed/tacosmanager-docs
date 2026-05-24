@@ -385,9 +385,17 @@ Current priority order:
 
 ---
 
-# 🏷️ Order Classification System (Pendiente — ETAPA 4.6)
+# 🏷️ Order Classification System (Épica — ETAPA 4.6)
 
-## ⬜ OrderType — Clasificación de pedido
+The Order Classification System is divided into three independent sub-stages:
+
+- **ETAPA 4.6.1** — Backend Schema & API
+- **ETAPA 4.6.2** — Frontend Create/Edit Order
+- **ETAPA 4.6.3** — Kitchen Integration
+
+---
+
+## ⬜ OrderType — Clasificación de pedido (4.6.1)
 
 Each order will have an `orderType` field that determines its consumption modality:
 
@@ -395,34 +403,48 @@ Each order will have an `orderType` field that determines its consumption modali
 - `TAKEAWAY` — customer picks up at the counter
 - `DELIVERY` — delivered to an address
 
-`orderType` is independent of `orderStatus`. They represent different dimensions of an order.
+`orderType` is **independent of `orderStatus`**. They represent entirely different dimensions of an order:
+
+- `orderStatus` → preparation stage (PENDING, PREPARING, READY…)
+- `orderType` → consumption modality (DINE_IN, TAKEAWAY, DELIVERY)
 
 ---
 
-## ⬜ Reference Field — Identificador visual del pedido
+## ⬜ Reference Field — Identificador visual del pedido (4.6.1)
 
-The `tableNumber` field will be replaced conceptually by a `reference` field.
+The `tableNumber` field is replaced conceptually by a `reference` field.
 
 `reference` represents the visual label used by staff to locate an order.
 
 Examples by type:
 - `DINE_IN`: "Mesa 4", "Terraza 2", "Barra 3"
 - `TAKEAWAY`: "Roberto", "Juan Pérez"
-- `DELIVERY`: null (address is used instead)
+- `DELIVERY`: optional (address is the primary identifier)
 
 ---
 
-## ⬜ Delivery Address — Dirección de entrega
+## ⬜ Delivery Address — Dirección de entrega (4.6.1)
 
 A new `deliveryAddress` field will be added for `DELIVERY` orders.
 
 Rules:
 - Required for `DELIVERY`
-- Null for `DINE_IN` and `TAKEAWAY`
+- Not applicable for `DINE_IN` and `TAKEAWAY`
 
 ---
 
-## ⬜ OrderType Selector — UI al crear pedido
+## ⬜ Data Migration — tableNumber → reference (4.6.1)
+
+All existing orders are automatically migrated:
+
+- `tableNumber` → `reference`
+- implicit type → `orderType = DINE_IN`
+
+No historical data is lost. No manual intervention required.
+
+---
+
+## ⬜ OrderType Selector — UI al crear pedido (4.6.2)
 
 When creating an order, the waiter selects the modality first:
 
@@ -433,27 +455,54 @@ When creating an order, the waiter selects the modality first:
 ```
 
 The displayed input field changes dynamically:
-- `DINE_IN` → "Referencia" (placeholder: Mesa 4)
-- `TAKEAWAY` → "Nombre cliente" (placeholder: Roberto)
-- `DELIVERY` → "Dirección" (placeholder: Av. Juárez #123)
+- `DINE_IN` → "Referencia" (placeholder: Mesa 4) — required
+- `TAKEAWAY` → "Nombre cliente" (placeholder: Roberto) — required
+- `DELIVERY` → "Dirección" (placeholder: Av. Juárez #123) — required; reference optional
+
+The input field clears when the user switches order type.
 
 ---
 
-## ⬜ Kitchen OrderType Badge — Identificación visual en cocina
+## ⬜ Editable Order Type — Cambio de tipo en edición (4.6.2)
 
-The KDS (Kitchen Display System) shows a badge combining emoji + reference for each order:
+The waiter can change the order type when editing an existing order:
 
 ```
-🍽 Mesa 4
-🥡 Roberto
-🛵 Av. Juárez #123
+DINE_IN ↔ TAKEAWAY ↔ DELIVERY
+```
+
+Validations corresponding to the new type are applied immediately.
+
+---
+
+## ⬜ Delivery Visibility — Dirección visible para meseros (4.6.2)
+
+When a waiter opens a `DELIVERY` order for editing, the full `deliveryAddress` is displayed inside the current edit flow. No additional screen is required.
+
+---
+
+## ⬜ Kitchen Classification — Identificación visual en cocina (4.6.3)
+
+The KDS shows a badge combining emoji + reference for each order:
+
+```
+DINE_IN   →  🍽 Mesa 4
+TAKEAWAY  →  🥡 Roberto
+
+DELIVERY (with reference):
+  🛵 Roberto - Enviar
+
+DELIVERY (without reference):
+  🛵 Av. Juárez #123...  (truncated if long)
 ```
 
 No extra text labels. The emoji alone identifies the modality at a glance.
 
+Kitchen does NOT group orders by type. FIFO and priority ordering remain unchanged.
+
 ---
 
-## ⬜ READY is universal — Sin estados adicionales por tipo
+## ⬜ READY is universal — Sin estados adicionales por tipo (4.6.3)
 
 The `READY` status means the same thing for all order types:
 
@@ -467,11 +516,20 @@ No additional statuses (e.g. "OUT FOR DELIVERY") in ETAPA 4.6.
 
 ---
 
-## ⬜ MVP Delivery Scope — Captura interna
+## ⬜ MVP Delivery Scope — Captura interna (4.6.1 / 4.6.2)
 
 `DELIVERY` orders are captured by internal staff only.
 
+```
+Customer calls the restaurant
+      ↓
+Waiter captures the order in the system
+      ↓
+System registers DELIVERY order with deliveryAddress
+```
+
 No customer-facing portals, QR ordering, or self-ordering in ETAPA 4.6.
+These features may be evaluated after production launch.
 
 ---
 

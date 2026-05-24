@@ -128,11 +128,16 @@ Permite:
 - complementos
 - notas opcionales
 
-Campos planificados — ETAPA 4.6:
+Campos planificados — ETAPA 4.6.1:
 
-- orderType (DINE_IN | TAKEAWAY | DELIVERY)
-- reference (reemplaza tableNumber; obligatorio para DINE_IN y TAKEAWAY)
+- orderType (DINE_IN | TAKEAWAY | DELIVERY) — independiente de OrderStatus
+- reference (reemplaza conceptualmente tableNumber; obligatorio para DINE_IN y TAKEAWAY)
 - deliveryAddress (obligatorio para DELIVERY)
+
+Migración automática al activar ETAPA 4.6.1:
+
+- tableNumber → reference
+- orderType = DINE_IN (para todos los pedidos existentes)
 
 ---
 
@@ -256,17 +261,23 @@ createdAt ASC
 
 ---
 
-# Order Classification Rules — ETAPA 4.6
+# Order Classification Rules — ETAPA 4.6.1
 
-## OrderType
+## OrderType vs OrderStatus — Conceptos Independientes
+
+OrderType NO reemplaza OrderStatus.
 
 ```txt
-DINE_IN   → consumo en el restaurante
-TAKEAWAY  → para recoger
-DELIVERY  → entrega a domicilio
+OrderStatus — etapa de preparación de cocina:
+  PENDING | UPDATED | PREPARING | READY | DELIVERED | CANCELLED
+
+OrderType — modalidad de consumo:
+  DINE_IN   → consumo en el restaurante
+  TAKEAWAY  → para recoger
+  DELIVERY  → entrega a domicilio
 ```
 
-OrderType es independiente de OrderStatus.
+Un pedido puede tener orderType = DINE_IN y orderStatus = PREPARING al mismo tiempo.
 
 ## Campos nuevos por tipo
 
