@@ -706,7 +706,7 @@ useEditProduct
 productService
  ├── API calls via apiClient (axios, JWT auto-injected)
  ├── in-memory cache (Map<taqueriaId, Product[]>, sorted by name)
- └── Firebase Storage (image uploads only — no backend upload endpoint)
+ └── Firebase Storage (image uploads only — @react-native-firebase/storage, sin endpoint de upload en backend)
 ```
 
 ## Image Strategy — ETAPA 4.5.2

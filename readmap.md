@@ -47,15 +47,14 @@ Tecnologías principales:
 - 4.5.1 Frontend Authentication Migration
 - 4.5.2 Products API Migration
 - 4.5.3 Orders API Migration
+- 4.5.4 Socket.IO Realtime Integration
 
 ## En Progreso
 
-- 4.5.4 Socket.IO Realtime Integration
+- 4.5.5 Firebase Removal & Cleanup
 
 ## Pendiente
 
-- 4.5.4 Socket.IO Realtime Integration
-- 4.5.5 Firebase Removal & Cleanup
 - 4.5.6 Kitchen Queue Refinements
 - 4.6 Order Classification System
 - 4.7 Realtime Reliability
@@ -603,7 +602,7 @@ Migrar módulo de órdenes de Firestore a la API NestJS.
 
 Estado:
 
-🟡 EN PROGRESO
+✅ COMPLETADA
 
 ---
 
@@ -669,25 +668,82 @@ Actualización instantánea entre:
 
 Estado:
 
-⬜ PENDIENTE
+🟡 EN PROGRESO
 
 ---
 
 ## Objetivos
 
-Eliminar completamente Firebase del proyecto.
+Eliminar Firebase Auth y Firestore del proyecto frontend. Conservar Firebase Storage para imágenes de productos.
 
 ---
 
-## Acciones
+## Implementado
 
-- Remover @react-native-firebase/auth
-- Remover @react-native-firebase/firestore (si se migró en 4.5.2-4.5.3)
-- Remover @react-native-firebase/storage
-- Remover @react-native-firebase/app
-- Eliminar src/services/firebase/
-- Limpiar src/config/env.ts (variables Firebase)
-- Eliminar servicios Firestore de features/auth/
+### Archivos eliminados
+
+- `src/services/firebase/config.ts` — exportaba `firebaseModularAuth` y `firestoreModularDb` (Auth + Firestore)
+- `src/services/firebase/firestoreOperations.ts` — helpers de Firestore (timeouts, logs, error mapping)
+- `src/features/auth/services/taqueriaService.ts` — operaciones Firestore sobre colección `taquerias`
+- `src/features/auth/services/userService.ts` — operaciones Firestore sobre colección `users` (incluyendo listener `onSnapshot`)
+- `src/shared/constants/firebase.ts` — re-exportaba `firebaseConfig` de ENV (sin consumidores activos)
+
+### Archivos modificados
+
+- `src/services/index.ts` — eliminado `export * from './firebase/config'`
+- `src/shared/constants/index.ts` — eliminado `export * from './firebase'`
+- `src/features/auth/types.ts` — eliminados tipos legacy: `CreateTaqueriaParams`, `TaqueriaRecord`, `TaqueriaLookupResult`, `CreateUserProfileParams`, `RegisteredUserProfile`
+- `src/config/env.ts` — eliminadas variables Firebase de `requiredEnvVars` y objeto `ENV.firebase` (no usados por JS — Firebase nativo se configura vía `google-services.json`)
+- `package.json` — eliminadas dependencias `@react-native-firebase/auth@^24.0.0` y `@react-native-firebase/firestore@^24.0.0`
+
+### Dependencias conservadas
+
+- `@react-native-firebase/app@^24.0.0` — requerido como base de Firebase
+- `@react-native-firebase/storage@^24.0.0` — requerido para upload de imágenes de productos
+
+### Estado de dependencias Firebase
+
+| Paquete | Antes | Después |
+|---|---|---|
+| `@react-native-firebase/app` | ✅ | ✅ conservado |
+| `@react-native-firebase/auth` | ✅ | ❌ eliminado |
+| `@react-native-firebase/firestore` | ✅ | ❌ eliminado |
+| `@react-native-firebase/storage` | ✅ | ✅ conservado |
+
+### Nativa Android — sin cambios
+
+- `android/build.gradle`: `classpath("com.google.gms:google-services")` — conservado (requerido por Storage)
+- `android/app/build.gradle`: `apply plugin: 'com.google.gms.google-services'` — conservado (requerido por Storage)
+
+### Fuentes de verdad actuales
+
+| Función | Antes (Firestore era) | Ahora |
+|---|---|---|
+| Autenticación | Firebase Auth + Firestore | NestJS JWT (`POST /auth/login`) |
+| Perfil de usuario | Firestore `users` collection | NestJS API (`GET /auth/me`) |
+| Taquerías | Firestore `taquerias` collection | NestJS API (JWT payload) |
+| Pedidos | Firestore (migrado en 4.5.3) | NestJS API + PostgreSQL |
+| Productos | Firestore (migrado en 4.5.2) | NestJS API + PostgreSQL |
+| Realtime | Firebase (no implementado) | Socket.IO (ETAPA 4.5.4) |
+| Imágenes | Firebase Storage | Firebase Storage (conservado) |
+
+### Pasos adicionales requeridos por el desarrollador
+
+Después de hacer `git pull` y `npm install`:
+
+1. Limpiar la build de Android:
+
+```bash
+cd android && ./gradlew clean && cd ..
+```
+
+2. Rebuildar la app:
+
+```bash
+npx react-native run-android
+```
+
+El autolinking de React Native 0.84 eliminará automáticamente los módulos nativos de Auth y Firestore al hacer el rebuild.
 
 ---
 

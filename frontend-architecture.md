@@ -21,7 +21,8 @@ Stack principal:
 - React Navigation (navegación)
 - Axios (HTTP via apiClient)
 - AsyncStorage (persistencia de token)
-- Firebase Storage (imágenes de productos — temporal, pendiente eliminación en 4.5.5)
+- Socket.IO client (realtime — ETAPA 4.5.4)
+- Firebase Storage (imágenes de productos — temporal, sin endpoint de upload en backend)
 
 ---
 
@@ -68,6 +69,7 @@ src/
 │       └── services/productService.ts
 ├── services/
 │   ├── api/client.ts                   ← instancia axios (apiClient)
+│   ├── realtime/socketService.ts       ← singleton Socket.IO manager
 │   └── storage/tokenStorage.ts        ← AsyncStorage token persistence
 ├── shared/
 │   ├── components/OrderCard.tsx        ← shared order card (waiter view)

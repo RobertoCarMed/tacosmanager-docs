@@ -583,12 +583,16 @@ Current actions:
 
 # ☁️ Firebase Integration
 
-Current Firebase services (pending migration in ETAPA 4.5.4–4.5.5):
+Current Firebase state (post ETAPA 4.5.5):
 
 - ~~Firebase Auth~~ → **Migrated to NestJS JWT (ETAPA 4.5.1)**
 - ~~Firestore (products)~~ → **Migrated to NestJS API (ETAPA 4.5.2)**
 - ~~Firestore (orders)~~ → **Migrated to NestJS API (ETAPA 4.5.3)**
-- Firebase Storage (images only — kept intentionally; no backend upload endpoint)
+- Firebase Storage (images only — kept intentionally; no backend upload endpoint exists yet)
+
+Firebase packages retained: `@react-native-firebase/app`, `@react-native-firebase/storage`
+
+Firebase packages removed: `@react-native-firebase/auth`, `@react-native-firebase/firestore`
 
 ---
 
@@ -654,17 +658,20 @@ These are useful for reviewing history, not for live operation.
 ## Current Backend
 
 - NestJS (Auth — ETAPA 4.5.1, Products — ETAPA 4.5.2, Orders — ETAPA 4.5.3)
-- ~~Firebase Firestore~~ → fully migrated to NestJS API (Auth 4.5.1, Products 4.5.2, Orders 4.5.3)
-- Firebase Storage (product images — kept intentionally)
+- ~~Firebase Auth~~ → eliminated (ETAPA 4.5.1)
+- ~~Firebase Firestore~~ → eliminated (ETAPA 4.5.2–4.5.3); packages removed (ETAPA 4.5.5)
+- Firebase Storage (product images — kept intentionally, no backend upload endpoint yet)
 
 ---
 
 ## Current Architecture
 
-- JWT authentication via NestJS API
+- JWT authentication via NestJS API (Bearer token, 1 day expiration)
 - AsyncStorage token persistence
 - Context API (AuthContext) — session management
-- NestJS API (products — ETAPA 4.5.2, orders — ETAPA 4.5.3)
+- Redux Toolkit — orders state (addOrder, upsertOrder, setOrders)
+- Socket.IO client — realtime order updates
+- NestJS API (products, orders, auth)
 - Firebase Storage (product images — kept intentionally)
 - role-based rendering
 - taquería-based multi-tenancy
