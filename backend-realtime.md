@@ -306,14 +306,16 @@ socket.on('order-updated', ({ order }) => {
 });
 ```
 
-**Estado de la orden al emitir:**
-- `status`: `UPDATED` (automático — el servidor lo impone si el pedido estaba en `PREPARING` o superior)
+**Estado de la orden al emitir (objetivo ETAPA 4.5.6):**
 - `revision`: incrementado (era N, ahora N+1)
-- `priorityTimestamp`: actualizado a `now()` (la orden sube en la cola de cocina)
+- `status`: según reglas de modificación:
+  - Si el pedido estaba en `PENDING` → permanece `PENDING`, `priorityTimestamp` sin cambios
+  - Si el pedido estaba en `PREPARING` → permanece `PREPARING`, `priorityTimestamp` actualizado a `now()`
+  - Si el pedido estaba en `READY` → revierte a `PENDING`
 - Los plates e items anteriores: presentes con `isNew: false`, `createdInRevision` del momento original
 - Los plates e items nuevos: presentes con `isNew: true`, `createdInRevision` igual al nuevo `revision`
 
-> **Nota — ETAPA 4.5.6 (planificado):** El comportamiento cambiará según el status del pedido al momento del append. Si el pedido está en `PENDING`, el evento `order-updated` seguirá emitiéndose pero la orden conservará `status: PENDING`, los nuevos items tendrán `isNew: false` y `priorityTimestamp` no se actualizará.
+> **Nota — pre-4.5.6:** La implementación actual asigna `status: UPDATED` automáticamente y actualiza `priorityTimestamp` en todos los casos. ETAPA 4.5.6 reemplazará este comportamiento con las reglas condicionales descritas arriba. El evento `order-updated` seguirá emitiéndose en todos los casos.
 
 **Quién recibe:** todos los usuarios conectados de la taquería (COOK y WAITER).
 
@@ -337,19 +339,19 @@ socket.on('order-status-changed', ({ order }) => {
 
 **Estado de la orden al emitir:**
 - `status`: el nuevo status enviado por el COOK
-- Si el nuevo status es `READY` (viniendo de `UPDATED` o `PREPARING`): **todos** los items tienen `isNew: false` — limpiados en la misma transacción de BD antes de emitir.
+- Si el nuevo status es `READY`: **todos** los items tienen `isNew: false` — limpiados en la misma transacción de BD antes de emitir.
 - Si el nuevo status es `PREPARING`, `DELIVERED`, o `CANCELLED`: `isNew` no se modifica.
 
 **Estados posibles que puede recibir el cliente en `order.status`:**
 
 | Status      | Quién lo asigna | Puede aparecer en este evento |
 |-------------|-----------------|-------------------------------|
-| `PENDING`   | Sistema         | ✅ (COOK regresa a PENDING)  |
+| `PENDING`   | COOK            | ✅ (COOK regresa a PENDING)  |
 | `PREPARING` | COOK            | ✅                            |
 | `READY`     | COOK            | ✅ (limpia isNew)             |
 | `DELIVERED` | COOK            | ✅                            |
 | `CANCELLED` | COOK            | ✅                            |
-| `UPDATED`   | Sistema         | ❌ (no puede asignarse manualmente) |
+| ~~`UPDATED`~~ | ~~Sistema~~   | ❌ **`[DEPRECADO — ETAPA 4.5.6]`** No puede asignarse manualmente. Ver nota en `order-updated`. |
 
 **Quién recibe:** todos los usuarios conectados de la taquería (COOK y WAITER).
 
@@ -377,7 +379,7 @@ interface OrderRealtimePayload {
   type: OrderType;               // "DINE_IN" | "TAKEAWAY" | "DELIVERY"
   reference: string | null;      // Número/nombre de mesa o cliente. Opcional para DELIVERY (nombre del cliente).
   deliveryAddress: string | null; // Dirección de entrega. Null para DINE_IN y TAKEAWAY.
-  status: OrderStatus;           // "PENDING" | "UPDATED" | "PREPARING" | "READY" | "DELIVERED" | "CANCELLED"
+  status: OrderStatus;           // "PENDING" | "PREPARING" | "READY" | "DELIVERED" | "CANCELLED" — "UPDATED" deprecado en ETAPA 4.5.6
   revision: number;              // Empieza en 1, incrementa con cada PATCH /orders/:id
   priorityTimestamp: Date;       // ISO 8601 string en JSON. Actualizado en cada append.
   createdAt: Date;               // ISO 8601 string en JSON
@@ -424,7 +426,7 @@ interface OrderItemPayload {
     "type": "DINE_IN",
     "reference": "Mesa 5",
     "deliveryAddress": null,
-    "status": "UPDATED",
+    "status": "PENDING",
     "revision": 2,
     "priorityTimestamp": "2024-01-15T14:30:00.000Z",
     "createdAt": "2024-01-15T14:00:00.000Z",
@@ -848,15 +850,17 @@ socket.on('connect', async () => {
 
 ### Highlight `isNew` — cuándo mostrar en verde
 
-El frontend decide cuándo mostrar el highlight verde basándose en el payload recibido:
+El frontend muestra highlight verde en cualquier item con `isNew: true`, independientemente del status de la orden (ETAPA 4.5.6):
 
 ```typescript
-function shouldShowGreenHighlight(item: OrderItemPayload, orderStatus: string): boolean {
-  return item.isNew && (orderStatus === 'UPDATED' || orderStatus === 'PREPARING');
+function shouldShowGreenHighlight(item: OrderItemPayload): boolean {
+  return item.isNew; // aplica en PENDING, PREPARING — cualquier estado activo
 }
 ```
 
 Al recibir `order-status-changed` con `status: 'READY'`, el payload ya tiene `isNew: false` en todos los items — el servidor limpia el flag en la misma transacción. No hay que calcular nada.
+
+> **Nota — pre-4.5.6:** La implementación actual solo muestra el highlight cuando `orderStatus === 'UPDATED' || orderStatus === 'PREPARING'`. ETAPA 4.5.6 elimina la dependencia del status para el highlight.
 
 ### No filtrar eventos por rol en el cliente
 

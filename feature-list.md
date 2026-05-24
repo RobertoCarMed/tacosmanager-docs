@@ -376,12 +376,13 @@ Current states:
 
 # 🔥 Order Priority System
 
-Current priority order:
+Priority order (objetivo ETAPA 4.5.6):
 
-1. ACTUALIZADA
+1. PREPARANDO
 2. PENDIENTE
-3. PREPARANDO
-4. LISTO
+3. LISTO
+
+> **Nota — pre-4.5.6:** La implementación actual coloca ACTUALIZADA primero (prioridad 1). ACTUALIZADA será removida en ETAPA 4.5.6 y reemplazada por un mecanismo de seguimiento de cambios.
 
 ---
 
@@ -554,49 +555,76 @@ These features may be evaluated after production launch.
 
 # 🔧 Kitchen Queue Refinements (Pendiente — ETAPA 4.5.6)
 
-Two problems detected during post-migration functional testing (ETAPA 4.5.3):
+Redefinición completa de cómo el backend maneja modificaciones a pedidos en cocina.
 
-## ⬜ Diferenciar actualización de pedido antes y después del servicio
+## Decisión clave: UPDATED deprecado
 
-The backend will apply different logic to `PATCH /orders/:id` depending on the current order status:
+El estado `UPDATED` es **oficialmente deprecado** en ETAPA 4.5.6.
 
-- If status is `PENDING` → keep `PENDING`, no `isNew`, no `priorityTimestamp` update
-- If status is `PREPARING` or higher → promote to `UPDATED`, activate `isNew`, update `priorityTimestamp`
+El flujo oficial pasa de 6 estados a 5:
 
----
+```txt
+PENDING → PREPARING → READY → DELIVERED
+```
 
-## ⬜ Evitar promoción automática a UPDATED cuando el pedido continúa en PENDING
-
-A `PENDING` order that receives new products must remain `PENDING`.
-
-This prevents the order from jumping ahead of older `PENDING` orders in the kitchen queue.
+El estado `UPDATED` es reemplazado por un **mecanismo de seguimiento de cambios** independiente del estado (ver `hasPendingChanges`, `pendingChanges`, o tracking por `createdInRevision`).
 
 ---
 
-## ⬜ Mantener posición FIFO original para pedidos PENDING actualizados
+## ⬜ CASO 1 — Pedido PENDING recibe modificación
 
-When a `PENDING` order receives new products, its `priorityTimestamp` must NOT be updated.
-
-The order must keep its original position in the FIFO queue within the `PENDING` group.
-
----
-
-## ⬜ Priorizar visualmente pedidos PREPARING
-
-Orders currently being prepared by the cook must appear at the top of the kitchen queue.
-
-Proposed new priority:
-
-1. PREPARANDO
-2. ACTUALIZADA
-3. PENDIENTE
-4. LISTO
+- Estado permanece `PENDING` — no cambia.
+- `priorityTimestamp` no se actualiza — el pedido conserva su posición FIFO original.
+- Los items nuevos se marcan con el mecanismo de seguimiento de cambios.
+- El cocinero ve los items nuevos destacados visualmente (verde / badge) al tomar el pedido.
 
 ---
 
-## ⬜ Mantener FIFO independiente dentro de cada grupo de estado
+## ⬜ CASO 2 — Pedido PREPARING recibe modificación
 
-FIFO ordering by `priorityTimestamp ASC` is maintained independently within each status group, regardless of the priority reordering above.
+- Estado permanece `PREPARING` — no cambia.
+- Los items nuevos se destacan visualmente para que el cocinero identifique qué debe agregar.
+- El mecanismo de seguimiento de cambios señala que hay items pendientes nuevos.
+
+---
+
+## ⬜ CASO 3 — Pedido READY recibe modificación
+
+- Estado **revierte a PENDING** automáticamente.
+- La cocina debe preparar los items nuevos antes de volver a marcar el pedido como READY.
+- Los items nuevos se destacan visualmente.
+
+---
+
+## ⬜ Nueva prioridad de cocina
+
+```txt
+1. PREPARING
+2. PENDING
+3. READY
+4. DELIVERED
+5. CANCELLED
+```
+
+UPDATED eliminado del ordenamiento. FIFO por `priorityTimestamp ASC` dentro de cada grupo sin cambios.
+
+---
+
+## ⬜ Mecanismo de seguimiento de cambios
+
+Sustituye al estado UPDATED para señalar que un pedido recibió modificaciones.
+
+Opciones bajo evaluación para ETAPA 4.5.6:
+
+- Campo `hasPendingChanges: boolean` en la orden
+- Campo `pendingChanges: number` (contador de revisiones no vistas por cocina)
+- Tracking por `createdInRevision` en items
+
+Requisitos:
+- Independiente del estado de la orden
+- El highlight verde permanece mientras haya items recién agregados sin preparar
+- Se limpia cuando el pedido pasa a READY
+- Compatible con la arquitectura Append Only y el campo `revision`
 
 ---
 
@@ -606,10 +634,10 @@ When waiter edits an order:
 
 ## ✅ Kitchen Behavior
 
-- order status changes to ACTUALIZADA
-- order moves to top priority
-- newly added products are highlighted
-- new plates appear first
+- newly added products are highlighted (isNew = true)
+- kitchen sees the updated order with visual differentiation for new items
+
+> **Nota — pre-4.5.6:** La implementación actual cambia el status a ACTUALIZADA y mueve el pedido a máxima prioridad. En ETAPA 4.5.6 esto cambia según las reglas CASO 1/2/3 (ver Kitchen Queue Refinements).
 
 ---
 
@@ -617,11 +645,12 @@ When waiter edits an order:
 
 New products inside edited orders:
 
-- highlighted with soft green color
+- highlighted with soft green color (isNew = true)
 - visible immediately to cook
+- applies regardless of order status (PENDING, PREPARING)
 
-When order becomes PREPARANDO:
-- green highlight disappears
+When order becomes READY:
+- green highlight disappears (isNew cleared in same DB transaction)
 
 ---
 
@@ -700,9 +729,10 @@ Both cook and waiter screens default to the `active` filter.
 `active` shows all orders whose status is NOT `DELIVERED` or `CANCELLED`:
 
 - PENDING
-- UPDATED
 - PREPARING
 - READY
+
+> **Nota — pre-4.5.6:** La implementación actual también incluye `UPDATED` como estado activo. UPDATED será removido en ETAPA 4.5.6.
 
 No date restriction applies. An order created at 23:55 remains visible the next morning if it is still active.
 

@@ -758,105 +758,163 @@ Estado:
 
 ---
 
-## Contexto
+## Contexto y Cambio de Dirección
 
-Durante las pruebas funcionales posteriores a la migración de Orders (ETAPA 4.5.3) se detectaron dos problemas en la lógica de priorización de la cola de cocina.
+Durante el análisis funcional de la cola de cocina se detectaron problemas estructurales con el estado `UPDATED` que generaban ambigüedad, ruptura de FIFO y comportamiento no determinista.
 
-Los problemas no bloquean la operación actual pero generan comportamientos subóptimos detectables en uso real.
+Después del análisis se tomó la decisión de **deprecar completamente el estado `UPDATED`** en lugar de parchar su comportamiento.
 
-Los cambios requeridos son exclusivamente en el backend (`src/orders/orders.service.ts`). El frontend no requiere modificaciones.
-
----
-
-## Problema 1 — Promoción incorrecta a UPDATED para pedidos PENDING
-
-### Descripción
-
-Cuando un mesero agrega productos a un pedido en estado PENDING (el cocinero aún no lo ha comenzado), el backend actualmente siempre cambia el status a UPDATED y actualiza el `priorityTimestamp`.
-
-Esto causa que el pedido salte por delante de otros pedidos PENDING que llegaron antes, rompiendo el orden FIFO dentro del grupo PENDING.
-
-### Ejemplo del problema
-
-Pedido A → PENDING (12:00)
-
-Pedido B → PENDING (12:05)
-
-Pedido C → PENDING (12:10) — el mesero le agrega productos a las 12:11
-
-Resultado actual (incorrecto):
-
-1. Pedido C (UPDATED — promovido incorrectamente, priorityTimestamp = 12:11)
-2. Pedido A (PENDING)
-3. Pedido B (PENDING)
-
-Resultado esperado:
-
-1. Pedido A (PENDING — más antiguo, priorityTimestamp = 12:00)
-2. Pedido B (PENDING — priorityTimestamp = 12:05)
-3. Pedido C (PENDING — sigue en PENDING, priorityTimestamp = 12:10)
-
-### Regla propuesta
-
-Si el status actual es PENDING cuando se llama PATCH /orders/:id:
-
-- Mantener status PENDING
-- No activar isNew en los items agregados
-- No actualizar priorityTimestamp
-
-Si el status actual es PREPARING (o superior) cuando se llama PATCH /orders/:id:
-
-- Cambiar status a UPDATED
-- Activar isNew en los items nuevos
-- Actualizar priorityTimestamp a now()
+La estrategia aprobada reemplaza `UPDATED` como señal de modificación por un mecanismo de seguimiento de cambios a nivel de pedido o de ítem.
 
 ---
 
-## Problema 2 — Prioridad incorrecta para pedidos PREPARING
+## Estado UPDATED — Deprecado
 
-### Descripción
+El estado `UPDATED` queda **oficialmente deprecado** y no debe considerarse parte del flujo futuro del sistema.
 
-Los pedidos en PREPARING (que el cocinero ya comenzó a preparar) tienen actualmente menor prioridad que UPDATED y PENDING, lo que hace que se desplacen hacia abajo de la cola mientras el cocinero los trabaja.
+Mientras la migración no esté completa, `UPDATED` sigue existiendo en el schema como estado legado.
 
-### Prioridad actual (problemática)
+El flujo de estados oficiales pasa a ser:
 
-1. UPDATED
-2. PENDING
-3. PREPARING
-4. READY
-5. DELIVERED
-6. CANCELLED
+```txt
+PENDING → PREPARING → READY → DELIVERED
+```
 
-### Prioridad propuesta
-
-1. PREPARING
-2. UPDATED
-3. PENDING
-4. READY
-5. DELIVERED
-6. CANCELLED
-
-### Justificación
-
-Un pedido en PREPARING representa trabajo activo del cocinero. Debe mantenerse visible en la parte superior hasta que pase a READY. UPDATED y PENDING representan trabajo pendiente de iniciar.
+`CANCELLED` permanece disponible como salida en cualquier punto del flujo.
 
 ---
 
-## FIFO dentro de cada grupo
+## Razón del Cambio
 
-El orden FIFO por priorityTimestamp ASC se mantiene de forma independiente dentro de cada grupo de estado.
+El estado UPDATED generaba:
+
+- Ruptura de FIFO: pedidos PENDING saltaban por delante de otros PENDING al modificarse
+- Priorización no determinista: la posición del pedido cambiaba por acciones del mesero, no del cocinero
+- Ambigüedad en cocina: UPDATED y PENDING compartían la misma acción (Marcar preparando), duplicando semánticamente dos estados distintos
+- Complejidad innecesaria en Realtime: el estado cambiaba sin intervención del cocinero
+- UX degradada: el cocinero veía pedidos reorganizarse sin haberlos tocado
 
 ---
 
-## Archivos afectados
+## Nuevo Mecanismo de Seguimiento de Cambios
+
+Las modificaciones posteriores a la creación del pedido ya **no generan cambio de estado**.
+
+En su lugar se introduce un mecanismo de tracking de cambios pendientes.
+
+El mecanismo exacto queda por definir en la implementación, con posibles enfoques:
+
+- Campo `hasPendingChanges` a nivel de Order
+- Colección `pendingChanges` asociada al pedido
+- Tracking a nivel de ítem por `createdInRevision`
+
+Lo que debe garantizarse independientemente del mecanismo:
+
+- Cocina puede identificar rápidamente qué productos son nuevos en un pedido
+- Los productos nuevos se distinguen visualmente (color, badge, indicador)
+- El cambio es visible sin que el pedido cambie de posición en la cola
+
+---
+
+## Reglas de Negocio Aprobadas
+
+### CASO 1 — Pedido en PENDING recibe modificaciones
+
+El pedido permanece en PENDING.
+
+No cambia de prioridad.
+
+No cambia de posición en la cola.
+
+No altera el FIFO.
+
+Los productos nuevos se marcan internamente como pendientes.
+
+---
+
+### CASO 2 — Pedido en PREPARING recibe modificaciones
+
+El pedido permanece en PREPARING.
+
+No cambia de prioridad.
+
+No abandona la parte superior de la cola activa.
+
+Los productos nuevos se destacan visualmente para el cocinero.
+
+---
+
+### CASO 3 — Pedido en READY recibe modificaciones
+
+El pedido regresa automáticamente a PENDING.
+
+Cocina debe preparar los productos nuevos antes de marcarlo listo nuevamente.
+
+Los productos nuevos se destacan visualmente.
+
+---
+
+## Ordenamiento de la Cola de Cocina
+
+### Prioridad (implementación objetivo)
+
+```txt
+1. PREPARING  — trabajo activo del cocinero, siempre visible arriba
+2. PENDING    — trabajo por iniciar, orden FIFO
+3. READY      — listo para entregar
+4. DELIVERED  — fuera de la cola activa
+5. CANCELLED  — fuera de la cola activa
+```
+
+`UPDATED` eliminado del ordenamiento.
+
+### FIFO
+
+Dentro de cada grupo se mantiene FIFO por `priorityTimestamp ASC` (o `createdAt ASC` para PENDING).
+
+Las modificaciones a un pedido PENDING no actualizan su `priorityTimestamp`.
+
+---
+
+## Visualización de Productos Nuevos
+
+Los productos agregados después de la creación original deben diferenciarse visualmente en cocina.
+
+Mecanismos posibles:
+
+- Badge o indicador de color verde
+- Highlight de fondo en el ítem
+- Sección separada "Productos agregados" dentro del card
+
+Objetivo: el cocinero identifica en segundos qué fue lo último que se agregó al pedido sin necesidad de releer todo el card.
+
+---
+
+## Objetivos de la Etapa
+
+- Eliminar la ambigüedad del estado UPDATED
+- Restaurar el FIFO consistente para pedidos PENDING
+- Mantener PREPARING visible en la parte superior de la cola
+- Mejorar la experiencia del cocinero evitando reordenamientos inesperados
+- Facilitar la identificación de cambios recientes sin alterar el estado del pedido
+- Lograr comportamiento determinista: la cola solo cambia por acciones del cocinero
+
+---
+
+## Archivos afectados (pendiente de definición técnica)
 
 Backend:
 
 - `src/orders/orders.service.ts`
+- `prisma/schema.prisma` (si se agrega campo de tracking)
+- DTOs de órdenes
 
 Frontend:
 
-Ninguno. El frontend ya respeta el orden retornado por la API.
+- Lógica de visualización en Kitchen OrderCard
+- Posiblemente lógica de filtro en KitchenScreen
+
+La implementación exacta se definirá al iniciar esta etapa.
 
 ---
 

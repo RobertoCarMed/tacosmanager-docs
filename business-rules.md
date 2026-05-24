@@ -456,67 +456,86 @@ createdInRevision = 2
 
 # 13. Estados de Pedido
 
+Flujo oficial (ETAPA 4.5.6):
+
+```txt
+PENDING → PREPARING → READY → DELIVERED
+```
+
 Estados válidos:
 
-- UPDATED
 - PENDING
 - PREPARING
 - READY
 - DELIVERED
 - CANCELLED
+- ~~UPDATED~~ — `[DEPRECADO — ETAPA 4.5.6]`
 
 ---
 
 ## PENDING
 
-Pedido recién creado.
+Pedido recién creado, esperando que cocina lo tome.
 
----
-
-## UPDATED
-
-Pedido previamente existente que recibió nuevos plates/items.
-
-Tiene máxima prioridad para cocina.
+Los pedidos PENDING pueden recibir modificaciones (Append Only). Ver sección 16.
 
 ---
 
 ## PREPARING
 
-Pedido en preparación.
+Pedido en preparación activa por cocina.
+
+Los pedidos PREPARING pueden recibir modificaciones. Ver sección 16.
 
 ---
 
 ## READY
 
-Pedido terminado.
+Pedido completamente preparado y listo para ser entregado.
+
+Los pedidos READY pueden recibir modificaciones. Ver sección 16.
 
 ---
 
 ## DELIVERED
 
-Pedido entregado.
+Pedido entregado. Estado terminal.
 
 ---
 
 ## CANCELLED
 
-Pedido cancelado.
+Pedido cancelado. Estado terminal.
+
+---
+
+## UPDATED `[DEPRECADO — ETAPA 4.5.6]`
+
+Estado utilizado en implementaciones anteriores para señalar que un pedido recibió modificaciones mientras estaba en cocina.
+
+**Reemplazado en ETAPA 4.5.6** por un mecanismo de seguimiento de cambios independiente del estado (`hasPendingChanges`, `pendingChanges` o tracking por `createdInRevision`), eliminando la necesidad de un estado de modificación separado.
+
+UPDATED no forma parte del flujo oficial a partir de ETAPA 4.5.6. No debe usarse en nuevas implementaciones.
 
 ---
 
 # 14. Prioridad de Cocina
 
-Prioridades globales (implementación actual):
+Prioridades globales (ETAPA 4.5.6 — objetivo):
 
-1. UPDATED
+1. PREPARING
 2. PENDING
-3. PREPARING
-4. READY
-5. DELIVERED
-6. CANCELLED
+3. READY
+4. DELIVERED
+5. CANCELLED
 
-> **Nota — ETAPA 4.5.6 (planificado):** El orden de prioridad cambiará a PREPARING > UPDATED > PENDING > READY > DELIVERED > CANCELLED. Los pedidos PREPARING representan trabajo activo del cocinero y deben mantenerse en la cima de la cola. Ver ETAPA 4.5.6 en el roadmap.
+Los pedidos PREPARING representan trabajo activo del cocinero y encabezan la cola.
+
+Los pedidos PENDING son trabajo nuevo que debe tomarse.
+
+Los pedidos READY están listos — permanecen visibles hasta ser entregados.
+
+> **Nota — Implementación pre-4.5.6:** La implementación actual coloca UPDATED primero con prioridad 1. ETAPA 4.5.6 elimina UPDATED y reordena la cola. Ver sección 16 para reglas de modificación de pedidos.
 
 ---
 
@@ -542,32 +561,74 @@ Pedido B
 
 ---
 
-# 16. Prioridad de Pedidos Actualizados
+# 16. Reglas de Modificación de Pedidos (Append Only)
 
-Los pedidos actualizados siempre tienen prioridad sobre pedidos pendientes (implementación actual).
+Un pedido puede recibir nuevos plates/items en cualquier estado activo. El comportamiento difiere según el estado actual al momento de la modificación.
+
+---
+
+## CASO 1 — Modificación de pedido PENDING
+
+El pedido está esperando que cocina lo tome.
+
+Comportamiento:
+
+- El estado **permanece PENDING** — no cambia.
+- `priorityTimestamp` **no se actualiza** — el pedido conserva su posición FIFO original.
+- Los nuevos items se marcan con el mecanismo de seguimiento de cambios (ver sección 16a).
+- El cocinero verá los items nuevos destacados visualmente al tomar el pedido.
 
 Ejemplo:
 
-Pedido A → PENDING
+```txt
+Pedido A → PENDING (12:00) → recibe modificación → sigue PENDING (12:00)
+Pedido B → PENDING (12:05)
 
-Pedido B → PENDING
+Cola: Pedido A, Pedido B  ← orden sin cambios
+```
 
-Pedido C → UPDATED
+---
 
-Resultado:
+## CASO 2 — Modificación de pedido PREPARING
 
-Pedido C
+El pedido está siendo preparado activamente por cocina.
 
-Pedido A
+Comportamiento:
 
-Pedido B
+- El estado **permanece PREPARING** — no cambia.
+- Los nuevos items se destacan visualmente (verde / badge) para que el cocinero identifique qué debe agregar.
+- El mecanismo de seguimiento de cambios señala que hay pendientes nuevos.
 
-> **Nota — ETAPA 4.5.6 (planificado):** La promoción a UPDATED será condicional según el estado actual del pedido al recibir `PATCH /orders/:id`:
->
-> - Si el pedido está en **PENDING**: mantener PENDING, no activar `isNew`, no actualizar `priorityTimestamp`. El pedido conserva su posición FIFO original.
-> - Si el pedido está en **PREPARING** o superior: promover a UPDATED, activar `isNew` en los items nuevos, actualizar `priorityTimestamp`.
->
-> Esto evita que un pedido PENDING salte por delante de otros pedidos PENDING que llegaron antes.
+---
+
+## CASO 3 — Modificación de pedido READY
+
+El pedido ya estaba terminado pero el cliente pidió más.
+
+Comportamiento:
+
+- El estado **revierte a PENDING** automáticamente.
+- La cocina debe preparar los items nuevos antes de volver a marcar el pedido como READY.
+- Los nuevos items se destacan visualmente.
+
+---
+
+# 16a. Mecanismo de Seguimiento de Cambios
+
+Reemplaza el estado UPDATED (ver sección 13) como señal de que un pedido recibió modificaciones.
+
+El mecanismo exacto se definirá en ETAPA 4.5.6. Opciones bajo evaluación:
+
+- Campo `hasPendingChanges: boolean` en la orden
+- Campo `pendingChanges: number` (contador de revisiones no vistas por cocina)
+- Tracking por `createdInRevision` en items — la cocina identifica items nuevos comparando con la revisión que conocía
+
+Requisitos del mecanismo:
+
+- Independiente del estado de la orden (funciona en PENDING, PREPARING, READY)
+- El highlight verde permanece mientras existan items no preparados, independientemente del estado
+- Se limpia cuando el pedido pasa a READY (todos los items están listos)
+- Compatible con la arquitectura Append Only y el campo `revision`
 
 ---
 
@@ -575,15 +636,20 @@ Pedido B
 
 Campo utilizado para:
 
-- Reordenamiento
-- Priorización
+- Reordenamiento dentro del grupo de estado
+- Priorización FIFO
 - Realtime futuro
 
 Debe actualizarse cuando:
 
-- Se crea una orden
-- Se agregan nuevos plates
-- Se agregan nuevos items
+- Se crea una orden (siempre)
+- Se agregan nuevos plates/items a un pedido en estado **PREPARING** o **READY**
+
+No debe actualizarse cuando:
+
+- Se agregan nuevos plates/items a un pedido en estado **PENDING** — el pedido conserva su posición FIFO original (ver CASO 1, sección 16)
+
+Esto garantiza que un pedido PENDING que recibe modificaciones no salte por delante de otros pedidos PENDING que llegaron antes en la cola.
 
 ---
 
@@ -595,32 +661,29 @@ Los nuevos productos agregados en actualizaciones deben mostrarse en verde.
 
 ## Activación
 
-Cuando se agregan nuevos items:
+Cuando se agregan nuevos items a un pedido existente:
 
 isNew = true
+
+El highlight es independiente del estado de la orden. Aplica en PENDING, PREPARING y el caso de reversión desde READY (CASO 3, sección 16).
 
 ---
 
 ## Permanencia
 
-El color verde permanece durante:
+El color verde permanece mientras el pedido tenga items recién agregados que aún no han sido preparados.
 
-- UPDATED
-- PREPARING
+Aplica en cualquier estado activo (PENDING, PREPARING).
+
+No depende del estado UPDATED (deprecado en ETAPA 4.5.6 — ver sección 13).
 
 ---
 
 ## Eliminación
 
-El color verde desaparece únicamente cuando:
+El color verde desaparece cuando el pedido pasa a READY:
 
-- READY
-
----
-
-Al pasar a READY:
-
-isNew = false
+isNew = false (limpiado en la misma transacción que el cambio de estado)
 
 ---
 
@@ -731,10 +794,13 @@ Cuando un WAITER crea un pedido:
 Cuando un WAITER actualiza un pedido (Append Only):
 
 - Los nuevos plates/items se persisten en BD.
-- El status cambia a `UPDATED` automáticamente.
+- El status cambia según las reglas de modificación (ver sección 16): PENDING permanece PENDING, PREPARING permanece PREPARING, READY revierte a PENDING.
 - La revisión se incrementa.
 - Los nuevos items tienen `isNew: true`.
+- El mecanismo de seguimiento de cambios se activa (ver sección 16a).
 - `order-updated` se emite a toda la room de la taquería.
+
+> **Nota — pre-4.5.6:** La implementación actual cambia el status a `UPDATED` automáticamente. Esto será reemplazado en ETAPA 4.5.6.
 
 Cuando un COOK cambia el estado:
 
@@ -1001,9 +1067,10 @@ Un pedido es activo cuando su status **NO** es:
 Por lo tanto deben permanecer visibles bajo el filtro `active`:
 
 - PENDING
-- UPDATED
 - PREPARING
 - READY
+
+> **Nota — pre-4.5.6:** La implementación actual también incluye UPDATED como estado activo. UPDATED será removido en ETAPA 4.5.6.
 
 Sin importar cuándo fueron creados.
 

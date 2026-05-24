@@ -275,21 +275,22 @@ KitchenScreen
  │     Opciones disponibles: Activos | Hoy | Últimos 7 días | Último mes | Últimos 3 meses
  │
  ├── Lista de órdenes ordenada por prioridad (desde el backend)
- │     Prioridad actual: UPDATED > PENDING > PREPARING > READY
- │     (ETAPA 4.5.6 planificado: PREPARING > UPDATED > PENDING > READY)
+ │     Prioridad objetivo (ETAPA 4.5.6): PREPARING > PENDING > READY
+ │     (pre-4.5.6: UPDATED > PENDING > PREPARING > READY — UPDATED deprecado)
  │
  └── OrderCard por cada orden activa
        ├── Encabezado
-       │     ├── Identificador de pedido (tableNumber / reference — ETAPA 4.6)
+       │     ├── Identificador de pedido via getOrderDisplayLabel(order)
+       │     │     🍽 Mesa 4 | 🥡 Roberto | 🛵 Roberto - Enviar | 🛵 Av. Juárez #123...
        │     ├── Estado (badge)
        │     └── Timestamp
        ├── Lista de plates e items
-       │     ├── Items nuevos (isNew = true) → highlight verde
+       │     ├── Items con isNew = true → highlight verde (cualquier estado activo — ETAPA 4.5.6)
        │     └── Items originales → sin highlight
        └── Acciones
-             ├── PENDING | UPDATED → [Marcar preparando]  → PATCH /orders/:id/status PREPARING
-             ├── PREPARING         → [Marcar listo]       → PATCH /orders/:id/status READY
-             └── READY             → [Entregado]          → PATCH /orders/:id/status DELIVERED
+             ├── PENDING   → [Marcar preparando]  → PATCH /orders/:id/status PREPARING
+             ├── PREPARING → [Marcar listo]        → PATCH /orders/:id/status READY
+             └── READY     → [Entregado]           → PATCH /orders/:id/status DELIVERED
 ```
 
 ### Kitchen OrderCard — ETAPA 4.6.3 🟡 EN PROGRESO
@@ -330,14 +331,18 @@ KitchenDashboardScreen
  └── OrderCard compacto con acciones inline
 ```
 
-### isNew Highlight Rules
+### isNew Highlight Rules (ETAPA 4.5.6)
 
 ```txt
-item.isNew === true && order.status === 'UPDATED'   → verde
-item.isNew === true && order.status === 'PREPARING' → verde
-item.isNew === true && order.status === 'READY'     → no verde (isNew ya fue limpiado por el servidor)
+item.isNew === true  → verde (cualquier estado activo: PENDING, PREPARING)
 item.isNew === false → sin highlight
+
+Limpieza automática al pasar a READY:
+  → isNew = false en todos los items (servidor, misma transacción)
+  → No hay items verdes cuando order.status === 'READY'
 ```
+
+> **Nota — pre-4.5.6:** La implementación actual solo muestra verde cuando `order.status === 'UPDATED' || order.status === 'PREPARING'`. ETAPA 4.5.6 elimina la dependencia del status UPDATED para el highlight.
 
 ---
 
