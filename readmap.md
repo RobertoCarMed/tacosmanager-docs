@@ -1004,9 +1004,13 @@ Filtros históricos.
 
 ## Opciones
 
-### Hoy
+### Activos
 
-Default.
+Default. Muestra pedidos cuyo status no es DELIVERED ni CANCELLED, sin límite de fecha.
+
+---
+
+### Hoy
 
 ---
 

@@ -610,14 +610,35 @@ No polling. No manual refresh. No redundant GET /orders after socket events.
 
 ---
 
-# 📅 Historical Filters (Planned / In Progress)
+# 📅 Order Filters
 
-Both cook and waiter screens support:
+## ✅ Active Filter (Filtro por defecto — post-ETAPA 4.5.3)
 
-- today
-- last 7 days
-- last month
-- last 3 months
+Both cook and waiter screens default to the `active` filter.
+
+`active` shows all orders whose status is NOT `DELIVERED` or `CANCELLED`:
+
+- PENDING
+- UPDATED
+- PREPARING
+- READY
+
+No date restriction applies. An order created at 23:55 remains visible the next morning if it is still active.
+
+This prevents the midnight edge case where active orders disappear from the screen when the day changes.
+
+---
+
+## ✅ Historical Date Filters
+
+Both cook and waiter screens support switching to date-based filters:
+
+- Hoy (`today`) — orders created since midnight today
+- Últimos 7 días (`7d`)
+- Último mes (`1m`)
+- Últimos 3 meses (`3m`)
+
+These are useful for reviewing history, not for live operation.
 
 ---
 

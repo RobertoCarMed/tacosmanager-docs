@@ -882,6 +882,70 @@ No existe en ETAPA 4.6:
 
 ---
 
+# 29. Visibilidad de Pedidos — Filtro Activo
+
+## Problema
+
+Un pedido creado a las 23:55 con status PENDING desaparece automáticamente a las 00:00 si el filtro utilizado es "Hoy" (`today`), ya que ese filtro excluye pedidos cuyo `createdAt` sea anterior al inicio del día actual.
+
+Esto genera una experiencia incorrecta para meseros, cocina y operación nocturna.
+
+---
+
+## Filtro Activo (`active`)
+
+El filtro `active` representa pedidos activos del negocio.
+
+Un pedido es activo cuando su status **NO** es:
+
+- DELIVERED
+- CANCELLED
+
+Por lo tanto deben permanecer visibles bajo el filtro `active`:
+
+- PENDING
+- UPDATED
+- PREPARING
+- READY
+
+Sin importar cuándo fueron creados.
+
+---
+
+## Casos de uso
+
+Pedido creado ayer a las 23:55 con status PENDING:
+
+- Resultado: visible hoy en el filtro `active`.
+
+Pedido READY creado ayer:
+
+- Resultado: visible hoy en el filtro `active`.
+
+Pedido DELIVERED:
+
+- Resultado: no aparece en `active`.
+
+Pedido CANCELLED:
+
+- Resultado: no aparece en `active`.
+
+---
+
+## Filtros históricos
+
+Los filtros `today`, `7d`, `1m`, `3m` filtran por `createdAt`.
+
+Son útiles para consultas históricas, no para operación en tiempo real.
+
+---
+
+## Filtro por defecto
+
+El filtro por defecto en `WaiterOrdersScreen` y `KitchenScreen` es `active`.
+
+---
+
 # 28. Principios Arquitectónicos
 
 Mantener siempre:

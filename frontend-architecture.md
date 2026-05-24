@@ -173,7 +173,12 @@ productService
 useOrders(options)
  └── ordersService.subscribeToOrders({ dateFilter, taqueriaId }, onData, onError)
        ├── GET /products (cache warm — parallel, cache-first)
-       ├── GET /orders → filter by dateFilter client-side
+       ├── GET /orders → filter client-side según dateFilter
+       │     ├── 'active' → excluye DELIVERED y CANCELLED (sin límite de fecha)
+       │     ├── 'today'  → createdAt >= inicio del día actual
+       │     ├── '7d'     → createdAt >= hace 7 días
+       │     ├── '1m'     → createdAt >= hace 1 mes
+       │     └── '3m'     → createdAt >= hace 3 meses
        ├── mapApiOrder() → resolves product name/price/complements from cache
        └── returns cancellation function
 
@@ -254,6 +259,8 @@ Tipos principales:
 export type OrderStatus =
   | 'UPDATED' | 'PENDING' | 'PREPARING'
   | 'READY' | 'DELIVERED' | 'CANCELLED';
+
+export type OrderDateFilter = 'active' | 'today' | '7d' | '1m' | '3m';
 
 // ETAPA 4.6 (planificado)
 export type OrderType = 'DINE_IN' | 'TAKEAWAY' | 'DELIVERY';

@@ -133,6 +133,22 @@ El campo se limpia al cambiar de tipo para evitar confusión.
 
 ---
 
+## Waiter Orders Filter
+
+```txt
+WaiterOrdersScreen
+ ├── Filtro inicial: 'active' (pedidos no terminados, sin límite de fecha)
+ │     Opciones disponibles: Activos | Hoy | Últimos 7 días | Último mes | Últimos 3 meses
+ │
+ ├── Filtro 'active': muestra todos los pedidos cuyo status NO sea DELIVERED ni CANCELLED
+ │     → Independiente de la fecha de creación
+ │     → Un pedido de 23:55 sigue visible al día siguiente si aún está activo
+ │
+ └── Filtros históricos ('today', '7d', '1m', '3m'): filtran por createdAt
+```
+
+---
+
 ## Edit Order Flow
 
 ### Flujo actual — ETAPA 4.5.3
@@ -169,6 +185,9 @@ Solo se pueden agregar nuevos plates con nuevos items.
 
 ```txt
 KitchenScreen
+ ├── Filtro inicial: 'active' (pedidos no terminados, sin límite de fecha)
+ │     Opciones disponibles: Activos | Hoy | Últimos 7 días | Último mes | Últimos 3 meses
+ │
  ├── Lista de órdenes ordenada por prioridad (desde el backend)
  │     Prioridad actual: UPDATED > PENDING > PREPARING > READY
  │     (ETAPA 4.5.6 planificado: PREPARING > UPDATED > PENDING > READY)
