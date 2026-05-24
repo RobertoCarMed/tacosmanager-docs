@@ -547,6 +547,15 @@ Todas las respuestas de órdenes siguen esta forma:
 
 Los plates se ordenan por `plateNumber ASC`.
 
+> **ETAPA 4.6.1 (planificado):** La estructura de orden incorporará tres nuevos campos:
+> - `orderType`: `"DINE_IN" | "TAKEAWAY" | "DELIVERY"` — modalidad de consumo del pedido.
+> - `reference`: `string | null` — identificador visual (reemplaza conceptualmente `tableNumber`).
+> - `deliveryAddress`: `string | null` — dirección de entrega, obligatoria para `DELIVERY`.
+>
+> `orderType` es independiente de `orderStatus`. Representan dimensiones distintas del pedido.
+>
+> Migración automática de datos existentes: `tableNumber → reference`, `orderType = DINE_IN`.
+
 ---
 
 ### Estados de orden (`OrderStatus`)
@@ -637,6 +646,22 @@ El frontend debe mostrar highlight verde cuando `isNew === true` y el status es 
 
 La orden se crea con `status: PENDING`, `revision: 1`, todos los items con `isNew: false`.
 
+> **ETAPA 4.6.1 (planificado):** `POST /orders` recibirá tres nuevos campos:
+>
+> | Campo             | Tipo      | Obligatorio                            |
+> |-------------------|-----------|----------------------------------------|
+> | `orderType`       | `enum`    | ✅ — `DINE_IN`, `TAKEAWAY`, `DELIVERY` |
+> | `reference`       | `string`  | ✅ para DINE_IN y TAKEAWAY; ❌ para DELIVERY |
+> | `deliveryAddress` | `string`  | ✅ para DELIVERY; ❌ para los demás     |
+>
+> Las validaciones son condicionales según `orderType`.
+>
+> `orderType` es independiente de `orderStatus`. Son dimensiones distintas del pedido.
+>
+> El campo `tableNumber` seguirá aceptándose durante la transición para compatibilidad con pedidos existentes.
+>
+> Migración automática al activar ETAPA 4.6.1: `tableNumber → reference`, `orderType = DINE_IN`.
+
 **Errores:**
 
 | Código | Causa |
@@ -653,7 +678,7 @@ La orden se crea con `status: PENDING`, `revision: 1`, todos los items con `isNe
 
 **COOK — todas las órdenes de la taquería, ordenadas por prioridad de cocina:**
 
-Orden de prioridad:
+Orden de prioridad (implementación actual):
 1. `UPDATED`
 2. `PENDING`
 3. `PREPARING`
@@ -662,6 +687,8 @@ Orden de prioridad:
 6. `CANCELLED`
 
 Dentro de cada grupo: FIFO por `priorityTimestamp ASC`. La orden que lleva más tiempo esperando en su estado aparece primero.
+
+> **Nota — ETAPA 4.5.6 (planificado):** El orden cambiará a `PREPARING(1) > UPDATED(2) > PENDING(3) > READY(4) > DELIVERED(5) > CANCELLED(6)`. Los pedidos en preparación activa pasarán a tener la prioridad más alta.
 
 **WAITER — solo sus propias órdenes, ordenadas por `createdAt DESC`.**
 
@@ -753,6 +780,8 @@ Si se cambia el `type`, se validan las reglas de clasificación sobre el estado 
 **Response `200`:** estructura completa de la orden actualizada.
 
 El status cambia automáticamente a `UPDATED`. La revisión se incrementa. Los nuevos items tienen `isNew: true`. `priorityTimestamp` se actualiza a `now()`.
+
+> **Nota — ETAPA 4.5.6 (planificado):** Este comportamiento será condicional. Si el status actual del pedido es `PENDING`, el status permanecerá en `PENDING`, `isNew` no se activará en los items nuevos y `priorityTimestamp` no se actualizará. La promoción a `UPDATED` solo ocurrirá si el pedido estaba en `PREPARING` o superior.
 
 **Errores:**
 

@@ -307,11 +307,13 @@ socket.on('order-updated', ({ order }) => {
 ```
 
 **Estado de la orden al emitir:**
-- `status`: `UPDATED` (automático — el servidor lo impone)
+- `status`: `UPDATED` (automático — el servidor lo impone si el pedido estaba en `PREPARING` o superior)
 - `revision`: incrementado (era N, ahora N+1)
 - `priorityTimestamp`: actualizado a `now()` (la orden sube en la cola de cocina)
 - Los plates e items anteriores: presentes con `isNew: false`, `createdInRevision` del momento original
 - Los plates e items nuevos: presentes con `isNew: true`, `createdInRevision` igual al nuevo `revision`
+
+> **Nota — ETAPA 4.5.6 (planificado):** El comportamiento cambiará según el status del pedido al momento del append. Si el pedido está en `PENDING`, el evento `order-updated` seguirá emitiéndose pero la orden conservará `status: PENDING`, los nuevos items tendrán `isNew: false` y `priorityTimestamp` no se actualizará.
 
 **Quién recibe:** todos los usuarios conectados de la taquería (COOK y WAITER).
 
@@ -381,8 +383,14 @@ interface OrderRealtimePayload {
   createdAt: Date;               // ISO 8601 string en JSON
   updatedAt: Date;               // ISO 8601 string en JSON
   plates: OrderPlatePayload[];   // Ordenados por plateNumber ASC
+  // ETAPA 4.6.1 — campos planificados:
+  // orderType: "DINE_IN" | "TAKEAWAY" | "DELIVERY"
+  // reference: string | null
+  // deliveryAddress: string | null
 }
 ```
+
+> **ETAPA 4.6.1 (planificado):** El payload incluirá `orderType`, `reference` y `deliveryAddress` una vez que el backend sea actualizado. `orderType` es independiente de `status`. Representan dimensiones distintas del pedido.
 
 ### `OrderPlatePayload`
 
@@ -892,4 +900,23 @@ socket.on('connect', () => {
 
 ---
 
-*Generado analizando el código fuente del backend. Fuentes: `src/realtime/**`, `src/orders/orders.service.ts`, `src/realtime/interfaces/`, `src/auth/auth.module.ts`. Última actualización: ETAPA 4.4.*
+---
+
+## Estado de integración Frontend
+
+**ETAPA 4.5.4 — Integrado.**
+
+El frontend conecta via `socket.io-client@4` en `src/services/realtime/socketService.ts`.
+
+El token se obtiene de `authService.getMemoryToken()` y se envía en `auth.token` del handshake (Opción A — recomendada).
+
+Eventos integrados:
+- `order-created` → `addOrder` en Redux
+- `order-updated` → `upsertOrder` en Redux
+- `order-status-changed` → `upsertOrder` en Redux
+
+No se realiza refetch REST tras eventos. El payload completo del socket se usa directamente.
+
+---
+
+*Generado analizando el código fuente del backend. Fuentes: `src/realtime/**`, `src/orders/orders.service.ts`, `src/realtime/interfaces/`, `src/auth/auth.module.ts`. Última actualización: ETAPA 4.5.4.*

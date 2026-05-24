@@ -42,12 +42,32 @@ Responsible for:
 
 # 🔐 Authentication System
 
-## ✅ Email & Password Login
+## ✅ Email & Password Login (NestJS JWT — ETAPA 4.5.1)
 Users authenticate using:
 - email
 - password
 
-Authentication is currently handled with Firebase Auth.
+Authentication is handled exclusively by the NestJS backend via `POST /auth/login`.
+
+On success, the backend returns:
+- `accessToken` (JWT, 1 day expiration)
+- `user` (id, name, email, role, taqueriaId)
+- `taqueria` (id, name, restaurantCode, address, city, state)
+
+The token is persisted locally with AsyncStorage for session restore.
+
+## ✅ Session Restore
+On app start, the frontend:
+- Reads the stored accessToken from AsyncStorage
+- Calls `GET /auth/me` to validate the session
+- Restores user and taqueria context if token is valid
+- Redirects to Login if token is missing or expired
+
+## ✅ Logout
+On logout:
+- accessToken is removed from AsyncStorage
+- User and taqueria are cleared from AuthContext
+- App navigates to Login screen
 
 ---
 
@@ -60,43 +80,101 @@ Authentication is currently handled with Firebase Auth.
 
 ---
 
-## ✅ Taquería Creation Flow
+## ✅ Taquería Registration Flow (Smart Multi-Match — ETAPA 4.5.1)
 
-During registration:
+During registration, the backend is called in 2 phases:
 
-- User writes taquería name
-- If taquería already exists:
-  - user is linked automatically
-- If taquería does not exist:
-  - app asks for taquería information
-  - new taquería is created
+**Phase 1 — Discovery (no side effects):**
+- User fills: name, email, password, role, taqueriaName
+- Backend returns match count and available taquerías
 
----
+**Phase 2A — Join existing taquería:**
+- User selects a taquería by restaurantCode
+- Backend creates the user linked to the existing taquería
+- Returns accessToken + user + taquería
+
+**Phase 2B — Create new taquería:**
+- User fills optional: address, city, state
+- Backend creates a new taquería with unique restaurantCode
+- Returns accessToken + user + taquería
+
+**Match scenarios:**
+- 0 matches → directly go to create flow
+- 1 match → show the match, offer join or create new
+- N matches → show list with restaurantCode, user selects
 
 ## ✅ Taquería Fields
 
 Each taquería contains:
 
+- id
 - name
-- address
-- city
-- state
+- restaurantCode (unique tenant identifier)
+- address (optional)
+- city (optional)
+- state (optional)
+- phone (optional)
 - createdAt
 
 ---
 
 # 🍽️ Product Management
 
-## ✅ Product Creation
+## ✅ Product Creation (NestJS API — ETAPA 4.5.2)
 
-Cooks can create products.
+Cooks can create products via `POST /products`.
 
 Each product supports:
 
 - product name
 - price
-- image
-- complements
+- image (Firebase Storage → imageUrl persisted via API)
+- complements (max 3)
+
+---
+
+## ✅ Product Listing (NestJS API — ETAPA 4.5.2)
+
+Products are loaded from `GET /products`.
+
+- Cache-first strategy with background refresh on screen focus
+- Only products from the current taquería are returned (multi-tenant enforced by JWT)
+
+---
+
+## ✅ Product Edit — Fields available from UI (NestJS API — ETAPA 4.5.2)
+
+Cooks can update existing products via `PATCH /products/:id`.
+
+Fields editable from the current UI:
+- name
+- price
+- image (Firebase Storage → new imageUrl persisted via API)
+
+Notes:
+- Only changed fields are sent in the PATCH request
+- New image is uploaded to Firebase Storage before patching
+- Old image is deleted from Firebase Storage after successful upload
+
+---
+
+## ⬜ Product Edit — Complement editing from UI (Pendiente — ETAPA 4.9)
+
+The backend supports updating `complements` via `PATCH /products/:id`.
+
+The current `EditProductScreen` does NOT expose complement editing.
+
+This is a known pending feature — the service layer already supports it.
+
+---
+
+## ⬜ Product Delete from UI (Pendiente — ETAPA 4.9)
+
+`DELETE /products/:id` is fully implemented in the service layer (`productService.deleteProduct`).
+
+The current UI has NO button or flow to delete a product.
+
+This is a known pending feature — the service layer already supports it.
 
 ---
 
@@ -104,7 +182,7 @@ Each product supports:
 
 Products may contain:
 
-- uploaded image
+- uploaded image (stored in Firebase Storage, URL persisted via API)
 - fallback placeholder image
 
 If no image is selected:
@@ -115,12 +193,13 @@ If no image is selected:
 
 ## ✅ Product Ownership
 
-Products are linked to the taquería.
+Products are linked to the taquería via JWT.
 
 Rules:
 - A taquería can have many products
 - Different taquerías can have products with same name
 - Each taquería can define its own prices
+- `taqueriaId` is never sent from the frontend — backend extracts it from the JWT
 
 ---
 
@@ -201,10 +280,10 @@ PLATE 2
 
 ## ✅ Product Selector
 
-Products are loaded dynamically from Firestore.
+Products are loaded dynamically from the NestJS API (`GET /products`).
 
 Products shown:
-- only products from current taquería
+- only products from current taquería (enforced server-side via JWT)
 
 ---
 
@@ -306,6 +385,202 @@ Current priority order:
 
 ---
 
+# 🏷️ Order Classification System (Épica — ETAPA 4.6)
+
+The Order Classification System is divided into three independent sub-stages:
+
+- **ETAPA 4.6.1** — Backend Schema & API
+- **ETAPA 4.6.2** — Frontend Create/Edit Order
+- **ETAPA 4.6.3** — Kitchen Integration
+
+---
+
+## ⬜ OrderType — Clasificación de pedido (4.6.1)
+
+Each order will have an `orderType` field that determines its consumption modality:
+
+- `DINE_IN` — consume inside the restaurant
+- `TAKEAWAY` — customer picks up at the counter
+- `DELIVERY` — delivered to an address
+
+`orderType` is **independent of `orderStatus`**. They represent entirely different dimensions of an order:
+
+- `orderStatus` → preparation stage (PENDING, PREPARING, READY…)
+- `orderType` → consumption modality (DINE_IN, TAKEAWAY, DELIVERY)
+
+---
+
+## ⬜ Reference Field — Identificador visual del pedido (4.6.1)
+
+The `tableNumber` field is replaced conceptually by a `reference` field.
+
+`reference` represents the visual label used by staff to locate an order.
+
+Examples by type:
+- `DINE_IN`: "Mesa 4", "Terraza 2", "Barra 3"
+- `TAKEAWAY`: "Roberto", "Juan Pérez"
+- `DELIVERY`: optional (address is the primary identifier)
+
+---
+
+## ⬜ Delivery Address — Dirección de entrega (4.6.1)
+
+A new `deliveryAddress` field will be added for `DELIVERY` orders.
+
+Rules:
+- Required for `DELIVERY`
+- Not applicable for `DINE_IN` and `TAKEAWAY`
+
+---
+
+## ⬜ Data Migration — tableNumber → reference (4.6.1)
+
+All existing orders are automatically migrated:
+
+- `tableNumber` → `reference`
+- implicit type → `orderType = DINE_IN`
+
+No historical data is lost. No manual intervention required.
+
+---
+
+## ⬜ OrderType Selector — UI al crear pedido (4.6.2)
+
+When creating an order, the waiter selects the modality first:
+
+```
+🍽 Comer aquí
+🥡 Para llevar
+🛵 Delivery
+```
+
+The displayed input field changes dynamically:
+- `DINE_IN` → "Referencia" (placeholder: Mesa 4) — required
+- `TAKEAWAY` → "Nombre cliente" (placeholder: Roberto) — required
+- `DELIVERY` → "Dirección" (placeholder: Av. Juárez #123) — required; reference optional
+
+The input field clears when the user switches order type.
+
+---
+
+## ⬜ Editable Order Type — Cambio de tipo en edición (4.6.2)
+
+The waiter can change the order type when editing an existing order:
+
+```
+DINE_IN ↔ TAKEAWAY ↔ DELIVERY
+```
+
+Validations corresponding to the new type are applied immediately.
+
+---
+
+## ⬜ Delivery Visibility — Dirección visible para meseros (4.6.2)
+
+When a waiter opens a `DELIVERY` order for editing, the full `deliveryAddress` is displayed inside the current edit flow. No additional screen is required.
+
+---
+
+## ⬜ Kitchen Classification — Identificación visual en cocina (4.6.3)
+
+The KDS shows a badge combining emoji + reference for each order:
+
+```
+DINE_IN   →  🍽 Mesa 4
+TAKEAWAY  →  🥡 Roberto
+
+DELIVERY (with reference):
+  🛵 Roberto - Enviar
+
+DELIVERY (without reference):
+  🛵 Av. Juárez #123...  (truncated if long)
+```
+
+No extra text labels. The emoji alone identifies the modality at a glance.
+
+Kitchen does NOT group orders by type. FIFO and priority ordering remain unchanged.
+
+---
+
+## ⬜ READY is universal — Sin estados adicionales por tipo (4.6.3)
+
+The `READY` status means the same thing for all order types:
+
+> "Order fully prepared and ready to be delivered."
+
+- Waiter takes it to the table (DINE_IN)
+- Customer picks it up (TAKEAWAY)
+- Delivery person takes it out (DELIVERY)
+
+No additional statuses (e.g. "OUT FOR DELIVERY") in ETAPA 4.6.
+
+---
+
+## ⬜ MVP Delivery Scope — Captura interna (4.6.1 / 4.6.2)
+
+`DELIVERY` orders are captured by internal staff only.
+
+```
+Customer calls the restaurant
+      ↓
+Waiter captures the order in the system
+      ↓
+System registers DELIVERY order with deliveryAddress
+```
+
+No customer-facing portals, QR ordering, or self-ordering in ETAPA 4.6.
+These features may be evaluated after production launch.
+
+---
+
+# 🔧 Kitchen Queue Refinements (Pendiente — ETAPA 4.5.6)
+
+Two problems detected during post-migration functional testing (ETAPA 4.5.3):
+
+## ⬜ Diferenciar actualización de pedido antes y después del servicio
+
+The backend will apply different logic to `PATCH /orders/:id` depending on the current order status:
+
+- If status is `PENDING` → keep `PENDING`, no `isNew`, no `priorityTimestamp` update
+- If status is `PREPARING` or higher → promote to `UPDATED`, activate `isNew`, update `priorityTimestamp`
+
+---
+
+## ⬜ Evitar promoción automática a UPDATED cuando el pedido continúa en PENDING
+
+A `PENDING` order that receives new products must remain `PENDING`.
+
+This prevents the order from jumping ahead of older `PENDING` orders in the kitchen queue.
+
+---
+
+## ⬜ Mantener posición FIFO original para pedidos PENDING actualizados
+
+When a `PENDING` order receives new products, its `priorityTimestamp` must NOT be updated.
+
+The order must keep its original position in the FIFO queue within the `PENDING` group.
+
+---
+
+## ⬜ Priorizar visualmente pedidos PREPARING
+
+Orders currently being prepared by the cook must appear at the top of the kitchen queue.
+
+Proposed new priority:
+
+1. PREPARANDO
+2. ACTUALIZADA
+3. PENDIENTE
+4. LISTO
+
+---
+
+## ⬜ Mantener FIFO independiente dentro de cada grupo de estado
+
+FIFO ordering by `priorityTimestamp ASC` is maintained independently within each status group, regardless of the priority reordering above.
+
+---
+
 # ✨ Realtime Order Updates
 
 When waiter edits an order:
@@ -366,35 +641,66 @@ Current actions:
 
 # ☁️ Firebase Integration
 
-Current Firebase services:
+Current Firebase state (post ETAPA 4.5.5):
 
-- Firebase Auth
-- Firestore
-- Firebase Storage
+- ~~Firebase Auth~~ → **Migrated to NestJS JWT (ETAPA 4.5.1)**
+- ~~Firestore (products)~~ → **Migrated to NestJS API (ETAPA 4.5.2)**
+- ~~Firestore (orders)~~ → **Migrated to NestJS API (ETAPA 4.5.3)**
+- Firebase Storage (images only — kept intentionally; no backend upload endpoint exists yet)
+
+Firebase packages retained: `@react-native-firebase/app`, `@react-native-firebase/storage`
+
+Firebase packages removed: `@react-native-firebase/auth`, `@react-native-firebase/firestore`
 
 ---
 
 # 🔄 Realtime Features
 
-## ✅ Realtime Synchronization
+## ✅ Realtime Synchronization (Socket.IO — ETAPA 4.5.4)
+
+Frontend connected to backend Socket.IO via `socket.io-client@4`.
 
 Realtime updates include:
 
-- order creation
-- order updates
-- order status changes
-- kitchen updates
+- `order-created` → new order inserted in Redux without REST refetch
+- `order-updated` → existing order replaced in Redux (append-only payload)
+- `order-status-changed` → order status updated in Redux instantly
+
+Kitchen screen reacts to all events automatically via LayoutAnimation.
+
+No polling. No manual refresh. No redundant GET /orders after socket events.
 
 ---
 
-# 📅 Historical Filters (Planned / In Progress)
+# 📅 Order Filters
 
-Both cook and waiter screens support:
+## ✅ Active Filter (Filtro por defecto — post-ETAPA 4.5.3)
 
-- today
-- last 7 days
-- last month
-- last 3 months
+Both cook and waiter screens default to the `active` filter.
+
+`active` shows all orders whose status is NOT `DELIVERED` or `CANCELLED`:
+
+- PENDING
+- UPDATED
+- PREPARING
+- READY
+
+No date restriction applies. An order created at 23:55 remains visible the next morning if it is still active.
+
+This prevents the midnight edge case where active orders disappear from the screen when the day changes.
+
+---
+
+## ✅ Historical Date Filters
+
+Both cook and waiter screens support switching to date-based filters:
+
+- Hoy (`today`) — orders created since midnight today
+- Últimos 7 días (`7d`)
+- Último mes (`1m`)
+- Últimos 3 meses (`3m`)
+
+These are useful for reviewing history, not for live operation.
 
 ---
 
@@ -409,14 +715,22 @@ Both cook and waiter screens support:
 
 ## Current Backend
 
-- Firebase
+- NestJS (Auth — ETAPA 4.5.1, Products — ETAPA 4.5.2, Orders — ETAPA 4.5.3)
+- ~~Firebase Auth~~ → eliminated (ETAPA 4.5.1)
+- ~~Firebase Firestore~~ → eliminated (ETAPA 4.5.2–4.5.3); packages removed (ETAPA 4.5.5)
+- Firebase Storage (product images — kept intentionally, no backend upload endpoint yet)
 
 ---
 
 ## Current Architecture
 
-- realtime listeners
-- Firestore snapshots
+- JWT authentication via NestJS API (Bearer token, 1 day expiration)
+- AsyncStorage token persistence
+- Context API (AuthContext) — session management
+- Redux Toolkit — orders state (addOrder, upsertOrder, setOrders)
+- Socket.IO client — realtime order updates
+- NestJS API (products, orders, auth)
+- Firebase Storage (product images — kept intentionally)
 - role-based rendering
 - taquería-based multi-tenancy
 

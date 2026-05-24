@@ -128,6 +128,17 @@ Permite:
 - complementos
 - notas opcionales
 
+Campos planificados — ETAPA 4.6.1:
+
+- orderType (DINE_IN | TAKEAWAY | DELIVERY) — independiente de OrderStatus
+- reference (reemplaza conceptualmente tableNumber; obligatorio para DINE_IN y TAKEAWAY)
+- deliveryAddress (obligatorio para DELIVERY)
+
+Migración automática al activar ETAPA 4.6.1:
+
+- tableNumber → reference
+- orderType = DINE_IN (para todos los pedidos existentes)
+
 ---
 
 ## GET /orders
@@ -225,7 +236,7 @@ su propia taquería
 
 # Kitchen Queue Rules
 
-Orden global:
+Orden global (implementación actual):
 
 ```txt
 UPDATED
@@ -236,6 +247,8 @@ DELIVERED
 CANCELLED
 ```
 
+> **Nota — ETAPA 4.5.6 (planificado):** El orden cambiará a `PREPARING > UPDATED > PENDING > READY > DELIVERED > CANCELLED`. Además, la promoción automática a `UPDATED` al hacer `PATCH /orders/:id` será condicional: solo ocurrirá si el pedido estaba en `PREPARING` o superior. Un pedido en `PENDING` permanecerá en `PENDING` al recibir nuevos productos.
+
 ---
 
 Dentro de cada grupo:
@@ -244,6 +257,57 @@ FIFO
 
 ```txt
 createdAt ASC
+```
+
+---
+
+# Order Classification Rules — ETAPA 4.6.1
+
+## OrderType vs OrderStatus — Conceptos Independientes
+
+OrderType NO reemplaza OrderStatus.
+
+```txt
+OrderStatus — etapa de preparación de cocina:
+  PENDING | UPDATED | PREPARING | READY | DELIVERED | CANCELLED
+
+OrderType — modalidad de consumo:
+  DINE_IN   → consumo en el restaurante
+  TAKEAWAY  → para recoger
+  DELIVERY  → entrega a domicilio
+```
+
+Un pedido puede tener orderType = DINE_IN y orderStatus = PREPARING al mismo tiempo.
+
+## Campos nuevos por tipo
+
+DINE_IN:
+
+```txt
+reference: string (obligatorio)   — ej. "Mesa 4", "Terraza 2"
+deliveryAddress: null
+```
+
+TAKEAWAY:
+
+```txt
+reference: string (obligatorio)   — nombre del cliente
+deliveryAddress: null
+```
+
+DELIVERY:
+
+```txt
+reference: string | null (opcional)
+deliveryAddress: string (obligatorio)  — ej. "Av. Juárez #123"
+```
+
+## Visualización en Kitchen
+
+```txt
+🍽 Mesa 4
+🥡 Roberto
+🛵 Av. Juárez #123
 ```
 
 ---

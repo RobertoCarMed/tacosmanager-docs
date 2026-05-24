@@ -213,6 +213,8 @@ updatedAt
 
 ## Order
 
+Campos actuales:
+
 ```txt
 id
 type           (OrderType: DINE_IN | TAKEAWAY | DELIVERY)
@@ -225,6 +227,21 @@ waiterId
 taqueriaId
 createdAt
 updatedAt
+```
+
+Campos planificados — ETAPA 4.6.1:
+
+```txt
+orderType       (DINE_IN | TAKEAWAY | DELIVERY)
+reference       (reemplaza conceptualmente tableNumber)
+deliveryAddress (solo para DELIVERY — nullable)
+```
+
+Migración automática al agregar los campos:
+
+```txt
+tableNumber → reference
+tipo implícito → orderType = DINE_IN
 ```
 
 ---
@@ -321,7 +338,7 @@ CANCELLED
 
 # Kitchen Priority
 
-Orden global:
+Orden global (implementación actual):
 
 ```txt
 UPDATED
@@ -331,6 +348,8 @@ READY
 DELIVERED
 CANCELLED
 ```
+
+> **Nota — ETAPA 4.5.6 (planificado):** El orden cambiará a `PREPARING > UPDATED > PENDING > READY > DELIVERED > CANCELLED`.
 
 ---
 
@@ -423,6 +442,27 @@ Ownership Validation
 Layer 4
 
 Tenant Isolation
+
+---
+
+# Realtime Architecture Frontend (Etapa 4.5.4)
+
+```txt
+AppProviders
+ └── AuthProvider
+       └── RealtimeProvider
+             ├── socketService.connect(token) → io(APP_CONFIG.baseApiUrl, {auth: {token}})
+             ├── socket.on('order-created')        → dispatch(addOrder(parseOrder(payload)))
+             ├── socket.on('order-updated')         → dispatch(upsertOrder(parseOrder(payload)))
+             └── socket.on('order-status-changed') → dispatch(upsertOrder(parseOrder(payload)))
+```
+
+Reglas:
+- Conexión creada cuando user deja de ser null (post-login).
+- Desconexión cuando user vuelve a ser null (logout).
+- Listeners registrados con referencias named para cleanup limpio.
+- No se realiza refetch REST tras eventos realtime.
+- REST mantiene responsabilidad de carga inicial y sync al re-enfocar pantallas.
 
 ---
 
@@ -578,23 +618,255 @@ Si Socket.IO falla al emitir:
 
 ---
 
+# Frontend Architecture (React Native)
+
+## Auth Module — ETAPA 4.5.1
+
+```txt
+AppProviders
+ └── AuthProvider (AuthContext)
+       ├── restoreSession() on mount → GET /auth/me
+       ├── signIn(user, taqueria)    → called by useLogin / useRegister
+       └── signOut()                 → clears token + context
+
+useLogin
+ ├── authService.login(email, password) → POST /auth/login
+ └── signIn(user, taqueria)
+
+useRegister
+ ├── authService.registerDiscoverTaqueria(values) → POST /auth/register (Phase 1)
+ ├── authService.registerJoinTaqueria(values, restaurantCode) → POST /auth/register (Phase 2A)
+ ├── authService.registerCreateTaqueria(values) → POST /auth/register (Phase 2B)
+ └── signIn(user, taqueria)
+
+authService
+ ├── API calls via apiClient (axios)
+ ├── token management (applyToken → apiClient.defaults.headers)
+ └── tokenStorage (AsyncStorage persistence)
+```
+
+## Token Management
+
+```txt
+Login / Register success
+        ↓
+authService.applyToken(accessToken)
+        ├── memoryToken = accessToken
+        └── apiClient.defaults.headers.Authorization = "Bearer <token>"
+        ↓
+tokenStorage.setToken(accessToken)  ← AsyncStorage persistence
+        ↓
+AuthContext.signIn(user, taqueria)  ← context update → navigation
+
+App start
+        ↓
+tokenStorage.getToken()             ← AsyncStorage read
+        ↓
+apiClient.defaults.headers.Authorization = "Bearer <token>"
+        ↓
+GET /auth/me
+        ├── success → signIn(user, taqueria)
+        └── failure → clearToken() + removeToken() → Login screen
+
+Logout
+        ↓
+authService.signOut()
+        ├── clearToken() → remove Authorization header
+        └── tokenStorage.removeToken() ← AsyncStorage clear
+        ↓
+AuthContext → user = null, taqueria = null → Login screen
+```
+
+## Role Mapping
+
+```txt
+API (backend)   →   Frontend (app)
+"WAITER"        →   "waiter"
+"COOK"          →   "cook"
+```
+
+## Navigation after auth
+
+```txt
+AuthContext.user === null  →  AuthStack (Login / Register)
+user.role === "cook"       →  KitchenStack
+user.role === "waiter"     →  WaiterStack
+```
+
+---
+
+## Products Module — ETAPA 4.5.2
+
+```txt
+useProducts(taqueriaId)
+ └── productService.subscribeToProducts(taqueriaId, onData, onError)
+       ├── onData(cached) immediately if cache hit
+       ├── GET /products → fresh data → onData(products)
+       └── returns cancellation function (no realtime)
+
+useCreateProduct
+ ├── uploadProductImage(imageUri) → Firebase Storage → imageUrl
+ └── productService.createProduct(payload) → POST /products
+
+useEditProduct
+ ├── useProducts(taqueriaId) → product list
+ ├── uploadProductImage(newImageUri) → Firebase Storage → imageUrl
+ └── productService.updateProduct(payload) → PATCH /products/:id
+
+productService
+ ├── API calls via apiClient (axios, JWT auto-injected)
+ ├── in-memory cache (Map<taqueriaId, Product[]>, sorted by name)
+ └── Firebase Storage (image uploads only — @react-native-firebase/storage, sin endpoint de upload en backend)
+```
+
+## Image Strategy — ETAPA 4.5.2
+
+```txt
+createProduct / updateProduct
+        ↓
+uploadProductImage(imageUri)
+        ↓
+Firebase Storage → putFile → getDownloadURL → imageUrl
+        ↓
+POST /products  { name, price, complements, imageUrl }
+PATCH /products/:id  { name, price, imageUrl? }
+        ↓
+NestJS persists imageUrl in PostgreSQL
+```
+
+taqueriaId is never sent in the request body — backend extracts it from JWT.
+
+---
+
+## Orders Module — ETAPA 4.5.3
+
+```txt
+useOrders(options)
+ └── ordersService.subscribeToOrders({ dateFilter, taqueriaId }, onData, onError)
+       ├── GET /products (cache warm — parallel, cache-first)
+       ├── GET /orders → filter by dateFilter client-side
+       ├── mapApiOrder() → resolves product name/price/complements from cache
+       └── returns cancellation function
+
+useCreateOrder
+ ├── local NewOrderItem { productId, name, price, quantity, selectedComplements }
+ └── ordersService.createOrder({ tableNumber, plates[{ plateNumber, items[{ productId, quantity, selectedComplements }] }] })
+       └── POST /orders
+
+useEditOrder(orderId)
+ ├── ordersService.getOrder(orderId) → GET /orders/:id
+ └── ordersService.appendPlatesToOrder(orderId, plates[{ plateNumber, items }])
+       └── PATCH /orders/:id
+           (plateNumber = max(existing) + index + 1)
+
+useOrders.updateOrderStatus
+ └── ordersService.updateOrderStatus(orderId, status)
+       └── PATCH /orders/:id/status { status: "PREPARING" | "READY" | "DELIVERED" | "CANCELLED" }
+```
+
+## OrderStatus Values — ETAPA 4.5.3
+
+API uses UPPERCASE values:
+
+```txt
+UPDATED    → kitchen priority 1
+PENDING    → kitchen priority 2
+PREPARING  → kitchen priority 3
+READY      → kitchen priority 4
+DELIVERED  → filtered out of active kitchen view
+CANCELLED  → filtered out of active kitchen view
+```
+
+UPDATED cannot be set manually — backend sets it when plates are appended.
+
+## Product Name Resolution — ETAPA 4.5.3
+
+API items contain only productId (not name/price).
+
+Resolution strategy:
+```txt
+subscribeToOrders
+ ├── GET /products (parallel, cache-first — warms productService cache)
+ └── mapApiOrder
+       └── productMap.get(apiItem.productId)
+             ├── hit  → item.name = product.name, item.price = product.price
+             └── miss → item.name = productId (fallback)
+```
+
+---
+
+# OrderType Enum — ETAPA 4.6.1
+
+```txt
+enum OrderType {
+  DINE_IN
+  TAKEAWAY
+  DELIVERY
+}
+```
+
+Clasifica la modalidad de consumo del pedido.
+
+Independiente de OrderStatus.
+
+OrderStatus = etapa de preparación de cocina.
+OrderType = modalidad de consumo del pedido.
+
+---
+
+# Order Classification System — Impacto por capa
+
+## Impacto Backend (ETAPA 4.6.1)
+
+- Prisma Schema: nuevo enum `OrderType`, campos `orderType`, `reference`, `deliveryAddress`
+- DTOs: validaciones condicionales según `orderType`
+- Servicios y controladores: aplican reglas por tipo
+- Realtime payload: incluye los tres nuevos campos
+- Migración automática: `tableNumber → reference`, `orderType = DINE_IN`
+
+## Impacto Frontend — Crear y Editar Pedido (ETAPA 4.6.2)
+
+- `CreateOrderScreen`: selector de tipo + campo dinámico por tipo
+- `EditOrderScreen`: muestra tipo actual; permite cambiar tipo; muestra `deliveryAddress` para DELIVERY
+- `ordersService`: envía `orderType`, `reference`, `deliveryAddress` en el payload
+- `domain.ts`: nuevos tipos `OrderType`, campos en `Order` y `CreateOrderPayload`
+
+## Impacto Kitchen (ETAPA 4.6.3)
+
+- `OrderCard`: muestra emoji + referencia según tipo
+- DINE_IN: `🍽 Mesa 4`
+- TAKEAWAY: `🥡 Roberto`
+- DELIVERY con reference: `🛵 Roberto - Enviar`
+- DELIVERY sin reference: `🛵 Av. Juárez #123...` (truncado)
+- No se agrupan pedidos por tipo — el FIFO y la priorización no cambian
+
+## Impacto Realtime
+
+- Los eventos `order-created`, `order-updated`, `order-status-changed` incluirán `orderType`, `reference`, `deliveryAddress` a partir de ETAPA 4.6.1
+- El frontend en ETAPA 4.6.2 y 4.6.3 usará estos campos para actualizar el store y la UI
+
+---
+
 # Future Architecture
 
-Etapa 4.5
+Etapa 4.5.6
 
-React Native Socket Migration — conectar frontend a Socket.IO.
-
----
-
-Etapa 4.5
-
-Frontend Socket Integration
+Kitchen Queue Refinements — conditional UPDATED promotion, PREPARING as highest priority.
 
 ---
 
-Etapa 4.6
+Etapa 4.6 (Épica)
 
-Realtime Reliability
+Order Classification System:
+- 4.6.1 — Backend Schema & API
+- 4.6.2 — Frontend Create/Edit Order
+- 4.6.3 — Kitchen Integration
+
+---
+
+Etapa 4.7
+
+Realtime Reliability.
 
 ---
 

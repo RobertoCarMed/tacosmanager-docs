@@ -507,7 +507,7 @@ Pedido cancelado.
 
 # 14. Prioridad de Cocina
 
-Prioridades globales:
+Prioridades globales (implementación actual):
 
 1. UPDATED
 2. PENDING
@@ -515,6 +515,8 @@ Prioridades globales:
 4. READY
 5. DELIVERED
 6. CANCELLED
+
+> **Nota — ETAPA 4.5.6 (planificado):** El orden de prioridad cambiará a PREPARING > UPDATED > PENDING > READY > DELIVERED > CANCELLED. Los pedidos PREPARING representan trabajo activo del cocinero y deben mantenerse en la cima de la cola. Ver ETAPA 4.5.6 en el roadmap.
 
 ---
 
@@ -542,7 +544,7 @@ Pedido B
 
 # 16. Prioridad de Pedidos Actualizados
 
-Los pedidos actualizados siempre tienen prioridad sobre pedidos pendientes.
+Los pedidos actualizados siempre tienen prioridad sobre pedidos pendientes (implementación actual).
 
 Ejemplo:
 
@@ -559,6 +561,13 @@ Pedido C
 Pedido A
 
 Pedido B
+
+> **Nota — ETAPA 4.5.6 (planificado):** La promoción a UPDATED será condicional según el estado actual del pedido al recibir `PATCH /orders/:id`:
+>
+> - Si el pedido está en **PENDING**: mantener PENDING, no activar `isNew`, no actualizar `priorityTimestamp`. El pedido conserva su posición FIFO original.
+> - Si el pedido está en **PREPARING** o superior: promover a UPDATED, activar `isNew` en los items nuevos, actualizar `priorityTimestamp`.
+>
+> Esto evita que un pedido PENDING salte por delante de otros pedidos PENDING que llegaron antes.
 
 ---
 
@@ -772,7 +781,269 @@ La persistencia en BD tiene prioridad absoluta sobre la emisión WebSocket.
 
 ---
 
-# 22. Principios Arquitectónicos
+# 22. Order Classification — OrderType
+
+Nuevo enum que clasifica el tipo de pedido según su modalidad de consumo.
+
+Valores:
+
+```txt
+DINE_IN
+TAKEAWAY
+DELIVERY
+```
+
+OrderType es completamente independiente de OrderStatus.
+
+OrderStatus representa la etapa de preparación de cocina.
+
+OrderType representa la modalidad de consumo del pedido.
+
+---
+
+# 23. Reglas de Validación por OrderType
+
+## DINE_IN
+
+reference: obligatorio.
+
+Representa el identificador visual de la mesa o zona.
+
+Ejemplos válidos:
+
+- Mesa 4
+- Terraza 2
+- Barra 3
+- Mesa VIP
+
+deliveryAddress: no aplica.
+
+---
+
+## TAKEAWAY
+
+reference: obligatorio.
+
+Representa el nombre de la persona que recogerá el pedido.
+
+Ejemplos válidos:
+
+- Roberto
+- Juan Pérez
+- María
+
+deliveryAddress: no aplica.
+
+---
+
+## DELIVERY
+
+deliveryAddress: obligatoria.
+
+Ejemplos válidos:
+
+- Av. Juárez #123
+- Calle Hidalgo #45, Col. Centro
+
+reference: opcional para futuras extensiones.
+
+---
+
+# 24. Evolución del campo tableNumber
+
+El campo `tableNumber` se reemplaza conceptualmente por:
+
+```txt
+reference: string | null
+```
+
+Representa el identificador visual utilizado por el personal para localizar el pedido.
+
+Se agrega además:
+
+```txt
+deliveryAddress: string | null
+```
+
+Campo exclusivo para pedidos DELIVERY.
+
+---
+
+# 25. Visualización en Kitchen por OrderType
+
+La cocina identifica el tipo de pedido visualmente mediante emoji + referencia.
+
+Sin texto adicional ni etiquetas redundantes.
+
+```txt
+DINE_IN   →  🍽 Mesa 4
+TAKEAWAY  →  🥡 Roberto
+
+DELIVERY (con reference):
+  🛵 Roberto - Enviar
+
+DELIVERY (sin reference):
+  🛵 Av. Juárez #123...   (truncado si el texto es largo)
+```
+
+El emoji identifica la modalidad a distancia.
+
+Kitchen NO agrupa por tipo. Los pedidos permanecen mezclados en la misma cola.
+
+Se mantienen el FIFO y la priorización de estados existentes sin cambios.
+
+---
+
+# 26. READY — Significado unificado para todos los OrderType
+
+READY mantiene exactamente el mismo significado independientemente del tipo de pedido.
+
+Significa:
+
+"Pedido completamente preparado y listo para ser entregado."
+
+- DINE_IN → mesero puede llevarlo a la mesa.
+- TAKEAWAY → cliente puede recogerlo.
+- DELIVERY → repartidor puede salir a entregarlo.
+
+No se agregan estados adicionales por tipo en la ETAPA 4.6.
+
+---
+
+# 27. Alcance MVP — DELIVERY
+
+Los pedidos DELIVERY son capturados exclusivamente por personal interno.
+
+Flujo:
+
+```txt
+Cliente llama al restaurante
+      ↓
+Mesero captura el pedido en el sistema
+      ↓
+Sistema registra pedido DELIVERY con deliveryAddress
+```
+
+No existe en ETAPA 4.6:
+
+- Integración con clientes externos
+- Portal web
+- QR Ordering
+- Self-ordering
+- App de repartidores
+
+Estas funcionalidades podrán evaluarse en etapas posteriores a producción.
+
+---
+
+# 28. Edición del tipo de pedido
+
+El mesero puede cambiar el tipo de un pedido existente:
+
+```txt
+DINE_IN ↔ TAKEAWAY ↔ DELIVERY
+```
+
+Validaciones correspondientes al nuevo tipo seleccionado se aplican al momento de editar.
+
+Implementado en ETAPA 4.6.2.
+
+---
+
+# 29. Visualización de dirección DELIVERY para meseros
+
+Cuando un mesero abre un pedido de tipo DELIVERY para editarlo:
+
+La dirección completa (`deliveryAddress`) se muestra dentro del flujo de edición actual.
+
+No se requiere pantalla adicional para ver la dirección.
+
+Implementado en ETAPA 4.6.2.
+
+---
+
+# 30. Migración de datos existentes — tableNumber → reference
+
+Todos los pedidos existentes antes de ETAPA 4.6.1 deben migrarse automáticamente:
+
+```txt
+tableNumber → reference
+tipo implícito → orderType = DINE_IN
+```
+
+La migración ocurre en la misma operación de Prisma que agrega los nuevos campos.
+
+No se pierde información histórica.
+
+No se requiere intervención manual.
+
+---
+
+# 31. Visibilidad de Pedidos — Filtro Activo
+
+## Problema
+
+Un pedido creado a las 23:55 con status PENDING desaparece automáticamente a las 00:00 si el filtro utilizado es "Hoy" (`today`), ya que ese filtro excluye pedidos cuyo `createdAt` sea anterior al inicio del día actual.
+
+Esto genera una experiencia incorrecta para meseros, cocina y operación nocturna.
+
+---
+
+## Filtro Activo (`active`)
+
+El filtro `active` representa pedidos activos del negocio.
+
+Un pedido es activo cuando su status **NO** es:
+
+- DELIVERED
+- CANCELLED
+
+Por lo tanto deben permanecer visibles bajo el filtro `active`:
+
+- PENDING
+- UPDATED
+- PREPARING
+- READY
+
+Sin importar cuándo fueron creados.
+
+---
+
+## Casos de uso
+
+Pedido creado ayer a las 23:55 con status PENDING:
+
+- Resultado: visible hoy en el filtro `active`.
+
+Pedido READY creado ayer:
+
+- Resultado: visible hoy en el filtro `active`.
+
+Pedido DELIVERED:
+
+- Resultado: no aparece en `active`.
+
+Pedido CANCELLED:
+
+- Resultado: no aparece en `active`.
+
+---
+
+## Filtros históricos
+
+Los filtros `today`, `7d`, `1m`, `3m` filtran por `createdAt`.
+
+Son útiles para consultas históricas, no para operación en tiempo real.
+
+---
+
+## Filtro por defecto
+
+El filtro por defecto en `WaiterOrdersScreen` y `KitchenScreen` es `active`.
+
+---
+
+# 32. Principios Arquitectónicos
 
 Mantener siempre:
 
