@@ -215,7 +215,9 @@ updatedAt
 
 ```txt
 id
-tableNumber
+type           (OrderType: DINE_IN | TAKEAWAY | DELIVERY)
+reference      (nullable — requerido para DINE_IN y TAKEAWAY)
+deliveryAddress (nullable — requerido para DELIVERY)
 status
 revision
 priorityTimestamp
@@ -545,7 +547,8 @@ Todos los eventos emiten la orden completa — el frontend no necesita hacer lla
 ```txt
 {
   order: {
-    id, taqueriaId, waiterId, tableNumber,
+    id, taqueriaId, waiterId,
+    type, reference, deliveryAddress,
     status, revision, priorityTimestamp,
     createdAt, updatedAt,
     plates: [

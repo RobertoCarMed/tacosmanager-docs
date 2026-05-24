@@ -372,7 +372,9 @@ interface OrderRealtimePayload {
   id: string;                    // UUID
   taqueriaId: string;            // UUID — siempre filtra a la room correcta
   waiterId: string;              // UUID del mesero que creó la orden
-  tableNumber: string;           // Label de mesa (string, no numérico)
+  type: OrderType;               // "DINE_IN" | "TAKEAWAY" | "DELIVERY"
+  reference: string | null;      // Número/nombre de mesa o cliente. Null para DELIVERY
+  deliveryAddress: string | null; // Dirección de entrega. Null para DINE_IN y TAKEAWAY
   status: OrderStatus;           // "PENDING" | "UPDATED" | "PREPARING" | "READY" | "DELIVERED" | "CANCELLED"
   revision: number;              // Empieza en 1, incrementa con cada PATCH /orders/:id
   priorityTimestamp: Date;       // ISO 8601 string en JSON. Actualizado en cada append.
@@ -418,7 +420,9 @@ interface OrderItemPayload {
     "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     "taqueriaId": "b3e2c1d4-8f4a-4b2e-9c1d-5a7e8f0b2c3d",
     "waiterId": "c4d5e6f7-g8h9-0123-bcde-f01234567891",
-    "tableNumber": "Mesa 5",
+    "type": "DINE_IN",
+    "reference": "Mesa 5",
+    "deliveryAddress": null,
     "status": "UPDATED",
     "revision": 2,
     "priorityTimestamp": "2024-01-15T14:30:00.000Z",

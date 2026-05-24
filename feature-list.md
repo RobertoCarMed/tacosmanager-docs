@@ -873,8 +873,10 @@ Single-screen flow remains:
   - `id`
   - `taqueriaId`
   - `waiterId`
-  - `tableNumber` (visual reference string)
-  - `status` (`PENDING`, `PREPARING`, `READY`, `DELIVERED`, `CANCELLED`)
+  - `type` (`DINE_IN` | `TAKEAWAY` | `DELIVERY`)
+  - `reference` (nullable — requerido para DINE_IN y TAKEAWAY)
+  - `deliveryAddress` (nullable — requerido para DELIVERY)
+  - `status` (`PENDING`, `UPDATED`, `PREPARING`, `READY`, `DELIVERED`, `CANCELLED`)
   - `isUpdated`
   - `createdAt`
   - `updatedAt`
@@ -941,14 +943,11 @@ Single-screen flow remains:
 
 - Product IDs must exist and belong to current taqueria.
 - Quantities must be positive integers.
-- `tableNumber` is required non-empty string (trim applied).
-  - valid examples:
-    - `Mesa 1`
-    - `Mesa Juanita`
-    - `Terraza`
-    - `Barra 3`
-    - `Pedido Uber`
-    - `Mesa VIP`
+- `type` required enum (`DINE_IN` | `TAKEAWAY` | `DELIVERY`).
+- `reference` required for DINE_IN and TAKEAWAY (non-empty string, trim applied).
+  - valid examples: `Mesa 1`, `Mesa Juanita`, `Terraza`, `Barra 3`, `Juan`
+- `deliveryAddress` required for DELIVERY (non-empty string, trim applied).
+- Sending `reference` for DELIVERY or `deliveryAddress` for DINE_IN/TAKEAWAY is rejected.
 - Status updates must use enum values only.
 - Item `notes` is optional string.
   - valid values:
@@ -1112,7 +1111,7 @@ Accepted sources in order:
 
 Every event emits the **complete order** including all plates and items — no partial payloads.
 
-Fields always present: `id`, `taqueriaId`, `waiterId`, `tableNumber`, `status`, `revision`, `priorityTimestamp`, `createdAt`, `updatedAt`, `plates[].items[].isNew`, `plates[].items[].createdInRevision`.
+Fields always present: `id`, `taqueriaId`, `waiterId`, `type`, `reference`, `deliveryAddress`, `status`, `revision`, `priorityTimestamp`, `createdAt`, `updatedAt`, `plates[].items[].isNew`, `plates[].items[].createdInRevision`.
 
 ### isNew lifecycle via WebSocket
 
@@ -1137,6 +1136,59 @@ The backend does **not** filter by role — the frontend decides how to handle e
 - ✅ No circular module dependencies
 - ✅ No `any` types — full TypeScript strict typing
 - ✅ Documentation updated
+
+---
+
+# Backend Progress (ETAPA 4.6.1 - Order Classification System)
+
+## Status: 🟡 En validación
+
+## Implemented: OrderType enum + conditional field validation
+
+### Schema changes
+
+- `enum OrderType { DINE_IN TAKEAWAY DELIVERY }` added to Prisma schema
+- `tableNumber String` renamed to `reference String?` (nullable) via `RENAME COLUMN` — data preserved
+- `deliveryAddress String?` added to `Order` model
+- `type OrderType @default(DINE_IN)` added to `Order` model
+- Migration: `20260523000000_order_classification_system_etapa_4_6_1`
+
+### Modified files
+
+- `prisma/schema.prisma`
+- `src/orders/dto/create-order.dto.ts` — `type` required, `@ValidateIf` for `reference`/`deliveryAddress`
+- `src/orders/dto/update-order.dto.ts` — all fields optional, `plates` optional, conditional validation
+- `src/orders/orders.service.ts` — `validateClassification()` private helper, `orderSelect()` updated
+- `src/orders/orders.service.spec.ts` — `RealtimeGateway` mock added, 7 new OrderType test cases
+- `src/realtime/interfaces/order-payload.interface.ts` — `type`, `reference`, `deliveryAddress` fields
+
+### Classification rules
+
+| type      | reference         | deliveryAddress  |
+|-----------|-------------------|------------------|
+| DINE_IN   | required, non-empty | null            |
+| TAKEAWAY  | required, non-empty | null            |
+| DELIVERY  | null              | required, non-empty |
+
+### updateOrder behavior
+
+- `plates` is now optional in `PATCH /orders/:id`
+- `type`, `reference`, `deliveryAddress` are all optional (patch semantics)
+- Validation uses merged state: type/reference/deliveryAddress are resolved against existing order before validating
+- Status still changes to `UPDATED` and revision increments regardless
+
+### Completion criteria met
+
+- ✅ `enum OrderType` in Prisma schema and DB
+- ✅ Migration with RENAME COLUMN preserves existing data
+- ✅ Conditional DTO validation with `@ValidateIf`
+- ✅ `validateClassification()` helper enforces rules at service layer
+- ✅ `orderSelect()` returns `type`, `reference`, `deliveryAddress`
+- ✅ `OrderRealtimePayload` updated — all events carry new fields
+- ✅ `RealtimeGateway` mock added to test module
+- ✅ 10 test cases passing (3 FIFO + 1 SQL + 6 OrderType)
+- ✅ Build compiles without errors
+- ✅ Documentation updated (7 docs)
 
 ---
 

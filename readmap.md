@@ -48,6 +48,7 @@ Tecnologías principales:
 ## Pendiente
 
 - Frontend Migration
+- Order Classification (en validación)
 - Realtime Reliability
 - Analytics
 - Production Deployment
@@ -480,6 +481,67 @@ Actualización instantánea entre:
 ---
 
 # ETAPA 4.6
+# Order Classification System
+
+Estado:
+
+🟡 EN VALIDACIÓN
+
+---
+
+## Objetivos
+
+Clasificar pedidos por tipo de servicio.
+
+---
+
+## ETAPA 4.6.1
+# Backend Schema & API
+
+Estado:
+
+🟡 EN VALIDACIÓN
+
+---
+
+### Implementado
+
+- `enum OrderType { DINE_IN, TAKEAWAY, DELIVERY }`
+- `tableNumber` renombrado a `reference String?` (nullable, datos preservados)
+- `deliveryAddress String?` agregado al modelo `Order`
+- `type OrderType @default(DINE_IN)` agregado al modelo `Order`
+- Migración con `RENAME COLUMN` para preservar datos existentes
+- Validación condicional en `CreateOrderDto` con `@ValidateIf`:
+  - DINE_IN / TAKEAWAY → `reference` requerido
+  - DELIVERY → `deliveryAddress` requerido
+- `UpdateOrderDto`: plates opcionales, type/reference/deliveryAddress opcionales con validación condicional
+- `OrdersService.validateClassification()` como helper privado
+- `OrderRealtimePayload` actualizado: `reference`, `deliveryAddress`, `type`
+- Tests: 10 casos (3 FIFO + 1 SQL + 6 OrderType)
+
+### Archivos modificados
+
+```
+prisma/schema.prisma
+prisma/migrations/20260523000000_.../migration.sql
+src/orders/dto/create-order.dto.ts
+src/orders/dto/update-order.dto.ts
+src/orders/orders.service.ts
+src/orders/orders.service.spec.ts
+src/realtime/interfaces/order-payload.interface.ts
+```
+
+### Reglas de clasificación
+
+| type      | reference  | deliveryAddress |
+|-----------|------------|-----------------|
+| DINE_IN   | requerido  | ignorado        |
+| TAKEAWAY  | requerido  | ignorado        |
+| DELIVERY  | ignorado   | requerido       |
+
+---
+
+# ETAPA 4.7
 # Realtime Reliability
 
 Estado:
@@ -510,7 +572,7 @@ Realtime estable en producción.
 
 ---
 
-# ETAPA 4.7
+# ETAPA 4.8
 # History & Filters
 
 Estado:
@@ -559,7 +621,7 @@ Todos los pedidos de la taquería.
 
 ---
 
-# ETAPA 4.8
+# ETAPA 4.9
 # Performance Optimization
 
 Estado:
@@ -675,3 +737,13 @@ React Native Socket Migration
 Objetivo:
 
 Crear la infraestructura realtime que sustituirá completamente Firebase.
+
+---
+
+ETAPA 4.6 (en paralelo / tras 4.5)
+
+Order Classification System
+
+Objetivo:
+
+Validar la clasificación de pedidos en el frontend y asegurar que la cocina distingue DINE_IN, TAKEAWAY y DELIVERY.

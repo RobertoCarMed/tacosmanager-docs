@@ -513,7 +513,9 @@ Todas las respuestas de órdenes siguen esta forma:
   "id": "uuid",
   "taqueriaId": "uuid",
   "waiterId": "uuid",
-  "tableNumber": "Mesa 3",
+  "type": "DINE_IN",
+  "reference": "Mesa 3",
+  "deliveryAddress": null,
   "status": "PENDING",
   "revision": 1,
   "priorityTimestamp": "2024-01-01T12:00:00.000Z",
@@ -586,10 +588,11 @@ El frontend debe mostrar highlight verde cuando `isNew === true` y el status es 
 
 **Requiere JWT.** Rol: `WAITER` exclusivamente.
 
-**Request:**
+**Request (DINE_IN):**
 ```json
 {
-  "tableNumber": "Mesa 3",
+  "type": "DINE_IN",
+  "reference": "Mesa 3",
   "plates": [
     {
       "plateNumber": 1,
@@ -606,18 +609,29 @@ El frontend debe mostrar highlight verde cuando `isNew === true` y el status es 
 }
 ```
 
+**Request (DELIVERY):**
+```json
+{
+  "type": "DELIVERY",
+  "deliveryAddress": "Av. Insurgentes 123 Col. Roma",
+  "plates": [...]
+}
+```
+
 **Validaciones:**
 
-| Campo                              | Tipo       | Obligatorio | Restricciones                              |
-|------------------------------------|------------|-------------|--------------------------------------------|
-| `tableNumber`                      | `string`   | ✅          | `@IsNotEmpty`. Se aplica `.trim()`.        |
-| `plates`                           | `array`    | ✅          | Mínimo 1 elemento                          |
-| `plates[].plateNumber`             | `integer`  | ✅          | Mínimo `1`                                 |
-| `plates[].items`                   | `array`    | ✅          | Mínimo 1 elemento                          |
-| `plates[].items[].productId`       | `string`   | ✅          | UUID válido, debe pertenecer a la taquería |
-| `plates[].items[].quantity`        | `integer`  | ✅          | Mínimo `1`                                 |
-| `plates[].items[].selectedComplements` | `string[]` | ❌    | —                                          |
-| `plates[].items[].notes`           | `string`   | ❌          | —                                          |
+| Campo             | Tipo       | Obligatorio              | Restricciones                              |
+|-------------------|------------|--------------------------|--------------------------------------------|
+| `type`            | `string`   | ✅                       | `DINE_IN` \| `TAKEAWAY` \| `DELIVERY`      |
+| `reference`       | `string`   | Si type ≠ DELIVERY       | `@IsNotEmpty`. Se aplica `.trim()`.        |
+| `deliveryAddress` | `string`   | Si type = DELIVERY       | `@IsNotEmpty`. Se aplica `.trim()`.        |
+| `plates`          | `array`    | ✅                       | Mínimo 1 elemento                          |
+| `plates[].plateNumber`             | `integer`  | ✅ | Mínimo `1`                             |
+| `plates[].items`                   | `array`    | ✅ | Mínimo 1 elemento                      |
+| `plates[].items[].productId`       | `string`   | ✅ | UUID válido, debe pertenecer a la taquería |
+| `plates[].items[].quantity`        | `integer`  | ✅ | Mínimo `1`                             |
+| `plates[].items[].selectedComplements` | `string[]` | ❌ | —                                  |
+| `plates[].items[].notes`           | `string`   | ❌ | —                                      |
 
 **Response `201`:** estructura completa de la orden.
 
@@ -627,7 +641,7 @@ La orden se crea con `status: PENDING`, `revision: 1`, todos los items con `isNe
 
 | Código | Causa |
 |--------|-------|
-| `400`  | Validación de campos |
+| `400`  | Validación de campos (incluyendo reglas de clasificación) |
 | `400`  | Algún `productId` no existe o no pertenece a la taquería |
 | `403`  | El usuario es COOK |
 
@@ -685,7 +699,7 @@ Dentro de cada grupo: FIFO por `priorityTimestamp ASC`. La orden que lleva más 
 
 **Requiere JWT.** Rol: `WAITER` exclusivamente. Solo el mesero que creó la orden.
 
-**Request:**
+**Request (solo plates):**
 ```json
 {
   "plates": [
@@ -704,9 +718,37 @@ Dentro de cada grupo: FIFO por `priorityTimestamp ASC`. La orden que lleva más 
 }
 ```
 
+**Request (cambiar tipo + dirección, sin plates):**
+```json
+{
+  "type": "DELIVERY",
+  "deliveryAddress": "Calle Falsa 123"
+}
+```
+
+**Request (combinado):**
+```json
+{
+  "type": "TAKEAWAY",
+  "reference": "Ana",
+  "plates": [...]
+}
+```
+
+Todos los campos son opcionales, pero al menos uno debe ser útil (type, reference, deliveryAddress o plates).
+
 El campo `plateNumber` debe ser un número que **no exista** en la orden actual. Intentar usar un `plateNumber` ya existente devuelve `400`.
 
-**Validaciones:** mismas que `POST /orders` para plates e items, salvo que no hay `tableNumber`.
+Si se cambia el `type`, se validan las reglas de clasificación sobre el estado resultante (tipo efectivo + reference/deliveryAddress efectivos).
+
+**Validaciones de clasificación en PATCH:**
+
+| Campo             | Tipo       | Obligatorio                       |
+|-------------------|------------|-----------------------------------|
+| `type`            | `string`   | ❌ (si se omite, conserva el anterior) |
+| `reference`       | `string`   | Requerido si type efectivo ≠ DELIVERY |
+| `deliveryAddress` | `string`   | Requerido si type efectivo = DELIVERY |
+| `plates`          | `array`    | ❌ (mínimo 1 elemento si se envía) |
 
 **Response `200`:** estructura completa de la orden actualizada.
 
@@ -861,7 +903,9 @@ socket.on('order-created', ({ order }) => {
     "id": "uuid",
     "taqueriaId": "uuid",
     "waiterId": "uuid",
-    "tableNumber": "Mesa 3",
+    "type": "DINE_IN",
+    "reference": "Mesa 3",
+    "deliveryAddress": null,
     "status": "PENDING",
     "revision": 1,
     "priorityTimestamp": "2024-01-01T12:00:00.000Z",

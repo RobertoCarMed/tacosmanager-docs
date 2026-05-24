@@ -1,8 +1,8 @@
 # TacosManager - Reglas de Negocio
 
-Versión: 1.0
+Versión: 1.1
 Estado: Backend NestJS + Prisma + PostgreSQL
-Última actualización: Etapa 4.2 (Kitchen Queue Logic)
+Última actualización: Etapa 4.6.1 (Order Classification System)
 
 ---
 
@@ -207,26 +207,69 @@ Contiene:
 
 ---
 
-## tableNumber
+## Tipos de Pedido (OrderType)
 
-Representa el identificador visual de la orden.
+Cada orden tiene un tipo que determina el contexto de servicio:
 
-No necesariamente es numérico.
+### DINE_IN (predeterminado)
 
-Ejemplos válidos:
+Mesa en el local.
 
-- Mesa 1
-- Mesa Juanita
-- Barra 3
-- Terraza
-- Uber Eats
-- Pedido Rappi
+Campo requerido: `reference` (número o nombre de mesa).
 
-Reglas:
+Ejemplos: `Mesa 3`, `Barra 2`, `Terraza`.
 
-- Obligatorio
-- String
-- No vacío
+---
+
+### TAKEAWAY
+
+Para llevar, cliente en el local.
+
+Campo requerido: `reference` (nombre del cliente).
+
+Ejemplos: `Juan`, `Familia López`.
+
+---
+
+### DELIVERY
+
+Entrega a domicilio.
+
+Campo requerido: `deliveryAddress` (dirección de entrega).
+
+`reference` queda en null.
+
+Ejemplos: `Av. Insurgentes 123 Col. Roma`.
+
+---
+
+## reference
+
+Campo `String?` (nullable). Renombrado de `tableNumber` en Etapa 4.6.1.
+
+Requerido para DINE_IN y TAKEAWAY.
+
+Null para DELIVERY.
+
+---
+
+## deliveryAddress
+
+Campo `String?` (nullable).
+
+Requerido para DELIVERY.
+
+Null para DINE_IN y TAKEAWAY.
+
+---
+
+## Reglas de Validación por Tipo
+
+| OrderType | reference  | deliveryAddress | Comportamiento              |
+|-----------|------------|-----------------|------------------------------|
+| DINE_IN   | requerido  | ignorado        | Error si reference está vacío |
+| TAKEAWAY  | requerido  | ignorado        | Error si reference está vacío |
+| DELIVERY  | ignorado   | requerido       | Error si deliveryAddress vacío |
 
 ---
 
