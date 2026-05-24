@@ -385,6 +385,96 @@ Current priority order:
 
 ---
 
+# 🏷️ Order Classification System (Pendiente — ETAPA 4.6)
+
+## ⬜ OrderType — Clasificación de pedido
+
+Each order will have an `orderType` field that determines its consumption modality:
+
+- `DINE_IN` — consume inside the restaurant
+- `TAKEAWAY` — customer picks up at the counter
+- `DELIVERY` — delivered to an address
+
+`orderType` is independent of `orderStatus`. They represent different dimensions of an order.
+
+---
+
+## ⬜ Reference Field — Identificador visual del pedido
+
+The `tableNumber` field will be replaced conceptually by a `reference` field.
+
+`reference` represents the visual label used by staff to locate an order.
+
+Examples by type:
+- `DINE_IN`: "Mesa 4", "Terraza 2", "Barra 3"
+- `TAKEAWAY`: "Roberto", "Juan Pérez"
+- `DELIVERY`: null (address is used instead)
+
+---
+
+## ⬜ Delivery Address — Dirección de entrega
+
+A new `deliveryAddress` field will be added for `DELIVERY` orders.
+
+Rules:
+- Required for `DELIVERY`
+- Null for `DINE_IN` and `TAKEAWAY`
+
+---
+
+## ⬜ OrderType Selector — UI al crear pedido
+
+When creating an order, the waiter selects the modality first:
+
+```
+🍽 Comer aquí
+🥡 Para llevar
+🛵 Delivery
+```
+
+The displayed input field changes dynamically:
+- `DINE_IN` → "Referencia" (placeholder: Mesa 4)
+- `TAKEAWAY` → "Nombre cliente" (placeholder: Roberto)
+- `DELIVERY` → "Dirección" (placeholder: Av. Juárez #123)
+
+---
+
+## ⬜ Kitchen OrderType Badge — Identificación visual en cocina
+
+The KDS (Kitchen Display System) shows a badge combining emoji + reference for each order:
+
+```
+🍽 Mesa 4
+🥡 Roberto
+🛵 Av. Juárez #123
+```
+
+No extra text labels. The emoji alone identifies the modality at a glance.
+
+---
+
+## ⬜ READY is universal — Sin estados adicionales por tipo
+
+The `READY` status means the same thing for all order types:
+
+> "Order fully prepared and ready to be delivered."
+
+- Waiter takes it to the table (DINE_IN)
+- Customer picks it up (TAKEAWAY)
+- Delivery person takes it out (DELIVERY)
+
+No additional statuses (e.g. "OUT FOR DELIVERY") in ETAPA 4.6.
+
+---
+
+## ⬜ MVP Delivery Scope — Captura interna
+
+`DELIVERY` orders are captured by internal staff only.
+
+No customer-facing portals, QR ordering, or self-ordering in ETAPA 4.6.
+
+---
+
 # 🔧 Kitchen Queue Refinements (Pendiente — ETAPA 4.5.6)
 
 Two problems detected during post-migration functional testing (ETAPA 4.5.3):

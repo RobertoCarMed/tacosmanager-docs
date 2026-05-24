@@ -545,6 +545,11 @@ Todas las respuestas de órdenes siguen esta forma:
 
 Los plates se ordenan por `plateNumber ASC`.
 
+> **ETAPA 4.6 (planificado):** La estructura de orden incorporará tres nuevos campos:
+> - `orderType`: `"DINE_IN" | "TAKEAWAY" | "DELIVERY"` — modalidad de consumo del pedido.
+> - `reference`: `string | null` — identificador visual (reemplaza conceptualmente `tableNumber`).
+> - `deliveryAddress`: `string | null` — dirección de entrega, obligatoria para `DELIVERY`.
+
 ---
 
 ### Estados de orden (`OrderStatus`)
@@ -622,6 +627,17 @@ El frontend debe mostrar highlight verde cuando `isNew === true` y el status es 
 **Response `201`:** estructura completa de la orden.
 
 La orden se crea con `status: PENDING`, `revision: 1`, todos los items con `isNew: false`.
+
+> **ETAPA 4.6 (planificado):** `POST /orders` recibirá tres nuevos campos:
+>
+> | Campo             | Tipo      | Obligatorio                            |
+> |-------------------|-----------|----------------------------------------|
+> | `orderType`       | `enum`    | ✅ — `DINE_IN`, `TAKEAWAY`, `DELIVERY` |
+> | `reference`       | `string`  | ✅ para DINE_IN y TAKEAWAY; ❌ para DELIVERY |
+> | `deliveryAddress` | `string`  | ✅ para DELIVERY; ❌ para los demás     |
+>
+> El campo `tableNumber` seguirá aceptándose durante la transición.
+> Las validaciones serán condicionales según `orderType`.
 
 **Errores:**
 

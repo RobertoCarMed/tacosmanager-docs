@@ -738,7 +738,151 @@ La persistencia en BD tiene prioridad absoluta sobre la emisión WebSocket.
 
 ---
 
-# 22. Principios Arquitectónicos
+# 22. Order Classification — OrderType
+
+Nuevo enum que clasifica el tipo de pedido según su modalidad de consumo.
+
+Valores:
+
+```txt
+DINE_IN
+TAKEAWAY
+DELIVERY
+```
+
+OrderType es completamente independiente de OrderStatus.
+
+OrderStatus representa la etapa de preparación de cocina.
+
+OrderType representa la modalidad de consumo del pedido.
+
+---
+
+# 23. Reglas de Validación por OrderType
+
+## DINE_IN
+
+reference: obligatorio.
+
+Representa el identificador visual de la mesa o zona.
+
+Ejemplos válidos:
+
+- Mesa 4
+- Terraza 2
+- Barra 3
+- Mesa VIP
+
+deliveryAddress: no aplica.
+
+---
+
+## TAKEAWAY
+
+reference: obligatorio.
+
+Representa el nombre de la persona que recogerá el pedido.
+
+Ejemplos válidos:
+
+- Roberto
+- Juan Pérez
+- María
+
+deliveryAddress: no aplica.
+
+---
+
+## DELIVERY
+
+deliveryAddress: obligatoria.
+
+Ejemplos válidos:
+
+- Av. Juárez #123
+- Calle Hidalgo #45, Col. Centro
+
+reference: opcional para futuras extensiones.
+
+---
+
+# 24. Evolución del campo tableNumber
+
+El campo `tableNumber` se reemplaza conceptualmente por:
+
+```txt
+reference: string | null
+```
+
+Representa el identificador visual utilizado por el personal para localizar el pedido.
+
+Se agrega además:
+
+```txt
+deliveryAddress: string | null
+```
+
+Campo exclusivo para pedidos DELIVERY.
+
+---
+
+# 25. Visualización en Kitchen por OrderType
+
+La cocina identifica el tipo de pedido visualmente mediante emoji + referencia.
+
+Sin texto adicional ni etiquetas redundantes.
+
+```txt
+DINE_IN   →  🍽 Mesa 4
+TAKEAWAY  →  🥡 Roberto
+DELIVERY  →  🛵 Av. Juárez #123
+```
+
+El emoji y la referencia visual son suficientes para identificar la modalidad.
+
+---
+
+# 26. READY — Significado unificado para todos los OrderType
+
+READY mantiene exactamente el mismo significado independientemente del tipo de pedido.
+
+Significa:
+
+"Pedido completamente preparado y listo para ser entregado."
+
+- DINE_IN → mesero puede llevarlo a la mesa.
+- TAKEAWAY → cliente puede recogerlo.
+- DELIVERY → repartidor puede salir a entregarlo.
+
+No se agregan estados adicionales por tipo en la ETAPA 4.6.
+
+---
+
+# 27. Alcance MVP — DELIVERY
+
+Los pedidos DELIVERY son capturados exclusivamente por personal interno.
+
+Flujo:
+
+```txt
+Cliente llama al restaurante
+      ↓
+Mesero captura el pedido en el sistema
+      ↓
+Sistema registra pedido DELIVERY con deliveryAddress
+```
+
+No existe en ETAPA 4.6:
+
+- Integración con clientes externos
+- Portal web
+- QR Ordering
+- Self-ordering
+- App de repartidores
+
+---
+
+# 28. Principios Arquitectónicos
 
 Mantener siempre:
 

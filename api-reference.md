@@ -128,6 +128,12 @@ Permite:
 - complementos
 - notas opcionales
 
+Campos planificados — ETAPA 4.6:
+
+- orderType (DINE_IN | TAKEAWAY | DELIVERY)
+- reference (reemplaza tableNumber; obligatorio para DINE_IN y TAKEAWAY)
+- deliveryAddress (obligatorio para DELIVERY)
+
 ---
 
 ## GET /orders
@@ -246,6 +252,51 @@ FIFO
 
 ```txt
 createdAt ASC
+```
+
+---
+
+# Order Classification Rules — ETAPA 4.6
+
+## OrderType
+
+```txt
+DINE_IN   → consumo en el restaurante
+TAKEAWAY  → para recoger
+DELIVERY  → entrega a domicilio
+```
+
+OrderType es independiente de OrderStatus.
+
+## Campos nuevos por tipo
+
+DINE_IN:
+
+```txt
+reference: string (obligatorio)   — ej. "Mesa 4", "Terraza 2"
+deliveryAddress: null
+```
+
+TAKEAWAY:
+
+```txt
+reference: string (obligatorio)   — nombre del cliente
+deliveryAddress: null
+```
+
+DELIVERY:
+
+```txt
+reference: string | null (opcional)
+deliveryAddress: string (obligatorio)  — ej. "Av. Juárez #123"
+```
+
+## Visualización en Kitchen
+
+```txt
+🍽 Mesa 4
+🥡 Roberto
+🛵 Av. Juárez #123
 ```
 
 ---

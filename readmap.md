@@ -57,10 +57,11 @@ Tecnologías principales:
 - 4.5.4 Socket.IO Realtime Integration
 - 4.5.5 Firebase Removal & Cleanup
 - 4.5.6 Kitchen Queue Refinements
-- 4.6 Realtime Reliability
-- 4.7 History & Filters
-- 4.8 Performance Optimization
-- 4.9 Product Management Improvements
+- 4.6 Order Classification System
+- 4.7 Realtime Reliability
+- 4.8 History & Filters
+- 4.9 Performance Optimization
+- 4.10 Product Management Improvements
 - Analytics
 - Production Deployment
 
@@ -769,6 +770,160 @@ Ninguno. El frontend ya respeta el orden retornado por la API.
 ---
 
 # ETAPA 4.6
+# Order Classification System
+
+Estado:
+
+⬜ PENDIENTE
+
+---
+
+## Justificación
+
+Los pedidos actualmente solo tienen `tableNumber` como identificador visual y `status` para el estado de cocina.
+
+No existe clasificación funcional que distinga:
+
+- Pedidos para comer dentro del restaurante
+- Pedidos para recoger y llevar
+- Pedidos para entrega a domicilio
+
+Esta clasificación aporta valor operativo para meseros, cocina, repartidores, reportes futuros y la operación diaria del restaurante.
+
+---
+
+## Nuevo campo — OrderType
+
+```txt
+enum OrderType {
+  DINE_IN
+  TAKEAWAY
+  DELIVERY
+}
+```
+
+OrderType NO reemplaza OrderStatus.
+
+Son conceptos independientes.
+
+---
+
+## Evolución del modelo Order
+
+El campo `tableNumber` se reemplaza conceptualmente por:
+
+```txt
+reference: string | null
+```
+
+Representa el identificador visual utilizado por el personal para localizar el pedido.
+
+Se agrega además:
+
+```txt
+deliveryAddress: string | null
+```
+
+Para pedidos tipo DELIVERY.
+
+---
+
+## Validaciones
+
+DINE_IN:
+
+- reference: obligatorio (ej. "Mesa 4", "Terraza 2")
+- deliveryAddress: no aplica
+
+TAKEAWAY:
+
+- reference: obligatorio — nombre del cliente (ej. "Roberto", "Juan Pérez")
+- deliveryAddress: no aplica
+
+DELIVERY:
+
+- deliveryAddress: obligatoria (ej. "Av. Juárez #123")
+- reference: opcional
+
+---
+
+## Comportamiento UI
+
+Selector al crear pedido:
+
+```txt
+🍽 Comer aquí  →  campo "Referencia"     placeholder: Mesa 4
+🥡 Para llevar  →  campo "Nombre cliente" placeholder: Roberto
+🛵 Delivery     →  campo "Dirección"      placeholder: Av. Juárez #123
+```
+
+---
+
+## Comportamiento Kitchen
+
+Los pedidos se identifican visualmente mediante emoji + referencia:
+
+```txt
+🍽 Mesa 4
+🥡 Roberto
+🛵 Av. Juárez #123
+```
+
+No se muestra el tipo de forma textual explícita.
+
+El emoji y la referencia visual son suficientes para identificar la modalidad.
+
+---
+
+## Regla READY
+
+READY mantiene el mismo significado para todos los tipos:
+
+"Pedido completamente preparado y listo para ser entregado."
+
+- Mesero puede llevarlo a la mesa (DINE_IN).
+- Cliente puede recogerlo (TAKEAWAY).
+- Repartidor puede salir a entregarlo (DELIVERY).
+
+No se agregan estados adicionales para ningún tipo en esta etapa.
+
+---
+
+## Alcance MVP
+
+Los pedidos DELIVERY son capturados exclusivamente por personal interno.
+
+No existe:
+
+- Integración con clientes externos
+- Portal web
+- QR Ordering
+- Self-ordering
+
+Estas funcionalidades podrán evaluarse en etapas posteriores a producción.
+
+---
+
+## Archivos afectados
+
+Backend:
+
+- `src/orders/orders.service.ts`
+- `src/orders/orders.controller.ts`
+- `src/orders/dto/create-order.dto.ts`
+- `prisma/schema.prisma`
+- Nueva migración Prisma
+
+Frontend:
+
+- `src/shared/types/domain.ts`
+- `src/features/orders/hooks/useCreateOrder.ts`
+- `src/features/orders/screens/CreateOrderScreen.tsx`
+- `src/features/kitchen/components/OrderCard.tsx`
+
+---
+
+# ETAPA 4.7
 # Realtime Reliability
 
 Estado:
@@ -799,7 +954,7 @@ Realtime estable en producción.
 
 ---
 
-# ETAPA 4.7
+# ETAPA 4.8
 # History & Filters
 
 Estado:
@@ -848,7 +1003,7 @@ Todos los pedidos de la taquería.
 
 ---
 
-# ETAPA 4.8
+# ETAPA 4.9
 # Performance Optimization
 
 Estado:
@@ -879,7 +1034,7 @@ Capacidad para operar múltiples taquerías simultáneamente.
 
 ---
 
-# ETAPA 4.9
+# ETAPA 4.10
 # Product Management Improvements
 
 Estado:

@@ -213,6 +213,8 @@ updatedAt
 
 ## Order
 
+Campos actuales:
+
 ```txt
 id
 tableNumber
@@ -223,6 +225,14 @@ waiterId
 taqueriaId
 createdAt
 updatedAt
+```
+
+Campos planificados — ETAPA 4.6:
+
+```txt
+orderType       (DINE_IN | TAKEAWAY | DELIVERY)
+reference       (reemplaza conceptualmente tableNumber)
+deliveryAddress (solo para DELIVERY — nullable)
 ```
 
 ---
@@ -754,6 +764,22 @@ subscribeToOrders
 
 ---
 
+# OrderType Enum — ETAPA 4.6
+
+```txt
+enum OrderType {
+  DINE_IN
+  TAKEAWAY
+  DELIVERY
+}
+```
+
+Clasifica la modalidad de consumo del pedido.
+
+Independiente de OrderStatus.
+
+---
+
 # Future Architecture
 
 Etapa 4.5.4
@@ -768,7 +794,19 @@ Firebase Removal & Cleanup — remove all Firebase from project.
 
 ---
 
+Etapa 4.5.6
+
+Kitchen Queue Refinements — conditional UPDATED promotion, PREPARING as highest priority.
+
+---
+
 Etapa 4.6
+
+Order Classification System — OrderType enum (DINE_IN, TAKEAWAY, DELIVERY), reference field, deliveryAddress field.
+
+---
+
+Etapa 4.7
 
 Realtime Reliability.
 
