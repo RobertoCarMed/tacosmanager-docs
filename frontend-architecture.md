@@ -1,7 +1,7 @@
 # TacosManager — Frontend Architecture
 
 Version: 1.1
-Última actualización: ETAPA 4.6.2
+Última actualización: ETAPA 4.6.3 — ETAPA 4.5 ✅ y ETAPA 4.6 ✅ completadas
 
 ---
 
@@ -268,7 +268,7 @@ getOrderHeaderLabel(order)
  └── DINE_IN   → 🍽 reference (o tableNumber como fallback)
 ```
 
-### Kitchen OrderCard — getOrderDisplayLabel (ETAPA 4.6.3) 🟡 EN PROGRESO
+### Kitchen OrderCard — getOrderDisplayLabel (ETAPA 4.6.3) ✅ COMPLETADA
 
 ```txt
 src/shared/utils/orderDisplay.ts → getOrderDisplayLabel(order)
@@ -463,7 +463,7 @@ src/
 
 ---
 
-## Kitchen Visualization — ETAPA 4.5.6.2 🟡 EN PROGRESO
+## Kitchen Visualization — ETAPA 4.5.6.2 ✅ COMPLETADA
 
 Adaptación de la Kitchen UI tras la implementación de ETAPA 4.5.6.1.
 
@@ -496,4 +496,4 @@ src/shared/components/OrderCard.tsx               ← highlight isNew en variant
 
 ---
 
-*Última actualización: ETAPA 4.5.6.2 🟡 (4.6.1 ✅ 4.6.2 ✅ 4.6.3 🟡 — 4.5.6.1 ✅ 4.5.6.2 🟡)*
+*Última actualización: ETAPA 4.6.3 ✅ — ETAPA 4.5 ✅ y ETAPA 4.6 ✅ completadas. Próxima: ETAPA 4.7 Realtime Reliability.*

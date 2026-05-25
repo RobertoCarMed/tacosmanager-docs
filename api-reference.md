@@ -232,7 +232,7 @@ su propia taquería
 
 # Kitchen Queue Rules
 
-Orden global (objetivo ETAPA 4.5.6.1):
+Orden global (ETAPA 4.5.6.1 ✅ implementado):
 
 ```txt
 PREPARING  (trabajo activo)
@@ -321,7 +321,7 @@ isNew = true
 Visible en:
 
 ```txt
-Cualquier estado activo donde isNew === true (PENDING, PREPARING — ETAPA 4.5.6.2)
+Cualquier estado activo donde isNew === true (PENDING, PREPARING — ETAPA 4.5.6.2 ✅)
 ```
 
 Desaparece en:
@@ -329,8 +329,6 @@ Desaparece en:
 ```txt
 READY — isNew limpiado en la misma transacción de BD
 ```
-
-> **Nota — pre-4.5.6.2:** La implementación actual solo muestra el highlight cuando status === UPDATED o status === PREPARING.
 
 ---
 

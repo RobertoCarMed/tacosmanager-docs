@@ -501,7 +501,7 @@ These features may be evaluated after production launch.
 
 ---
 
-## 🟡 Kitchen Classification — Identificación visual en cocina (4.6.3)
+## ✅ Kitchen Classification — Identificación visual en cocina (4.6.3 — COMPLETADA)
 
 The KDS shows a label combining emoji + reference for each order via `getOrderDisplayLabel(order)`:
 
@@ -524,7 +524,7 @@ Implemented in `src/shared/utils/orderDisplay.ts`. Applied to `kitchen/component
 
 ---
 
-## 🟡 READY is universal — Sin estados adicionales por tipo (4.6.3)
+## ✅ READY is universal — Sin estados adicionales por tipo (4.6.3 — COMPLETADA)
 
 The `READY` status means the same thing for all order types:
 
@@ -538,7 +538,7 @@ No additional statuses (e.g. "OUT FOR DELIVERY") in ETAPA 4.6.
 
 ---
 
-## ⬜ MVP Delivery Scope — Captura interna (4.6.1 / 4.6.2)
+## ✅ MVP Delivery Scope — Captura interna (4.6.1 / 4.6.2 — COMPLETADA)
 
 `DELIVERY` orders are captured by internal staff only.
 
@@ -555,7 +555,7 @@ These features may be evaluated after production launch.
 
 ---
 
-# 🔧 Kitchen Queue Refinements (Pendiente — ETAPA 4.5.6)
+# ✅ Kitchen Queue Refinements (ETAPA 4.5.6 — COMPLETADA)
 
 Dividida en dos subetapas independientes:
 
@@ -624,7 +624,7 @@ Implementado: **`isNew: boolean` por item**.
 
 ---
 
-## 🟡 ETAPA 4.5.6.2 — Frontend Kitchen Visualization
+## ✅ ETAPA 4.5.6.2 — Frontend Kitchen Visualization (COMPLETADA)
 
 Requiere: ETAPA 4.5.6.1 completada ✅
 
@@ -684,8 +684,7 @@ When waiter edits an order:
 
 - newly added products are highlighted (isNew = true)
 - kitchen sees the updated order with visual differentiation for new items
-
-> **Nota — pre-4.5.6:** La implementación actual cambia el status a ACTUALIZADA y mueve el pedido a máxima prioridad. En ETAPA 4.5.6 esto cambia según las reglas CASO 1/2/3 (ver Kitchen Queue Refinements).
+- status upon append follows CASO 1/2/3 rules (ETAPA 4.5.6.1 ✅): PENDING→PENDING, PREPARING→PREPARING, READY→PENDING
 
 ---
 
@@ -779,8 +778,6 @@ Both cook and waiter screens default to the `active` filter.
 - PENDING
 - PREPARING
 - READY
-
-> **Nota — pre-4.5.6:** La implementación actual también incluye `UPDATED` como estado activo. UPDATED será removido en ETAPA 4.5.6.
 
 No date restriction applies. An order created at 23:55 remains visible the next morning if it is still active.
 

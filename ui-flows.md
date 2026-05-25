@@ -1,7 +1,7 @@
 # TacosManager — UI Flows
 
-Version: 1.2
-Última actualización: ETAPA 4.6.2 ✅ (4.6.1 ✅ completada / 4.6.2 ✅ completada / 4.6.3 siguiente etapa)
+Version: 1.3
+Última actualización: ETAPA 4.6.3 ✅ — ETAPA 4.5 ✅ y ETAPA 4.6 ✅ completadas
 
 ---
 
@@ -275,8 +275,7 @@ KitchenScreen
  │     Opciones disponibles: Activos | Hoy | Últimos 7 días | Último mes | Últimos 3 meses
  │
  ├── Lista de órdenes ordenada por prioridad (desde el backend)
- │     Prioridad objetivo (ETAPA 4.5.6.1): PREPARING > PENDING > READY
- │     (pre-4.5.6.1: UPDATED > PENDING > PREPARING > READY — UPDATED deprecado en 4.5.6.1)
+ │     Prioridad (ETAPA 4.5.6.1 ✅): PREPARING > PENDING > READY
  │
  └── OrderCard por cada orden activa
        ├── Encabezado
@@ -293,7 +292,7 @@ KitchenScreen
              └── READY     → [Entregado]           → PATCH /orders/:id/status DELIVERED
 ```
 
-### Kitchen OrderCard — ETAPA 4.6.3 🟡 / ETAPA 4.5.6.2 🟡
+### Kitchen OrderCard — ETAPA 4.6.3 ✅ / ETAPA 4.5.6.2 ✅
 
 El encabezado del OrderCard muestra emoji + referencia via `getOrderDisplayLabel(order)`.
 
@@ -331,7 +330,7 @@ KitchenDashboardScreen
  └── OrderCard compacto con acciones inline
 ```
 
-### isNew Highlight Rules (ETAPA 4.5.6.2 🟡)
+### isNew Highlight Rules (ETAPA 4.5.6.2 ✅)
 
 ```txt
 item.isNew === true  → fondo verde (#E8F5E9) + borde (#C8E6C9) en cualquier estado activo (PENDING, PREPARING)
@@ -342,7 +341,7 @@ Limpieza automática al pasar a READY:
   → No hay items verdes cuando order.status === 'READY'
 ```
 
-Implementado: `kitchen/components/OrderCard.tsx` (estilo `itemRowUpdated`) y `shared/components/OrderCard.tsx` variante kitchen (nuevo estilo `itemRowNew`). Ambos leen `item.isNew` directamente, independiente del status de la orden.
+Implementado en `kitchen/components/OrderCard.tsx` (estilo `itemRowUpdated`) y `shared/components/OrderCard.tsx` variante kitchen (estilo `itemRowNew`). Ambos leen `item.isNew` directamente, independiente del status de la orden.
 
 ---
 
@@ -386,4 +385,4 @@ RootNavigator
 
 ---
 
-*Última actualización: ETAPA 4.5.6.2 🟡 — 4.5.6.1 ✅ 4.6.1 ✅ 4.6.2 ✅ completadas. 4.5.6.2 Kitchen Visualization y 4.6.3 Kitchen Integration en progreso.*
+*Última actualización: ETAPA 4.6.3 ✅ — ETAPA 4.5 ✅ y ETAPA 4.6 ✅ completadas. Próxima: ETAPA 4.7 Realtime Reliability.*

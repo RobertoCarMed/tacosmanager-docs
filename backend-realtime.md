@@ -306,7 +306,7 @@ socket.on('order-updated', ({ order }) => {
 });
 ```
 
-**Estado de la orden al emitir (objetivo ETAPA 4.5.6.1):**
+**Estado de la orden al emitir (ETAPA 4.5.6.1 ✅ implementado):**
 - `revision`: incrementado (era N, ahora N+1)
 - `status`: según reglas de modificación:
   - Si el pedido estaba en `PENDING` → permanece `PENDING`, `priorityTimestamp` sin cambios
@@ -314,8 +314,6 @@ socket.on('order-updated', ({ order }) => {
   - Si el pedido estaba en `READY` → revierte a `PENDING`
 - Los plates e items anteriores: presentes con `isNew: false`, `createdInRevision` del momento original
 - Los plates e items nuevos: presentes con `isNew: true`, `createdInRevision` igual al nuevo `revision`
-
-> **Implementado en ETAPA 4.5.6.1:** El status y `priorityTimestamp` reflejan las reglas condicionales descritas arriba. El evento `order-updated` se emite en todos los casos (DB-first — siempre después de confirmar la persistencia).
 
 **Quién recibe:** todos los usuarios conectados de la taquería (COOK y WAITER).
 
@@ -854,13 +852,11 @@ El frontend muestra highlight verde en cualquier item con `isNew: true`, indepen
 
 ```typescript
 function shouldShowGreenHighlight(item: OrderItemPayload): boolean {
-  return item.isNew; // aplica en PENDING, PREPARING — cualquier estado activo
+  return item.isNew; // aplica en PENDING, PREPARING — cualquier estado activo (ETAPA 4.5.6.2 ✅)
 }
 ```
 
 Al recibir `order-status-changed` con `status: 'READY'`, el payload ya tiene `isNew: false` en todos los items — el servidor limpia el flag en la misma transacción. No hay que calcular nada.
-
-> **Nota — pre-4.5.6.2:** La implementación actual solo muestra el highlight cuando `orderStatus === 'UPDATED' || orderStatus === 'PREPARING'`. ETAPA 4.5.6.2 elimina la dependencia del status para el highlight.
 
 ### No filtrar eventos por rol en el cliente
 
@@ -916,4 +912,4 @@ No se realiza refetch REST tras eventos. El payload completo del socket se usa d
 
 ---
 
-*Generado analizando el código fuente del backend. Fuentes: `src/realtime/**`, `src/orders/orders.service.ts`, `src/realtime/interfaces/`, `src/auth/auth.module.ts`. Última actualización: ETAPA 4.6.1 ✅ (payload actualizado con type/reference/deliveryAddress).*
+*Generado analizando el código fuente del backend. Fuentes: `src/realtime/**`, `src/orders/orders.service.ts`, `src/realtime/interfaces/`, `src/auth/auth.module.ts`. Última actualización: ETAPA 4.6.3 ✅. ETAPA 4.5 ✅ y ETAPA 4.6 ✅ completadas. Próxima: ETAPA 4.7 Realtime Reliability.*

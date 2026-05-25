@@ -50,13 +50,14 @@ Tecnologías principales:
 - 4.5.4 Socket.IO Realtime Integration
 - 4.5.5 Firebase Removal & Cleanup
 - 4.5.6.1 Backend Queue Rules
+- 4.5.6.2 Frontend Kitchen Visualization
 - 4.6.1 Backend Schema & API
 - 4.6.2 Frontend Create/Edit Order
+- 4.6.3 Kitchen Integration
 
 ## En Progreso
 
-- 4.5.6.2 Frontend Kitchen Visualization 🟡
-- 4.6.3 Kitchen Integration 🟡
+(ninguna)
 
 ## Pendiente
 
@@ -761,7 +762,7 @@ El autolinking de React Native 0.84 eliminará automáticamente los módulos nat
 
 Estado:
 
-⬜ PENDIENTE (dividida en dos subetapas independientes)
+✅ COMPLETADA (dividida en dos subetapas independientes, ambas completadas)
 
 ---
 
@@ -781,7 +782,7 @@ La etapa 4.5.6 creció en alcance al análisis funcional y fue dividida para:
  └── 4.5.6.2 Frontend Kitchen Visualization
 ```
 
-4.5.6.1 ✅ completada. 4.5.6.2 ⬜ pendiente — requiere 4.5.6.1 (ya disponible).
+4.5.6.1 ✅ completada. 4.5.6.2 ✅ completada.
 
 ---
 
@@ -933,7 +934,7 @@ Payloads realtime `order-updated`: status reflejará el nuevo comportamiento con
 
 Estado:
 
-🟡 EN PROGRESO
+✅ COMPLETADA
 
 Requiere: ETAPA 4.5.6.1 completada ✅
 
@@ -1056,7 +1057,7 @@ Highlight de fondo verde (`#E8F5E9`) con borde verde (`#C8E6C9`) aplicado al ít
 
 Estado:
 
-🟡 EN PROGRESO
+✅ COMPLETADA
 
 ---
 
@@ -1275,7 +1276,7 @@ Frontend:
 
 Estado:
 
-🟡 EN PROGRESO
+✅ COMPLETADA
 
 ---
 
@@ -1602,24 +1603,10 @@ Una etapa se considera completada cuando:
 
 # Próxima Etapa
 
-ETAPA 4.5.6.2 🟡 EN PROGRESO
+ETAPA 4.7 ⬜ PENDIENTE
 
-Frontend Kitchen Visualization
+Realtime Reliability
 
-En curso. Archivos modificados:
+Reconnection Strategy, Heartbeats, Connection Recovery, Cleanup, Memory Leak Prevention.
 
-- `src/shared/types/domain.ts` — UPDATED eliminado de OrderStatus
-- `src/features/kitchen/screens/KitchenScreen.tsx` — nueva prioridad PREPARING > PENDING > READY
-- `src/features/kitchen/components/OrderCard.tsx` — UPDATED eliminado, highlight isNew preservado
-- `src/features/kitchen/screens/KitchenDashboardScreen.tsx` — condición UPDATED eliminada
-- `src/shared/components/OrderCard.tsx` — highlight isNew en variante kitchen
-
----
-
-En paralelo:
-
-ETAPA 4.6.3 🟡 EN PROGRESO
-
-Kitchen Integration
-
-`getOrderDisplayLabel(order)` implementado en `src/shared/utils/orderDisplay.ts` y aplicado a ambos OrderCard.
+ETAPA 4.5 ✅ completada. ETAPA 4.6 ✅ completada.

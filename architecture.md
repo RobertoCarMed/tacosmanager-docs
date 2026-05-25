@@ -308,7 +308,7 @@ Plate 1 permanece intacto.
 
 # Kitchen Queue Architecture
 
-Flujo oficial (objetivo ETAPA 4.5.6.1):
+Flujo oficial (implementado ETAPA 4.5.6.1 ✅):
 
 ```txt
 PENDING → PREPARING → READY → DELIVERED
@@ -329,7 +329,7 @@ UPDATED  [DEPRECADO — ETAPA 4.5.6.1]
 
 # Kitchen Priority
 
-Orden global (objetivo ETAPA 4.5.6.1):
+Orden global (implementado ETAPA 4.5.6.1 ✅):
 
 ```txt
 PREPARING  (trabajo activo del cocinero)
@@ -826,7 +826,7 @@ OrderType = modalidad de consumo del pedido.
 - `domain.ts`: `OrderType`, `reference`, `deliveryAddress` en `Order` y `CreateOrderPayload`
 - `OrderCard` (waiter): `getOrderHeaderLabel` muestra emoji + referencia según tipo
 
-## Impacto Kitchen (ETAPA 4.6.3) 🟡 EN PROGRESO
+## Impacto Kitchen (ETAPA 4.6.3) ✅ COMPLETADA
 
 - `src/shared/utils/orderDisplay.ts`: nuevo helper `getOrderDisplayLabel(order)` con reglas por tipo y truncamiento
 - `kitchen/components/OrderCard.tsx`: reemplaza `Mesa {order.table}` con `getOrderDisplayLabel`
@@ -846,26 +846,26 @@ OrderType = modalidad de consumo del pedido.
 
 # Future Architecture
 
-Etapa 4.5.6.1
+Etapa 4.5.6.1 ✅ COMPLETADA
 
 Kitchen Queue Refinements (Backend) — UPDATED deprecado. Nuevo flujo: PENDING → PREPARING → READY → DELIVERED. Reglas de modificación condicionales por estado (CASO 1/2/3). Nueva prioridad: PREPARING > PENDING > READY. Mecanismo de seguimiento de cambios independiente del estado.
 
 ---
 
-Etapa 4.5.6.2 🟡
+Etapa 4.5.6.2 ✅ COMPLETADA
 
 Kitchen Visualization (Frontend) — `UPDATED` eliminado de `OrderStatus`. `statusPriority` corregido a `PREPARING(1) > PENDING(2) > READY(3)`. Highlight verde por `isNew` en ambos OrderCard (kitchen y shared variante kitchen). Waiter Orders UX sin dependencia de UPDATED.
 
 ---
 
-Etapa 4.6 (Épica) — Order Classification System:
+Etapa 4.6 (Épica) ✅ COMPLETADA — Order Classification System:
 - 4.6.1 ✅ — Backend Schema & API (completada)
 - 4.6.2 ✅ — Frontend Create/Edit Order (completada)
-- 4.6.3 🟡 — Kitchen Integration (en progreso)
+- 4.6.3 ✅ — Kitchen Integration (completada)
 
 ---
 
-Etapa 4.7
+Etapa 4.7 ⬜ PENDIENTE
 
 Realtime Reliability.
 

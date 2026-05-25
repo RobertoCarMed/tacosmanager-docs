@@ -1,8 +1,8 @@
 # TacosManager - Reglas de Negocio
 
-Versión: 1.1
+Versión: 1.2
 Estado: Backend NestJS + Prisma + PostgreSQL
-Última actualización: Etapa 4.6.1 (Order Classification System)
+Última actualización: Etapa 4.6.3 — ETAPA 4.5 ✅ y ETAPA 4.6 ✅ completadas
 
 ---
 
@@ -792,8 +792,6 @@ Cuando un WAITER actualiza un pedido (Append Only):
 - El mecanismo de seguimiento de cambios se activa (ver sección 16a).
 - `order-updated` se emite a toda la room de la taquería.
 
-> **Nota — pre-4.5.6.1:** La implementación actual cambia el status a `UPDATED` automáticamente. Esto será reemplazado en ETAPA 4.5.6.1.
-
 Cuando un COOK cambia el estado:
 
 - El nuevo status se persiste en BD.
@@ -1061,8 +1059,6 @@ Por lo tanto deben permanecer visibles bajo el filtro `active`:
 - PENDING
 - PREPARING
 - READY
-
-> **Nota — pre-4.5.6.1:** La implementación actual también incluye UPDATED como estado activo. UPDATED será removido en ETAPA 4.5.6.1.
 
 Sin importar cuándo fueron creados.
 
