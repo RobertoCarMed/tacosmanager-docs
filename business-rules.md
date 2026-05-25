@@ -521,7 +521,7 @@ UPDATED no forma parte del flujo oficial a partir de ETAPA 4.5.6.1. No debe usar
 
 # 14. Prioridad de Cocina
 
-Prioridades globales (ETAPA 4.5.6.1 — objetivo):
+Prioridades globales (implementado en ETAPA 4.5.6.1):
 
 1. PREPARING
 2. PENDING
@@ -534,8 +534,6 @@ Los pedidos PREPARING representan trabajo activo del cocinero y encabezan la col
 Los pedidos PENDING son trabajo nuevo que debe tomarse.
 
 Los pedidos READY están listos — permanecen visibles hasta ser entregados.
-
-> **Nota — Implementación pre-4.5.6.1:** La implementación actual coloca UPDATED primero con prioridad 1. ETAPA 4.5.6.1 elimina UPDATED y reordena la cola. Ver sección 16 para reglas de modificación de pedidos.
 
 ---
 
@@ -617,18 +615,12 @@ Comportamiento:
 
 Reemplaza el estado UPDATED (ver sección 13) como señal de que un pedido recibió modificaciones.
 
-El mecanismo exacto se definirá en ETAPA 4.5.6.1. Opciones bajo evaluación:
+Mecanismo implementado (ETAPA 4.5.6.1): **`isNew: boolean` por item**.
 
-- Campo `hasPendingChanges: boolean` en la orden
-- Campo `pendingChanges: number` (contador de revisiones no vistas por cocina)
-- Tracking por `createdInRevision` en items — la cocina identifica items nuevos comparando con la revisión que conocía
-
-Requisitos del mecanismo:
-
-- Independiente del estado de la orden (funciona en PENDING, PREPARING, READY)
-- El highlight verde permanece mientras existan items no preparados, independientemente del estado
-- Se limpia cuando el pedido pasa a READY (todos los items están listos)
-- Compatible con la arquitectura Append Only y el campo `revision`
+- `isNew: true` → item creado por `PATCH /orders/:id` (append posterior)
+- `isNew: false` → item creado en la orden original (`POST /orders`)
+- Se limpia a `false` en todos los items de la orden al pasar a `READY`, en la misma transacción de BD
+- Independiente del estado — aplica en PENDING, PREPARING, y el revert READY→PENDING (CASO 3)
 
 ---
 
@@ -643,7 +635,7 @@ Campo utilizado para:
 Debe actualizarse cuando:
 
 - Se crea una orden (siempre)
-- Se agregan nuevos plates/items a un pedido en estado **PREPARING** o **READY**
+- Se agregan nuevos plates/items a un pedido en estado **PREPARING** (CASO 2)
 
 No debe actualizarse cuando:
 

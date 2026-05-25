@@ -562,7 +562,7 @@ Los plates se ordenan por `plateNumber ASC`.
 
 **`UPDATED` nunca puede enviarse en `PATCH /orders/:id/status`** — el servidor lo rechaza con `400` a nivel de DTO y de servicio.
 
-> **Nota — pre-4.5.6.1:** La implementación actual asigna `UPDATED` automáticamente al hacer append. En ETAPA 4.5.6.1 el status permanecerá en `PENDING`/`PREPARING` según las reglas de modificación (ver sección PATCH /orders/:id).
+> **Implementado en ETAPA 4.5.6.1:** El status al hacer append respeta las reglas de modificación (ver sección PATCH /orders/:id). `UPDATED` ya no se asigna automáticamente.
 
 ---
 
@@ -576,7 +576,7 @@ Los plates se ordenan por `plateNumber ASC`.
 
 El frontend debe mostrar highlight verde cuando `isNew === true`, independientemente del status (aplica en PENDING, PREPARING — ETAPA 4.5.6.2).
 
-> **Nota — pre-4.5.6.2:** La implementación actual muestra el highlight verde solo cuando el status es `UPDATED` o `PREPARING`.
+> **Nota:** La visualización del highlight verde en frontend se adapta en ETAPA 4.5.6.2 — `isNew: true` ya se entrega correctamente por el backend en todos los casos.
 
 ---
 
@@ -657,7 +657,7 @@ La orden se crea con `status: PENDING`, `revision: 1`, todos los items con `isNe
 
 **COOK — todas las órdenes de la taquería, ordenadas por prioridad de cocina:**
 
-Orden de prioridad (objetivo ETAPA 4.5.6.1):
+Orden de prioridad (implementado en ETAPA 4.5.6.1):
 1. `PREPARING`
 2. `PENDING`
 3. `READY`
@@ -665,8 +665,6 @@ Orden de prioridad (objetivo ETAPA 4.5.6.1):
 5. `CANCELLED`
 
 Dentro de cada grupo: FIFO por `priorityTimestamp ASC`. La orden que lleva más tiempo esperando en su estado aparece primero.
-
-> **Nota — pre-4.5.6.1:** La implementación actual coloca `UPDATED(1) > PENDING(2) > PREPARING(3) > READY(4) > DELIVERED(5) > CANCELLED(6)`. El reordenamiento a PREPARING > PENDING ocurrirá en ETAPA 4.5.6.1 junto con la eliminación de UPDATED.
 
 **WAITER — solo sus propias órdenes, ordenadas por `createdAt DESC`.**
 

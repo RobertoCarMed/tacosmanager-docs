@@ -315,7 +315,7 @@ socket.on('order-updated', ({ order }) => {
 - Los plates e items anteriores: presentes con `isNew: false`, `createdInRevision` del momento original
 - Los plates e items nuevos: presentes con `isNew: true`, `createdInRevision` igual al nuevo `revision`
 
-> **Nota — pre-4.5.6.1:** La implementación actual asigna `status: UPDATED` automáticamente y actualiza `priorityTimestamp` en todos los casos. ETAPA 4.5.6.1 reemplazará este comportamiento con las reglas condicionales descritas arriba. El evento `order-updated` seguirá emitiéndose en todos los casos.
+> **Implementado en ETAPA 4.5.6.1:** El status y `priorityTimestamp` reflejan las reglas condicionales descritas arriba. El evento `order-updated` se emite en todos los casos (DB-first — siempre después de confirmar la persistencia).
 
 **Quién recibe:** todos los usuarios conectados de la taquería (COOK y WAITER).
 

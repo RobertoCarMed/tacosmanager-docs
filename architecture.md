@@ -339,7 +339,7 @@ DELIVERED
 CANCELLED
 ```
 
-> **Nota — pre-4.5.6.1:** La implementación actual utiliza `UPDATED > PENDING > PREPARING > READY > DELIVERED > CANCELLED`. ETAPA 4.5.6.1 elimina UPDATED y reordena la cola.
+> **Implementado en ETAPA 4.5.6.1:** Ordenamiento activo: `PREPARING > PENDING > READY > DELIVERED > CANCELLED`. `UPDATED` eliminado del flujo operativo (conservado en el enum para registros históricos).
 
 ---
 

@@ -242,9 +242,9 @@ DELIVERED
 CANCELLED
 ```
 
-> **Nota — pre-4.5.6.1:** La implementación actual utiliza `UPDATED(1) > PENDING(2) > PREPARING(3) > READY(4) > DELIVERED(5) > CANCELLED(6)`. ETAPA 4.5.6.1 elimina UPDATED y reordena la cola.
+> **Implementado en ETAPA 4.5.6.1:** Ordenamiento activo `PREPARING(1) > PENDING(2) > READY(3) > DELIVERED(4) > CANCELLED(5)`.
 
-> **UPDATED `[DEPRECADO — ETAPA 4.5.6.1]`:** El estado UPDATED fue asignado automáticamente por el backend al hacer `PATCH /orders/:id`. En ETAPA 4.5.6.1 será reemplazado por un mecanismo de seguimiento de cambios independiente del estado. Las reglas de modificación por estado (CASO 1/2/3) determinan qué ocurre con el status al hacer append — ver business-rules.md sección 16.
+> **UPDATED `[DEPRECADO — ETAPA 4.5.6.1]`:** No forma parte del flujo operativo. El backend ya no asigna `UPDATED` al hacer `PATCH /orders/:id`. El status al hacer append es condicional (CASO 1/2/3 — ver business-rules.md sección 16). El enum se conserva en DB para compatibilidad con registros históricos.
 
 ---
 

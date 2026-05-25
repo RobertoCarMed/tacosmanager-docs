@@ -49,6 +49,7 @@ Tecnologías principales:
 - 4.5.3 Orders API Migration
 - 4.5.4 Socket.IO Realtime Integration
 - 4.5.5 Firebase Removal & Cleanup
+- 4.5.6.1 Backend Queue Rules
 - 4.6.1 Backend Schema & API
 - 4.6.2 Frontend Create/Edit Order
 
@@ -58,7 +59,6 @@ Tecnologías principales:
 
 ## Pendiente
 
-- 4.5.6.1 Backend Queue Rules
 - 4.5.6.2 Frontend Kitchen Visualization
 - 4.7 Realtime Reliability
 - 4.8 History & Filters
@@ -781,7 +781,7 @@ La etapa 4.5.6 creció en alcance al análisis funcional y fue dividida para:
  └── 4.5.6.2 Frontend Kitchen Visualization
 ```
 
-Ambas subetapas están PENDIENTES. 4.5.6.2 requiere que 4.5.6.1 esté completada.
+4.5.6.1 ✅ completada. 4.5.6.2 ⬜ pendiente — requiere 4.5.6.1 (ya disponible).
 
 ---
 
@@ -804,7 +804,7 @@ La decisión es **deprecar completamente el estado `UPDATED`** y reemplazarlo po
 
 Estado:
 
-⬜ PENDIENTE
+✅ COMPLETADA
 
 Requiere: ETAPA 4.6.3 completada ✅
 
@@ -868,17 +868,12 @@ Cocina debe preparar los productos nuevos antes de marcarlo listo nuevamente.
 
 Reemplaza al estado UPDATED como señal de modificación.
 
-El mecanismo exacto se define al iniciar la implementación. Opciones evaluadas:
+Mecanismo implementado: **`isNew: boolean` por item**.
 
-- Campo `hasPendingChanges: boolean` a nivel de Order
-- Campo `pendingChanges: number` (contador de revisiones no vistas por cocina)
-- Tracking a nivel de ítem por `createdInRevision`
-
-Garantías independientes del mecanismo elegido:
-
-- Cocina puede identificar qué productos son nuevos en un pedido
-- Los productos nuevos se distinguen de los originales
-- El cambio es visible sin que el pedido cambie de posición en la cola
+- `isNew: true` en todos los items creados por `PATCH /orders/:id` (append)
+- `isNew: false` en items creados en la orden original (`POST /orders`)
+- `isNew` se limpia a `false` en todos los items al pasar la orden a `READY` (en la misma transacción de BD)
+- Independiente del estado de la orden — aplica en PENDING, PREPARING y el revert READY→PENDING (CASO 3)
 
 ---
 

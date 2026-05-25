@@ -376,13 +376,15 @@ Current states:
 
 # 🔥 Order Priority System
 
-Priority order (objetivo ETAPA 4.5.6):
+Priority order (implementado en ETAPA 4.5.6.1):
 
-1. PREPARANDO
-2. PENDIENTE
-3. LISTO
+1. PREPARING
+2. PENDING
+3. READY
+4. DELIVERED
+5. CANCELLED
 
-> **Nota — pre-4.5.6:** La implementación actual coloca ACTUALIZADA primero (prioridad 1). ACTUALIZADA será removida en ETAPA 4.5.6 y reemplazada por un mecanismo de seguimiento de cambios.
+`UPDATED` deprecado — reemplazado por `isNew: boolean` por item como mecanismo de seguimiento de cambios.
 
 ---
 
@@ -565,9 +567,9 @@ Dividida en dos subetapas independientes:
 
 ---
 
-## ⬜ ETAPA 4.5.6.1 — Backend Queue Rules
+## ✅ ETAPA 4.5.6.1 — Backend Queue Rules
 
-Objetivo: implementar en el backend el nuevo flujo de cola de cocina.
+Implementado en `src/orders/orders.service.ts`.
 
 Requiere: ETAPA 4.6.3 completada ✅
 
@@ -613,13 +615,12 @@ UPDATED eliminado del ordenamiento. FIFO por `priorityTimestamp ASC` dentro de c
 
 ### Mecanismo de seguimiento de cambios
 
-Opciones bajo evaluación:
+Implementado: **`isNew: boolean` por item**.
 
-- Campo `hasPendingChanges: boolean` en la orden
-- Campo `pendingChanges: number`
-- Tracking por `createdInRevision` en items
-
-Requisitos: independiente del estado, compatible con Append Only y `revision`.
+- `isNew: true` en items agregados por `PATCH /orders/:id`
+- `isNew: false` en items de la orden original
+- Se limpia a `false` al pasar la orden a `READY` (en la misma transacción de BD)
+- Independiente del estado — aplica en PENDING, PREPARING, y el revert READY→PENDING
 
 ---
 
