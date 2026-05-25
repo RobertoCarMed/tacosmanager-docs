@@ -396,7 +396,9 @@ isNew = true
 
 Frontend:
 
-Mostrar en verde independientemente del estado de la orden (PENDING, PREPARING — ETAPA 4.5.6.2).
+Mostrar en verde independientemente del estado de la orden (PENDING, PREPARING — implementado en ETAPA 4.5.6.2).
+
+Estrategia visual (ETAPA 4.5.6.2): fondo `#E8F5E9` + borde `#C8E6C9` en el ítem cuando `isNew === true`.
 
 Persistencia:
 
@@ -404,9 +406,7 @@ Cualquier estado activo mientras isNew === true.
 
 Desaparición:
 
-READY — el servidor limpia isNew en la misma transacción antes de emitir.
-
-> **Nota — pre-4.5.6.2:** La implementación actual solo muestra el highlight cuando status === UPDATED o status === PREPARING.
+READY — el servidor limpia isNew en la misma transacción antes de emitir. Sin items verdes cuando status === READY.
 
 ---
 
@@ -852,9 +852,9 @@ Kitchen Queue Refinements (Backend) — UPDATED deprecado. Nuevo flujo: PENDING 
 
 ---
 
-Etapa 4.5.6.2
+Etapa 4.5.6.2 🟡
 
-Kitchen Visualization (Frontend) — Indicadores visuales para items nuevos (isNew = true → verde en cualquier estado activo). Ordenamiento visual PREPARING > PENDING > READY. Highlight desaparece al llegar a READY. Waiter Orders UX: cambios pendientes visibles.
+Kitchen Visualization (Frontend) — `UPDATED` eliminado de `OrderStatus`. `statusPriority` corregido a `PREPARING(1) > PENDING(2) > READY(3)`. Highlight verde por `isNew` en ambos OrderCard (kitchen y shared variante kitchen). Waiter Orders UX sin dependencia de UPDATED.
 
 ---
 

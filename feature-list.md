@@ -624,23 +624,20 @@ Implementado: **`isNew: boolean` por item**.
 
 ---
 
-## ⬜ ETAPA 4.5.6.2 — Frontend Kitchen Visualization
+## 🟡 ETAPA 4.5.6.2 — Frontend Kitchen Visualization
 
-Objetivo: adaptar la Kitchen UI para visualizar correctamente los cambios de 4.5.6.1.
+Requiere: ETAPA 4.5.6.1 completada ✅
 
-Requiere: ETAPA 4.5.6.1 completada
+### Productos nuevos destacados visualmente ✅
 
-### Productos nuevos destacados visualmente
-
-Los productos agregados después de la creación original deben diferenciarse en cocina.
-
-Mecanismos visuales posibles:
-- Highlight de fondo verde en el ítem
-- Badge o indicador de "nuevo"
+Los productos con `isNew === true` se muestran con fondo verde (`#E8F5E9`) y borde verde (`#C8E6C9`) en:
+- `kitchen/components/OrderCard.tsx` — ya implementado (estilo `itemRowUpdated` existente)
+- `shared/components/OrderCard.tsx` variante kitchen — nuevo estilo `itemRowNew` agregado ✅
 
 El indicador es independiente del estado — aplica en PENDING, PREPARING, y revert desde READY.
+Desaparece al pasar a READY (backend limpia `isNew` en la misma transacción de BD).
 
-### Ordenamiento visual actualizado
+### Ordenamiento visual actualizado ✅
 
 ```txt
 1. PREPARING  (parte superior de la cola)
@@ -648,21 +645,34 @@ El indicador es independiente del estado — aplica en PENDING, PREPARING, y rev
 3. READY
 ```
 
-UPDATED eliminado del ordenamiento del frontend.
+`UPDATED` eliminado del `statusPriority` en `KitchenScreen.tsx`.
 
-### PREPARING permanece visible
+### PREPARING permanece visible ✅
 
-Los pedidos PREPARING permanecen en la parte superior durante modificaciones y preparación.
+Los pedidos PREPARING encabezan la cola. No son desplazados por pedidos PENDING al recibir modificaciones.
 
-### FIFO preservado
+### FIFO preservado ✅
 
-El frontend respeta el orden del backend. Sin reordenamientos locales.
+El frontend respeta el orden que entrega el backend. Sin reordenamientos locales.
 
-### Impacto Waiter Orders
+### UPDATED eliminado del tipo y la UI ✅
 
-Los meseros ven el estado correcto de sus pedidos sin UPDATED como estado visible.
+- `OrderStatus` en `domain.ts` ya no incluye `'UPDATED'`
+- `statusLabels` y `statusColors` en ambos OrderCards no incluyen UPDATED
+- `getActionForStatus` en kitchen OrderCard: solo `PENDING` → "Marcar preparando"
+- `KitchenDashboardScreen`: condición `|| item.status === 'UPDATED'` eliminada
 
-Los items con tracking activo se pueden indicar visualmente.
+### Impacto Waiter Orders ✅
+
+Los meseros ven el estado correcto de sus pedidos sin UPDATED como estado visible. La UI de WaiterOrdersScreen no tenía lógica explícita de UPDATED — funciona correctamente con los nuevos estados.
+
+### Archivos modificados
+
+- `src/shared/types/domain.ts`
+- `src/features/kitchen/screens/KitchenScreen.tsx`
+- `src/features/kitchen/components/OrderCard.tsx`
+- `src/features/kitchen/screens/KitchenDashboardScreen.tsx`
+- `src/shared/components/OrderCard.tsx`
 
 ---
 

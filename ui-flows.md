@@ -282,10 +282,10 @@ KitchenScreen
        ├── Encabezado
        │     ├── Identificador de pedido via getOrderDisplayLabel(order)
        │     │     🍽 Mesa 4 | 🥡 Roberto | 🛵 Roberto - Enviar | 🛵 Av. Juárez #123...
-       │     ├── Estado (badge)
+       │     ├── Estado (badge) — sin UPDATED (eliminado en ETAPA 4.5.6.2)
        │     └── Timestamp
        ├── Lista de plates e items
-       │     ├── Items con isNew = true → highlight verde (cualquier estado activo — ETAPA 4.5.6.2)
+       │     ├── Items con isNew = true → fondo verde (cualquier estado activo — ETAPA 4.5.6.2 ✅)
        │     └── Items originales → sin highlight
        └── Acciones
              ├── PENDING   → [Marcar preparando]  → PATCH /orders/:id/status PREPARING
@@ -293,7 +293,7 @@ KitchenScreen
              └── READY     → [Entregado]           → PATCH /orders/:id/status DELIVERED
 ```
 
-### Kitchen OrderCard — ETAPA 4.6.3 🟡 EN PROGRESO
+### Kitchen OrderCard — ETAPA 4.6.3 🟡 / ETAPA 4.5.6.2 🟡
 
 El encabezado del OrderCard muestra emoji + referencia via `getOrderDisplayLabel(order)`.
 
@@ -331,10 +331,10 @@ KitchenDashboardScreen
  └── OrderCard compacto con acciones inline
 ```
 
-### isNew Highlight Rules (ETAPA 4.5.6.2)
+### isNew Highlight Rules (ETAPA 4.5.6.2 🟡)
 
 ```txt
-item.isNew === true  → verde (cualquier estado activo: PENDING, PREPARING)
+item.isNew === true  → fondo verde (#E8F5E9) + borde (#C8E6C9) en cualquier estado activo (PENDING, PREPARING)
 item.isNew === false → sin highlight
 
 Limpieza automática al pasar a READY:
@@ -342,7 +342,7 @@ Limpieza automática al pasar a READY:
   → No hay items verdes cuando order.status === 'READY'
 ```
 
-> **Nota — pre-4.5.6.2:** La implementación actual solo muestra verde cuando `order.status === 'UPDATED' || order.status === 'PREPARING'`. ETAPA 4.5.6.2 elimina la dependencia del status UPDATED para el highlight.
+Implementado: `kitchen/components/OrderCard.tsx` (estilo `itemRowUpdated`) y `shared/components/OrderCard.tsx` variante kitchen (nuevo estilo `itemRowNew`). Ambos leen `item.isNew` directamente, independiente del status de la orden.
 
 ---
 
@@ -386,4 +386,4 @@ RootNavigator
 
 ---
 
-*Última actualización: ETAPA 4.6.3 🟡 — 4.6.1 ✅ y 4.6.2 ✅ completadas. 4.6.3 Kitchen Integration en progreso.*
+*Última actualización: ETAPA 4.5.6.2 🟡 — 4.5.6.1 ✅ 4.6.1 ✅ 4.6.2 ✅ completadas. 4.5.6.2 Kitchen Visualization y 4.6.3 Kitchen Integration en progreso.*

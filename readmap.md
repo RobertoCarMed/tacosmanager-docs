@@ -55,11 +55,11 @@ Tecnologías principales:
 
 ## En Progreso
 
+- 4.5.6.2 Frontend Kitchen Visualization 🟡
 - 4.6.3 Kitchen Integration 🟡
 
 ## Pendiente
 
-- 4.5.6.2 Frontend Kitchen Visualization
 - 4.7 Realtime Reliability
 - 4.8 History & Filters
 - 4.9 Performance Optimization
@@ -933,9 +933,9 @@ Payloads realtime `order-updated`: status reflejará el nuevo comportamiento con
 
 Estado:
 
-⬜ PENDIENTE
+🟡 EN PROGRESO
 
-Requiere: ETAPA 4.5.6.1 completada
+Requiere: ETAPA 4.5.6.1 completada ✅
 
 ---
 
@@ -1019,23 +1019,35 @@ Los eventos `order-updated` deben consumirse correctamente con el nuevo comporta
 
 ---
 
-## Archivos afectados (frontend)
+## Implementado
 
-- `src/features/kitchen/components/OrderCard.tsx` — visualización de items nuevos
-- `src/features/kitchen/screens/KitchenScreen.tsx` — orden de prioridad (PREPARING > PENDING > READY)
-- `src/shared/components/OrderCard.tsx` — variantes waiter y kitchen dashboard
-- Posiblemente `src/features/orders/store/ordersSlice.ts` — si se agrega campo de tracking al tipo `Order`
-- Posiblemente `src/shared/types/domain.ts` — si se agrega campo de tracking al tipo `Order`
+- `src/shared/types/domain.ts` — `UPDATED` eliminado del tipo `OrderStatus`
+- `src/features/kitchen/screens/KitchenScreen.tsx` — `statusPriority` actualizado: `PREPARING(1) > PENDING(2) > READY(3)`; `UPDATED` eliminado del mapa de prioridades
+- `src/features/kitchen/components/OrderCard.tsx` — `UPDATED` eliminado de `statusLabels` y `statusColors`; `getActionForStatus` ya no trata UPDATED como PENDING
+- `src/features/kitchen/screens/KitchenDashboardScreen.tsx` — condición `|| item.status === 'UPDATED'` eliminada del botón "Marcar preparando"
+- `src/shared/components/OrderCard.tsx` — `UPDATED` eliminado de `statusLabels` y `statusColors`; variante kitchen agrega highlight verde (`itemRowNew`) cuando `item.isNew === true`
+
+## Estrategia visual
+
+Highlight de fondo verde (`#E8F5E9`) con borde verde (`#C8E6C9`) aplicado al ítem completo cuando `item.isNew === true`. Independiente del estado de la orden. Desaparece al pasar a READY (el backend limpia `isNew` en la misma transacción).
+
+## Archivos modificados
+
+- `src/shared/types/domain.ts`
+- `src/features/kitchen/screens/KitchenScreen.tsx`
+- `src/features/kitchen/components/OrderCard.tsx`
+- `src/features/kitchen/screens/KitchenDashboardScreen.tsx`
+- `src/shared/components/OrderCard.tsx`
 
 ---
 
 ## Objetivos de la Subetapa
 
-- Visualizar correctamente pedidos modificados sin depender del estado UPDATED
-- Destacar productos nuevos en cualquier estado activo de la cola
-- Mantener PREPARING en la parte superior de la cola
-- Preservar el FIFO visible recibido del backend
-- Eliminar lógica de frontend que dependa de UPDATED como señal de modificación
+- Visualizar correctamente pedidos modificados sin depender del estado UPDATED ✅
+- Destacar productos nuevos en cualquier estado activo de la cola ✅
+- Mantener PREPARING en la parte superior de la cola ✅
+- Preservar el FIFO visible recibido del backend ✅
+- Eliminar lógica de frontend que dependa de UPDATED como señal de modificación ✅
 
 ---
 
@@ -1072,7 +1084,8 @@ Son dimensiones distintas de un mismo pedido.
 
 ```txt
 OrderStatus — etapa de preparación:
-  PENDING | UPDATED | PREPARING | READY | DELIVERED | CANCELLED
+  PENDING | PREPARING | READY | DELIVERED | CANCELLED
+  UPDATED  [DEPRECADO — ETAPA 4.5.6.1]
 
 OrderType — modalidad de consumo:
   DINE_IN | TAKEAWAY | DELIVERY
@@ -1589,42 +1602,24 @@ Una etapa se considera completada cuando:
 
 # Próxima Etapa
 
-ETAPA 4.6.3
-
-Kitchen Integration
-
-Objetivo:
-
-Adaptar el Kitchen Display System (KDS) para mostrar correctamente los tipos de pedido con emoji + referencia.
-
-```txt
-DINE_IN   →  🍽 Mesa 4
-TAKEAWAY  →  🥡 Roberto
-DELIVERY  →  🛵 Av. Juárez #123...
-```
-
-Kitchen NO agrupa por tipo. FIFO y priorización de estados sin cambios.
-
----
-
-Tras 4.6.3:
-
-ETAPA 4.5.6.1
-
-Backend Queue Rules
-
-Objetivo:
-
-Implementar en el backend el nuevo flujo PENDING → PREPARING → READY → DELIVERED, deprecar UPDATED, reglas CASO 1/2/3 de modificación, mecanismo de seguimiento de cambios, nueva prioridad PREPARING > PENDING > READY.
-
----
-
-Tras 4.5.6.1:
-
-ETAPA 4.5.6.2
+ETAPA 4.5.6.2 🟡 EN PROGRESO
 
 Frontend Kitchen Visualization
 
-Objetivo:
+En curso. Archivos modificados:
 
-Adaptar el Kitchen Display System para visualizar productos nuevos independientemente del estado de la orden, actualizar el ordenamiento visual (PREPARING > PENDING > READY) y eliminar dependencias del estado UPDATED.
+- `src/shared/types/domain.ts` — UPDATED eliminado de OrderStatus
+- `src/features/kitchen/screens/KitchenScreen.tsx` — nueva prioridad PREPARING > PENDING > READY
+- `src/features/kitchen/components/OrderCard.tsx` — UPDATED eliminado, highlight isNew preservado
+- `src/features/kitchen/screens/KitchenDashboardScreen.tsx` — condición UPDATED eliminada
+- `src/shared/components/OrderCard.tsx` — highlight isNew en variante kitchen
+
+---
+
+En paralelo:
+
+ETAPA 4.6.3 🟡 EN PROGRESO
+
+Kitchen Integration
+
+`getOrderDisplayLabel(order)` implementado en `src/shared/utils/orderDisplay.ts` y aplicado a ambos OrderCard.

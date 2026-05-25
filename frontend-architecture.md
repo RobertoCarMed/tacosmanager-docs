@@ -293,11 +293,10 @@ Archivo: `src/shared/types/domain.ts`
 Tipos principales:
 
 ```typescript
-// ETAPA 4.5.6.1: UPDATED deprecado — se eliminará del tipo en ETAPA 4.5.6.2
+// ETAPA 4.5.6.2: UPDATED eliminado del tipo
 export type OrderStatus =
   | 'PENDING' | 'PREPARING'
-  | 'READY' | 'DELIVERED' | 'CANCELLED'
-  | 'UPDATED'; // DEPRECADO — ETAPA 4.5.6.1
+  | 'READY' | 'DELIVERED' | 'CANCELLED';
 
 export type OrderDateFilter = 'active' | 'today' | '7d' | '1m' | '3m';
 
@@ -464,37 +463,37 @@ src/
 
 ---
 
-## Kitchen Visualization — ETAPA 4.5.6.2 ⬜ PENDIENTE
+## Kitchen Visualization — ETAPA 4.5.6.2 🟡 EN PROGRESO
 
 Adaptación de la Kitchen UI tras la implementación de ETAPA 4.5.6.1.
 
-Requiere: ETAPA 4.5.6.1 completada.
+Requiere: ETAPA 4.5.6.1 completada ✅
 
-### Cambios esperados en KitchenScreen
+### Cambios implementados en KitchenScreen
 
 ```txt
-KitchenScreen (post-4.5.6.2)
- ├── Orden de prioridad actualizado: PREPARING > PENDING > READY
- │     (UPDATED eliminado del ordenamiento local)
+KitchenScreen (ETAPA 4.5.6.2)
+ ├── Orden de prioridad actualizado: PREPARING(1) > PENDING(2) > READY(3)
+ │     UPDATED eliminado de statusPriority
  │
  └── OrderCard — visualización de items nuevos
-       ├── isNew === true (u otro campo de tracking)
-       │     → highlight visual (verde / badge)
+       ├── isNew === true
+       │     → fondo verde (#E8F5E9) + borde (#C8E6C9) sobre el ítem
        │     → aplica en PENDING, PREPARING (cualquier estado activo)
        └── isNew === false (o tras pasar a READY)
              → sin highlight
 ```
 
-### Archivos pendientes de modificación (4.5.6.2)
+### Archivos modificados (4.5.6.2)
 
 ```txt
-src/features/kitchen/components/OrderCard.tsx
-src/features/kitchen/screens/KitchenScreen.tsx    ← ordenamiento sin UPDATED
-src/shared/components/OrderCard.tsx               ← variante kitchen dashboard
-src/shared/types/domain.ts                        ← OrderStatus sin UPDATED
-src/features/orders/store/ordersSlice.ts          ← si se agrega campo de tracking
+src/shared/types/domain.ts                        ← OrderStatus sin UPDATED ✅
+src/features/kitchen/screens/KitchenScreen.tsx    ← statusPriority PREPARING > PENDING > READY ✅
+src/features/kitchen/components/OrderCard.tsx     ← UPDATED eliminado de labels/colors/action ✅
+src/features/kitchen/screens/KitchenDashboardScreen.tsx ← condición UPDATED eliminada ✅
+src/shared/components/OrderCard.tsx               ← highlight isNew en variante kitchen ✅
 ```
 
 ---
 
-*Última actualización: ETAPA 4.5.6 docs (4.6.1 ✅ 4.6.2 ✅ 4.6.3 ✅ — 4.5.6.1 ⬜ 4.5.6.2 ⬜)*
+*Última actualización: ETAPA 4.5.6.2 🟡 (4.6.1 ✅ 4.6.2 ✅ 4.6.3 🟡 — 4.5.6.1 ✅ 4.5.6.2 🟡)*
