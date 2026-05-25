@@ -232,7 +232,7 @@ su propia taquería
 
 # Kitchen Queue Rules
 
-Orden global (objetivo ETAPA 4.5.6):
+Orden global (objetivo ETAPA 4.5.6.1):
 
 ```txt
 PREPARING  (trabajo activo)
@@ -242,9 +242,9 @@ DELIVERED
 CANCELLED
 ```
 
-> **Nota — pre-4.5.6:** La implementación actual utiliza `UPDATED(1) > PENDING(2) > PREPARING(3) > READY(4) > DELIVERED(5) > CANCELLED(6)`. ETAPA 4.5.6 elimina UPDATED y reordena la cola.
+> **Nota — pre-4.5.6.1:** La implementación actual utiliza `UPDATED(1) > PENDING(2) > PREPARING(3) > READY(4) > DELIVERED(5) > CANCELLED(6)`. ETAPA 4.5.6.1 elimina UPDATED y reordena la cola.
 
-> **UPDATED `[DEPRECADO — ETAPA 4.5.6]`:** El estado UPDATED fue asignado automáticamente por el backend al hacer `PATCH /orders/:id`. En ETAPA 4.5.6 será reemplazado por un mecanismo de seguimiento de cambios independiente del estado. Las reglas de modificación por estado (CASO 1/2/3) determinan qué ocurre con el status al hacer append — ver business-rules.md sección 16.
+> **UPDATED `[DEPRECADO — ETAPA 4.5.6.1]`:** El estado UPDATED fue asignado automáticamente por el backend al hacer `PATCH /orders/:id`. En ETAPA 4.5.6.1 será reemplazado por un mecanismo de seguimiento de cambios independiente del estado. Las reglas de modificación por estado (CASO 1/2/3) determinan qué ocurre con el status al hacer append — ver business-rules.md sección 16.
 
 ---
 
@@ -267,7 +267,7 @@ OrderType NO reemplaza OrderStatus.
 ```txt
 OrderStatus — etapa de preparación de cocina:
   PENDING | PREPARING | READY | DELIVERED | CANCELLED
-  UPDATED  [DEPRECADO — ETAPA 4.5.6]
+  UPDATED  [DEPRECADO — ETAPA 4.5.6.1]
 
 OrderType — modalidad de consumo:
   DINE_IN   → consumo en el restaurante
@@ -321,7 +321,7 @@ isNew = true
 Visible en:
 
 ```txt
-Cualquier estado activo donde isNew === true (PENDING, PREPARING — ETAPA 4.5.6)
+Cualquier estado activo donde isNew === true (PENDING, PREPARING — ETAPA 4.5.6.2)
 ```
 
 Desaparece en:
@@ -330,7 +330,7 @@ Desaparece en:
 READY — isNew limpiado en la misma transacción de BD
 ```
 
-> **Nota — pre-4.5.6:** La implementación actual solo muestra el highlight cuando status === UPDATED o status === PREPARING.
+> **Nota — pre-4.5.6.2:** La implementación actual solo muestra el highlight cuando status === UPDATED o status === PREPARING.
 
 ---
 
@@ -464,7 +464,7 @@ Emitido a `taqueria:<taqueriaId>` cuando un WAITER agrega plates/items (PATCH /o
 
 La revisión se incrementa. Los nuevos items tienen `isNew: true` para highlight verde en cocina.
 
-El status resultante depende del estado previo (ETAPA 4.5.6): PENDING→PENDING, PREPARING→PREPARING, READY→PENDING.
+El status resultante depende del estado previo (ETAPA 4.5.6.1): PENDING→PENDING, PREPARING→PREPARING, READY→PENDING.
 
 ```js
 socket.on('order-updated', ({ order }) => {
@@ -487,7 +487,7 @@ Payload: misma estructura que `order-created`. Campos clave:
 }
 ```
 
-> **Nota — pre-4.5.6:** `status` siempre es `"UPDATED"` en la implementación actual.
+> **Nota — pre-4.5.6.1:** `status` siempre es `"UPDATED"` en la implementación actual.
 
 ---
 

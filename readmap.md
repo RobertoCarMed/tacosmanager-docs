@@ -58,7 +58,8 @@ Tecnologías principales:
 
 ## Pendiente
 
-- 4.5.6 Kitchen Queue Refinements
+- 4.5.6.1 Backend Queue Rules
+- 4.5.6.2 Frontend Kitchen Visualization
 - 4.7 Realtime Reliability
 - 4.8 History & Filters
 - 4.9 Performance Optimization
@@ -280,16 +281,18 @@ Backend como Source Of Truth.
 
 ## Estados
 
-- UPDATED
 - PENDING
 - PREPARING
 - READY
 - DELIVERED
 - CANCELLED
+- UPDATED ← `[DEPRECADO — ETAPA 4.5.6.1]`
+
+> **Nota:** El estado UPDATED fue definido en esta etapa. Su deprecación y reemplazo por un mecanismo de seguimiento de cambios se implementa en ETAPA 4.5.6.1.
 
 ---
 
-## Prioridad Global
+## Prioridad Global (implementación original)
 
 1. UPDATED
 2. PENDING
@@ -297,6 +300,8 @@ Backend como Source Of Truth.
 4. READY
 5. DELIVERED
 6. CANCELLED
+
+> **Nota:** El reordenamiento a PREPARING > PENDING > READY (y la eliminación de UPDATED) se implementa en ETAPA 4.5.6.1.
 
 ---
 
@@ -326,7 +331,7 @@ Nuevos Items:
 
 isNew = true
 
-Visible durante:
+Visible durante (implementación original):
 
 - UPDATED
 - PREPARING
@@ -334,6 +339,8 @@ Visible durante:
 Desaparece:
 
 - READY
+
+> **Nota:** La visualización desacoplada del estado UPDATED se implementa en ETAPA 4.5.6.2.
 
 ---
 
@@ -754,167 +761,286 @@ El autolinking de React Native 0.84 eliminará automáticamente los módulos nat
 
 Estado:
 
+⬜ PENDIENTE (dividida en dos subetapas independientes)
+
+---
+
+## División de la Etapa
+
+La etapa 4.5.6 creció en alcance al análisis funcional y fue dividida para:
+
+- Facilitar implementación incremental por capa
+- Facilitar pruebas independientes de backend y frontend
+- Reducir riesgo de regresión
+- Separar reglas de negocio de UX
+- Mejorar trazabilidad en el roadmap
+
+```txt
+4.5.6 Kitchen Queue Refinements
+ ├── 4.5.6.1 Backend Queue Rules
+ └── 4.5.6.2 Frontend Kitchen Visualization
+```
+
+Ambas subetapas están PENDIENTES. 4.5.6.2 requiere que 4.5.6.1 esté completada.
+
+---
+
+## Razón del Cambio (contexto compartido)
+
+El estado `UPDATED` generaba problemas estructurales:
+
+- Ruptura de FIFO: pedidos PENDING saltaban por delante de otros PENDING al modificarse
+- Priorización no determinista: la posición del pedido cambiaba por acciones del mesero, no del cocinero
+- Ambigüedad en cocina: UPDATED y PENDING compartían la misma acción (Marcar preparando)
+- Complejidad innecesaria en Realtime: el estado cambiaba sin intervención del cocinero
+- UX degradada: el cocinero veía pedidos reorganizarse sin haberlos tocado
+
+La decisión es **deprecar completamente el estado `UPDATED`** y reemplazarlo por un mecanismo de seguimiento de cambios independiente del estado.
+
+---
+
+# ETAPA 4.5.6.1
+# Backend Queue Rules
+
+Estado:
+
 ⬜ PENDIENTE
 
----
-
-## Contexto y Cambio de Dirección
-
-Durante el análisis funcional de la cola de cocina se detectaron problemas estructurales con el estado `UPDATED` que generaban ambigüedad, ruptura de FIFO y comportamiento no determinista.
-
-Después del análisis se tomó la decisión de **deprecar completamente el estado `UPDATED`** en lugar de parchar su comportamiento.
-
-La estrategia aprobada reemplaza `UPDATED` como señal de modificación por un mecanismo de seguimiento de cambios a nivel de pedido o de ítem.
+Requiere: ETAPA 4.6.3 completada ✅
 
 ---
 
-## Estado UPDATED — Deprecado
+## Objetivo
 
-El estado `UPDATED` queda **oficialmente deprecado** y no debe considerarse parte del flujo futuro del sistema.
+Implementar en el backend las nuevas reglas de negocio para la cola de cocina:
 
-Mientras la migración no esté completa, `UPDATED` sigue existiendo en el schema como estado legado.
+- Deprecación y remoción funcional del estado UPDATED
+- Nuevas transiciones de estado al recibir modificaciones
+- Mecanismo de seguimiento de cambios independiente del estado
+- Nueva prioridad de la cola de cocina
+- Contratos API y payloads realtime actualizados
 
-El flujo de estados oficiales pasa a ser:
+---
+
+## Nuevo Flujo Oficial de Estados
 
 ```txt
 PENDING → PREPARING → READY → DELIVERED
 ```
 
-`CANCELLED` permanece disponible como salida en cualquier punto del flujo.
+`CANCELLED` disponible como salida en cualquier punto.
+
+`UPDATED` oficialmente deprecado — no forma parte del flujo futuro.
 
 ---
 
-## Razón del Cambio
+## Reglas de Modificación de Pedidos (Append Only)
 
-El estado UPDATED generaba:
+### CASO 1 — Pedido en PENDING recibe modificación
 
-- Ruptura de FIFO: pedidos PENDING saltaban por delante de otros PENDING al modificarse
-- Priorización no determinista: la posición del pedido cambiaba por acciones del mesero, no del cocinero
-- Ambigüedad en cocina: UPDATED y PENDING compartían la misma acción (Marcar preparando), duplicando semánticamente dos estados distintos
-- Complejidad innecesaria en Realtime: el estado cambiaba sin intervención del cocinero
-- UX degradada: el cocinero veía pedidos reorganizarse sin haberlos tocado
+El pedido permanece en **PENDING**.
+
+`priorityTimestamp` no se actualiza — el pedido conserva su posición FIFO original.
+
+Los productos nuevos se marcan mediante el mecanismo de seguimiento de cambios.
 
 ---
 
-## Nuevo Mecanismo de Seguimiento de Cambios
+### CASO 2 — Pedido en PREPARING recibe modificación
 
-Las modificaciones posteriores a la creación del pedido ya **no generan cambio de estado**.
+El pedido permanece en **PREPARING**.
 
-En su lugar se introduce un mecanismo de tracking de cambios pendientes.
+No cambia de prioridad ni de posición en la cola.
 
-El mecanismo exacto queda por definir en la implementación, con posibles enfoques:
+Los productos nuevos se marcan mediante el mecanismo de seguimiento de cambios.
 
-- Campo `hasPendingChanges` a nivel de Order
-- Colección `pendingChanges` asociada al pedido
+---
+
+### CASO 3 — Pedido en READY recibe modificación
+
+El pedido **revierte automáticamente a PENDING**.
+
+Cocina debe preparar los productos nuevos antes de marcarlo listo nuevamente.
+
+---
+
+## Mecanismo de Seguimiento de Cambios
+
+Reemplaza al estado UPDATED como señal de modificación.
+
+El mecanismo exacto se define al iniciar la implementación. Opciones evaluadas:
+
+- Campo `hasPendingChanges: boolean` a nivel de Order
+- Campo `pendingChanges: number` (contador de revisiones no vistas por cocina)
 - Tracking a nivel de ítem por `createdInRevision`
 
-Lo que debe garantizarse independientemente del mecanismo:
+Garantías independientes del mecanismo elegido:
 
-- Cocina puede identificar rápidamente qué productos son nuevos en un pedido
-- Los productos nuevos se distinguen visualmente (color, badge, indicador)
+- Cocina puede identificar qué productos son nuevos en un pedido
+- Los productos nuevos se distinguen de los originales
 - El cambio es visible sin que el pedido cambie de posición en la cola
 
 ---
 
-## Reglas de Negocio Aprobadas
-
-### CASO 1 — Pedido en PENDING recibe modificaciones
-
-El pedido permanece en PENDING.
-
-No cambia de prioridad.
-
-No cambia de posición en la cola.
-
-No altera el FIFO.
-
-Los productos nuevos se marcan internamente como pendientes.
-
----
-
-### CASO 2 — Pedido en PREPARING recibe modificaciones
-
-El pedido permanece en PREPARING.
-
-No cambia de prioridad.
-
-No abandona la parte superior de la cola activa.
-
-Los productos nuevos se destacan visualmente para el cocinero.
-
----
-
-### CASO 3 — Pedido en READY recibe modificaciones
-
-El pedido regresa automáticamente a PENDING.
-
-Cocina debe preparar los productos nuevos antes de marcarlo listo nuevamente.
-
-Los productos nuevos se destacan visualmente.
-
----
-
-## Ordenamiento de la Cola de Cocina
-
-### Prioridad (implementación objetivo)
+## Nueva Prioridad de Cola de Cocina
 
 ```txt
-1. PREPARING  — trabajo activo del cocinero, siempre visible arriba
-2. PENDING    — trabajo por iniciar, orden FIFO
+1. PREPARING  — trabajo activo del cocinero
+2. PENDING    — trabajo por iniciar, FIFO
 3. READY      — listo para entregar
 4. DELIVERED  — fuera de la cola activa
 5. CANCELLED  — fuera de la cola activa
 ```
 
-`UPDATED` eliminado del ordenamiento.
+UPDATED eliminado del ordenamiento.
 
-### FIFO
-
-Dentro de cada grupo se mantiene FIFO por `priorityTimestamp ASC` (o `createdAt ASC` para PENDING).
-
-Las modificaciones a un pedido PENDING no actualizan su `priorityTimestamp`.
+FIFO por `priorityTimestamp ASC` dentro de cada grupo. Las modificaciones a un pedido PENDING no actualizan `priorityTimestamp`.
 
 ---
 
-## Visualización de Productos Nuevos
+## Impacto en API y Realtime
 
-Los productos agregados después de la creación original deben diferenciarse visualmente en cocina.
+`PATCH /orders/:id` — comportamiento condicional por estado:
 
-Mecanismos posibles:
+| Estado actual | Status resultante | priorityTimestamp |
+|---------------|-------------------|-------------------|
+| PENDING       | PENDING           | Sin cambio        |
+| PREPARING     | PREPARING         | Actualizado       |
+| READY         | PENDING (revert)  | Sin cambio        |
 
-- Badge o indicador de color verde
-- Highlight de fondo en el ítem
-- Sección separada "Productos agregados" dentro del card
+`GET /orders` (COOK) — nuevo orden: PREPARING > PENDING > READY > DELIVERED > CANCELLED.
 
-Objetivo: el cocinero identifica en segundos qué fue lo último que se agregó al pedido sin necesidad de releer todo el card.
-
----
-
-## Objetivos de la Etapa
-
-- Eliminar la ambigüedad del estado UPDATED
-- Restaurar el FIFO consistente para pedidos PENDING
-- Mantener PREPARING visible en la parte superior de la cola
-- Mejorar la experiencia del cocinero evitando reordenamientos inesperados
-- Facilitar la identificación de cambios recientes sin alterar el estado del pedido
-- Lograr comportamiento determinista: la cola solo cambia por acciones del cocinero
+Payloads realtime `order-updated`: status reflejará el nuevo comportamiento condicional.
 
 ---
 
-## Archivos afectados (pendiente de definición técnica)
+## Archivos afectados (backend)
 
-Backend:
+- `src/orders/orders.service.ts` — lógica condicional de status al hacer append
+- `prisma/schema.prisma` — posible campo de tracking de cambios
+- `src/orders/dto/update-order.dto.ts` — si se agrega campo de tracking
+- `src/realtime/interfaces/order-payload.interface.ts` — si se agrega campo de tracking al payload
 
-- `src/orders/orders.service.ts`
-- `prisma/schema.prisma` (si se agrega campo de tracking)
-- DTOs de órdenes
+---
 
-Frontend:
+## Objetivos de la Subetapa
 
-- Lógica de visualización en Kitchen OrderCard
-- Posiblemente lógica de filtro en KitchenScreen
+- Eliminar la ambigüedad del estado UPDATED en el backend
+- Restaurar FIFO consistente para pedidos PENDING
+- Implementar reglas condicionales de modificación (CASO 1/2/3)
+- Actualizar contratos API y payloads realtime
+- Documentar el mecanismo de seguimiento de cambios
 
-La implementación exacta se definirá al iniciar esta etapa.
+---
+
+# ETAPA 4.5.6.2
+# Frontend Kitchen Visualization
+
+Estado:
+
+⬜ PENDIENTE
+
+Requiere: ETAPA 4.5.6.1 completada
+
+---
+
+## Objetivo
+
+Adaptar la interfaz del Kitchen Display System (KDS) para visualizar correctamente los cambios introducidos por ETAPA 4.5.6.1:
+
+- Productos nuevos destacados visualmente en la cola de cocina
+- Indicadores visuales independientes del estado de la orden
+- Consumo correcto de los nuevos payloads realtime
+- Ordenamiento visual actualizado (PREPARING > PENDING > READY)
+- UX de cocina y meseros actualizada
+
+---
+
+## Comportamiento Esperado
+
+Los productos agregados después de la creación original del pedido deben diferenciarse visualmente.
+
+El cocinero identifica en segundos qué fue lo último que se agregó al pedido sin necesidad de releer todo el card.
+
+Mecanismos visuales posibles:
+
+- Highlight de fondo verde en el ítem
+- Badge o indicador de "nuevo"
+- Sección separada "Agregado posteriormente" dentro del card
+
+El indicador visual es independiente del estado: aplica en PENDING, PREPARING, y en el revert desde READY.
+
+---
+
+## Reglas de Visualización
+
+### Highlight de ítem nuevo
+
+```txt
+isNew === true (u otro mecanismo de tracking)
+  → destacar visualmente en cualquier estado activo
+  → aplica en PENDING, PREPARING
+
+isNew === false (o al pasar a READY)
+  → sin highlight
+```
+
+### Ordenamiento visual en KitchenScreen
+
+```txt
+1. PREPARING
+2. PENDING
+3. READY
+```
+
+UPDATED eliminado del ordenamiento del frontend.
+
+### PREPARING permanece visible
+
+Los pedidos en PREPARING deben permanecer en la parte superior de la cola durante las modificaciones y el tiempo de preparación.
+
+### FIFO preservado
+
+El frontend respeta el orden que entrega el backend. No reordena localmente.
+
+---
+
+## Impacto en Waiter Orders
+
+Los meseros también pueden beneficiarse de indicadores visuales al ver sus pedidos:
+
+- Identificar si un pedido ya fue modificado
+- Ver el estado actual correctamente (sin UPDATED como estado visible)
+
+---
+
+## Consumo de Realtime
+
+Los eventos `order-updated` deben consumirse correctamente con el nuevo comportamiento:
+
+- Si el status es PENDING → no asumir que el pedido cambió de posición
+- Si hay items con `isNew: true` → mostrar highlight visual independientemente del status
+- Si el status revierte a PENDING (CASO 3) → mostrar en la sección PENDING de la cola
+
+---
+
+## Archivos afectados (frontend)
+
+- `src/features/kitchen/components/OrderCard.tsx` — visualización de items nuevos
+- `src/features/kitchen/screens/KitchenScreen.tsx` — orden de prioridad (PREPARING > PENDING > READY)
+- `src/shared/components/OrderCard.tsx` — variantes waiter y kitchen dashboard
+- Posiblemente `src/features/orders/store/ordersSlice.ts` — si se agrega campo de tracking al tipo `Order`
+- Posiblemente `src/shared/types/domain.ts` — si se agrega campo de tracking al tipo `Order`
+
+---
+
+## Objetivos de la Subetapa
+
+- Visualizar correctamente pedidos modificados sin depender del estado UPDATED
+- Destacar productos nuevos en cualquier estado activo de la cola
+- Mantener PREPARING en la parte superior de la cola
+- Preservar el FIFO visible recibido del backend
+- Eliminar lógica de frontend que dependa de UPDATED como señal de modificación
 
 ---
 
@@ -1488,10 +1614,22 @@ Kitchen NO agrupa por tipo. FIFO y priorización de estados sin cambios.
 
 Tras 4.6.3:
 
-ETAPA 4.5.6
+ETAPA 4.5.6.1
 
-Kitchen Queue Refinements
+Backend Queue Rules
 
 Objetivo:
 
-Implementar promoción condicional a UPDATED según el estado del pedido, y cambiar el orden de prioridad de cocina a PREPARING > UPDATED > PENDING > READY > DELIVERED > CANCELLED.
+Implementar en el backend el nuevo flujo PENDING → PREPARING → READY → DELIVERED, deprecar UPDATED, reglas CASO 1/2/3 de modificación, mecanismo de seguimiento de cambios, nueva prioridad PREPARING > PENDING > READY.
+
+---
+
+Tras 4.5.6.1:
+
+ETAPA 4.5.6.2
+
+Frontend Kitchen Visualization
+
+Objetivo:
+
+Adaptar el Kitchen Display System para visualizar productos nuevos independientemente del estado de la orden, actualizar el ordenamiento visual (PREPARING > PENDING > READY) y eliminar dependencias del estado UPDATED.

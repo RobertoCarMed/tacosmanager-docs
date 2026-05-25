@@ -306,7 +306,7 @@ socket.on('order-updated', ({ order }) => {
 });
 ```
 
-**Estado de la orden al emitir (objetivo ETAPA 4.5.6):**
+**Estado de la orden al emitir (objetivo ETAPA 4.5.6.1):**
 - `revision`: incrementado (era N, ahora N+1)
 - `status`: según reglas de modificación:
   - Si el pedido estaba en `PENDING` → permanece `PENDING`, `priorityTimestamp` sin cambios
@@ -315,7 +315,7 @@ socket.on('order-updated', ({ order }) => {
 - Los plates e items anteriores: presentes con `isNew: false`, `createdInRevision` del momento original
 - Los plates e items nuevos: presentes con `isNew: true`, `createdInRevision` igual al nuevo `revision`
 
-> **Nota — pre-4.5.6:** La implementación actual asigna `status: UPDATED` automáticamente y actualiza `priorityTimestamp` en todos los casos. ETAPA 4.5.6 reemplazará este comportamiento con las reglas condicionales descritas arriba. El evento `order-updated` seguirá emitiéndose en todos los casos.
+> **Nota — pre-4.5.6.1:** La implementación actual asigna `status: UPDATED` automáticamente y actualiza `priorityTimestamp` en todos los casos. ETAPA 4.5.6.1 reemplazará este comportamiento con las reglas condicionales descritas arriba. El evento `order-updated` seguirá emitiéndose en todos los casos.
 
 **Quién recibe:** todos los usuarios conectados de la taquería (COOK y WAITER).
 
@@ -351,7 +351,7 @@ socket.on('order-status-changed', ({ order }) => {
 | `READY`     | COOK            | ✅ (limpia isNew)             |
 | `DELIVERED` | COOK            | ✅                            |
 | `CANCELLED` | COOK            | ✅                            |
-| ~~`UPDATED`~~ | ~~Sistema~~   | ❌ **`[DEPRECADO — ETAPA 4.5.6]`** No puede asignarse manualmente. Ver nota en `order-updated`. |
+| ~~`UPDATED`~~ | ~~Sistema~~   | ❌ **`[DEPRECADO — ETAPA 4.5.6.1]`** No puede asignarse manualmente. Ver nota en `order-updated`. |
 
 **Quién recibe:** todos los usuarios conectados de la taquería (COOK y WAITER).
 
@@ -379,7 +379,7 @@ interface OrderRealtimePayload {
   type: OrderType;               // "DINE_IN" | "TAKEAWAY" | "DELIVERY"
   reference: string | null;      // Número/nombre de mesa o cliente. Opcional para DELIVERY (nombre del cliente).
   deliveryAddress: string | null; // Dirección de entrega. Null para DINE_IN y TAKEAWAY.
-  status: OrderStatus;           // "PENDING" | "PREPARING" | "READY" | "DELIVERED" | "CANCELLED" — "UPDATED" deprecado en ETAPA 4.5.6
+  status: OrderStatus;           // "PENDING" | "PREPARING" | "READY" | "DELIVERED" | "CANCELLED" — "UPDATED" deprecado en ETAPA 4.5.6.1
   revision: number;              // Empieza en 1, incrementa con cada PATCH /orders/:id
   priorityTimestamp: Date;       // ISO 8601 string en JSON. Actualizado en cada append.
   createdAt: Date;               // ISO 8601 string en JSON
@@ -850,7 +850,7 @@ socket.on('connect', async () => {
 
 ### Highlight `isNew` — cuándo mostrar en verde
 
-El frontend muestra highlight verde en cualquier item con `isNew: true`, independientemente del status de la orden (ETAPA 4.5.6):
+El frontend muestra highlight verde en cualquier item con `isNew: true`, independientemente del status de la orden (ETAPA 4.5.6.2):
 
 ```typescript
 function shouldShowGreenHighlight(item: OrderItemPayload): boolean {
@@ -860,7 +860,7 @@ function shouldShowGreenHighlight(item: OrderItemPayload): boolean {
 
 Al recibir `order-status-changed` con `status: 'READY'`, el payload ya tiene `isNew: false` en todos los items — el servidor limpia el flag en la misma transacción. No hay que calcular nada.
 
-> **Nota — pre-4.5.6:** La implementación actual solo muestra el highlight cuando `orderStatus === 'UPDATED' || orderStatus === 'PREPARING'`. ETAPA 4.5.6 elimina la dependencia del status para el highlight.
+> **Nota — pre-4.5.6.2:** La implementación actual solo muestra el highlight cuando `orderStatus === 'UPDATED' || orderStatus === 'PREPARING'`. ETAPA 4.5.6.2 elimina la dependencia del status para el highlight.
 
 ### No filtrar eventos por rol en el cliente
 

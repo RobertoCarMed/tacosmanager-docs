@@ -555,48 +555,51 @@ These features may be evaluated after production launch.
 
 # 🔧 Kitchen Queue Refinements (Pendiente — ETAPA 4.5.6)
 
-Redefinición completa de cómo el backend maneja modificaciones a pedidos en cocina.
+Dividida en dos subetapas independientes:
 
-## Decisión clave: UPDATED deprecado
+```txt
+4.5.6 Kitchen Queue Refinements
+ ├── 4.5.6.1 Backend Queue Rules          ← reglas de negocio
+ └── 4.5.6.2 Frontend Kitchen Visualization ← adaptación UI
+```
 
-El estado `UPDATED` es **oficialmente deprecado** en ETAPA 4.5.6.
+---
 
-El flujo oficial pasa de 6 estados a 5:
+## ⬜ ETAPA 4.5.6.1 — Backend Queue Rules
+
+Objetivo: implementar en el backend el nuevo flujo de cola de cocina.
+
+Requiere: ETAPA 4.6.3 completada ✅
+
+### Decisión clave: UPDATED deprecado
+
+El estado `UPDATED` es **oficialmente deprecado** en ETAPA 4.5.6.1.
+
+Nuevo flujo oficial:
 
 ```txt
 PENDING → PREPARING → READY → DELIVERED
 ```
 
-El estado `UPDATED` es reemplazado por un **mecanismo de seguimiento de cambios** independiente del estado (ver `hasPendingChanges`, `pendingChanges`, o tracking por `createdInRevision`).
+`UPDATED` reemplazado por un **mecanismo de seguimiento de cambios** independiente del estado.
 
----
+### Reglas de modificación (CASO 1/2/3)
 
-## ⬜ CASO 1 — Pedido PENDING recibe modificación
-
-- Estado permanece `PENDING` — no cambia.
-- `priorityTimestamp` no se actualiza — el pedido conserva su posición FIFO original.
+**CASO 1 — Pedido PENDING recibe modificación:**
+- Estado permanece `PENDING`.
+- `priorityTimestamp` sin cambios — el pedido conserva su posición FIFO original.
 - Los items nuevos se marcan con el mecanismo de seguimiento de cambios.
-- El cocinero ve los items nuevos destacados visualmente (verde / badge) al tomar el pedido.
 
----
+**CASO 2 — Pedido PREPARING recibe modificación:**
+- Estado permanece `PREPARING`.
+- No cambia de prioridad ni posición en la cola.
+- Los items nuevos se marcan con el mecanismo de seguimiento de cambios.
 
-## ⬜ CASO 2 — Pedido PREPARING recibe modificación
-
-- Estado permanece `PREPARING` — no cambia.
-- Los items nuevos se destacan visualmente para que el cocinero identifique qué debe agregar.
-- El mecanismo de seguimiento de cambios señala que hay items pendientes nuevos.
-
----
-
-## ⬜ CASO 3 — Pedido READY recibe modificación
-
+**CASO 3 — Pedido READY recibe modificación:**
 - Estado **revierte a PENDING** automáticamente.
-- La cocina debe preparar los items nuevos antes de volver a marcar el pedido como READY.
-- Los items nuevos se destacan visualmente.
+- Cocina debe preparar los items nuevos antes de volver a marcar READY.
 
----
-
-## ⬜ Nueva prioridad de cocina
+### Nueva prioridad de cola de cocina
 
 ```txt
 1. PREPARING
@@ -608,23 +611,57 @@ El estado `UPDATED` es reemplazado por un **mecanismo de seguimiento de cambios*
 
 UPDATED eliminado del ordenamiento. FIFO por `priorityTimestamp ASC` dentro de cada grupo sin cambios.
 
----
+### Mecanismo de seguimiento de cambios
 
-## ⬜ Mecanismo de seguimiento de cambios
-
-Sustituye al estado UPDATED para señalar que un pedido recibió modificaciones.
-
-Opciones bajo evaluación para ETAPA 4.5.6:
+Opciones bajo evaluación:
 
 - Campo `hasPendingChanges: boolean` en la orden
-- Campo `pendingChanges: number` (contador de revisiones no vistas por cocina)
+- Campo `pendingChanges: number`
 - Tracking por `createdInRevision` en items
 
-Requisitos:
-- Independiente del estado de la orden
-- El highlight verde permanece mientras haya items recién agregados sin preparar
-- Se limpia cuando el pedido pasa a READY
-- Compatible con la arquitectura Append Only y el campo `revision`
+Requisitos: independiente del estado, compatible con Append Only y `revision`.
+
+---
+
+## ⬜ ETAPA 4.5.6.2 — Frontend Kitchen Visualization
+
+Objetivo: adaptar la Kitchen UI para visualizar correctamente los cambios de 4.5.6.1.
+
+Requiere: ETAPA 4.5.6.1 completada
+
+### Productos nuevos destacados visualmente
+
+Los productos agregados después de la creación original deben diferenciarse en cocina.
+
+Mecanismos visuales posibles:
+- Highlight de fondo verde en el ítem
+- Badge o indicador de "nuevo"
+
+El indicador es independiente del estado — aplica en PENDING, PREPARING, y revert desde READY.
+
+### Ordenamiento visual actualizado
+
+```txt
+1. PREPARING  (parte superior de la cola)
+2. PENDING    (FIFO)
+3. READY
+```
+
+UPDATED eliminado del ordenamiento del frontend.
+
+### PREPARING permanece visible
+
+Los pedidos PREPARING permanecen en la parte superior durante modificaciones y preparación.
+
+### FIFO preservado
+
+El frontend respeta el orden del backend. Sin reordenamientos locales.
+
+### Impacto Waiter Orders
+
+Los meseros ven el estado correcto de sus pedidos sin UPDATED como estado visible.
+
+Los items con tracking activo se pueden indicar visualmente.
 
 ---
 

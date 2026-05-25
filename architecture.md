@@ -308,7 +308,7 @@ Plate 1 permanece intacto.
 
 # Kitchen Queue Architecture
 
-Flujo oficial (ETAPA 4.5.6):
+Flujo oficial (objetivo ETAPA 4.5.6.1):
 
 ```txt
 PENDING → PREPARING → READY → DELIVERED
@@ -322,14 +322,14 @@ PREPARING
 READY
 DELIVERED
 CANCELLED
-UPDATED  [DEPRECADO — ETAPA 4.5.6]
+UPDATED  [DEPRECADO — ETAPA 4.5.6.1]
 ```
 
 ---
 
 # Kitchen Priority
 
-Orden global (objetivo ETAPA 4.5.6):
+Orden global (objetivo ETAPA 4.5.6.1):
 
 ```txt
 PREPARING  (trabajo activo del cocinero)
@@ -339,7 +339,7 @@ DELIVERED
 CANCELLED
 ```
 
-> **Nota — pre-4.5.6:** La implementación actual utiliza `UPDATED > PENDING > PREPARING > READY > DELIVERED > CANCELLED`. ETAPA 4.5.6 elimina UPDATED y reordena la cola.
+> **Nota — pre-4.5.6.1:** La implementación actual utiliza `UPDATED > PENDING > PREPARING > READY > DELIVERED > CANCELLED`. ETAPA 4.5.6.1 elimina UPDATED y reordena la cola.
 
 ---
 
@@ -396,7 +396,7 @@ isNew = true
 
 Frontend:
 
-Mostrar en verde independientemente del estado de la orden (PENDING, PREPARING — ETAPA 4.5.6).
+Mostrar en verde independientemente del estado de la orden (PENDING, PREPARING — ETAPA 4.5.6.2).
 
 Persistencia:
 
@@ -406,7 +406,7 @@ Desaparición:
 
 READY — el servidor limpia isNew en la misma transacción antes de emitir.
 
-> **Nota — pre-4.5.6:** La implementación actual solo muestra el highlight cuando status === UPDATED o status === PREPARING.
+> **Nota — pre-4.5.6.2:** La implementación actual solo muestra el highlight cuando status === UPDATED o status === PREPARING.
 
 ---
 
@@ -760,17 +760,17 @@ useOrders.updateOrderStatus
 API uses UPPERCASE values:
 
 ```txt
-PENDING    → kitchen priority 2 (objetivo 4.5.6)
-PREPARING  → kitchen priority 1 (objetivo 4.5.6)
-READY      → kitchen priority 3 (objetivo 4.5.6)
+PENDING    → kitchen priority 2 (objetivo 4.5.6.1)
+PREPARING  → kitchen priority 1 (objetivo 4.5.6.1)
+READY      → kitchen priority 3 (objetivo 4.5.6.1)
 DELIVERED  → filtered out of active kitchen view
 CANCELLED  → filtered out of active kitchen view
-UPDATED    → [DEPRECADO — ETAPA 4.5.6] pre-4.5.6 priority 1
+UPDATED    → [DEPRECADO — ETAPA 4.5.6.1] pre-4.5.6.1 priority 1
 ```
 
-UPDATED cannot be set manually — backend sets it when plates are appended (pre-4.5.6 only).
+UPDATED cannot be set manually — backend sets it when plates are appended (pre-4.5.6.1 only).
 
-ETAPA 4.5.6: UPDATED reemplazado por mecanismo de seguimiento de cambios independiente del estado.
+ETAPA 4.5.6.1: UPDATED reemplazado por mecanismo de seguimiento de cambios independiente del estado.
 
 ## Product Name Resolution — ETAPA 4.5.3
 
@@ -846,9 +846,15 @@ OrderType = modalidad de consumo del pedido.
 
 # Future Architecture
 
-Etapa 4.5.6
+Etapa 4.5.6.1
 
-Kitchen Queue Refinements — UPDATED deprecado. Nuevo flujo: PENDING → PREPARING → READY → DELIVERED. Reglas de modificación condicionales por estado (CASO 1/2/3). Nueva prioridad: PREPARING > PENDING > READY. Mecanismo de seguimiento de cambios independiente del estado.
+Kitchen Queue Refinements (Backend) — UPDATED deprecado. Nuevo flujo: PENDING → PREPARING → READY → DELIVERED. Reglas de modificación condicionales por estado (CASO 1/2/3). Nueva prioridad: PREPARING > PENDING > READY. Mecanismo de seguimiento de cambios independiente del estado.
+
+---
+
+Etapa 4.5.6.2
+
+Kitchen Visualization (Frontend) — Indicadores visuales para items nuevos (isNew = true → verde en cualquier estado activo). Ordenamiento visual PREPARING > PENDING > READY. Highlight desaparece al llegar a READY. Waiter Orders UX: cambios pendientes visibles.
 
 ---
 

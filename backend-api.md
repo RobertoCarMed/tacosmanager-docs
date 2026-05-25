@@ -558,11 +558,11 @@ Los plates se ordenan por `plateNumber ASC`.
 | `READY`     | COOK vía `PATCH /orders/:id/status` | Lista para entregar. Limpia `isNew` automáticamente. |
 | `DELIVERED` | COOK vía `PATCH /orders/:id/status` | Entregada                                   |
 | `CANCELLED` | COOK vía `PATCH /orders/:id/status` | Cancelada                                   |
-| ~~`UPDATED`~~ | ~~Sistema (al hacer append)~~ | **`[DEPRECADO — ETAPA 4.5.6]`** El mesero agregó items. No puede asignarse manualmente. Será eliminado en ETAPA 4.5.6 y reemplazado por un mecanismo de seguimiento de cambios. |
+| ~~`UPDATED`~~ | ~~Sistema (al hacer append)~~ | **`[DEPRECADO — ETAPA 4.5.6.1]`** El mesero agregó items. No puede asignarse manualmente. Será eliminado en ETAPA 4.5.6 y reemplazado por un mecanismo de seguimiento de cambios. |
 
 **`UPDATED` nunca puede enviarse en `PATCH /orders/:id/status`** — el servidor lo rechaza con `400` a nivel de DTO y de servicio.
 
-> **Nota — pre-4.5.6:** La implementación actual asigna `UPDATED` automáticamente al hacer append. En ETAPA 4.5.6 el status permanecerá en `PENDING`/`PREPARING` según las reglas de modificación (ver sección PATCH /orders/:id).
+> **Nota — pre-4.5.6.1:** La implementación actual asigna `UPDATED` automáticamente al hacer append. En ETAPA 4.5.6.1 el status permanecerá en `PENDING`/`PREPARING` según las reglas de modificación (ver sección PATCH /orders/:id).
 
 ---
 
@@ -574,9 +574,9 @@ Los plates se ordenan por `plateNumber ASC`.
 | Item creado en `PATCH /orders/:id` | `true`   |
 | Orden cambia a `READY`             | `false` (todos los items de la orden, en la misma transacción) |
 
-El frontend debe mostrar highlight verde cuando `isNew === true`, independientemente del status (aplica en PENDING, PREPARING — ETAPA 4.5.6).
+El frontend debe mostrar highlight verde cuando `isNew === true`, independientemente del status (aplica en PENDING, PREPARING — ETAPA 4.5.6.2).
 
-> **Nota — pre-4.5.6:** La implementación actual muestra el highlight verde solo cuando el status es `UPDATED` o `PREPARING`.
+> **Nota — pre-4.5.6.2:** La implementación actual muestra el highlight verde solo cuando el status es `UPDATED` o `PREPARING`.
 
 ---
 
@@ -657,7 +657,7 @@ La orden se crea con `status: PENDING`, `revision: 1`, todos los items con `isNe
 
 **COOK — todas las órdenes de la taquería, ordenadas por prioridad de cocina:**
 
-Orden de prioridad (objetivo ETAPA 4.5.6):
+Orden de prioridad (objetivo ETAPA 4.5.6.1):
 1. `PREPARING`
 2. `PENDING`
 3. `READY`
@@ -666,7 +666,7 @@ Orden de prioridad (objetivo ETAPA 4.5.6):
 
 Dentro de cada grupo: FIFO por `priorityTimestamp ASC`. La orden que lleva más tiempo esperando en su estado aparece primero.
 
-> **Nota — pre-4.5.6:** La implementación actual coloca `UPDATED(1) > PENDING(2) > PREPARING(3) > READY(4) > DELIVERED(5) > CANCELLED(6)`. El reordenamiento a PREPARING > PENDING ocurrirá en ETAPA 4.5.6 junto con la eliminación de UPDATED.
+> **Nota — pre-4.5.6.1:** La implementación actual coloca `UPDATED(1) > PENDING(2) > PREPARING(3) > READY(4) > DELIVERED(5) > CANCELLED(6)`. El reordenamiento a PREPARING > PENDING ocurrirá en ETAPA 4.5.6.1 junto con la eliminación de UPDATED.
 
 **WAITER — solo sus propias órdenes, ordenadas por `createdAt DESC`.**
 
@@ -759,7 +759,7 @@ Si se cambia el `type`, se validan las reglas de clasificación sobre el estado 
 
 La revisión se incrementa. Los nuevos items tienen `isNew: true`.
 
-Comportamiento del status según ETAPA 4.5.6 (objetivo):
+Comportamiento del status según ETAPA 4.5.6.1 (objetivo):
 
 | Status actual | Resultado tras PATCH             | `priorityTimestamp` |
 |---------------|----------------------------------|----------------------|
@@ -767,7 +767,7 @@ Comportamiento del status según ETAPA 4.5.6 (objetivo):
 | `PREPARING`   | Permanece `PREPARING`            | Se actualiza a `now()` |
 | `READY`       | Revierte a `PENDING`             | No aplica (revert)   |
 
-> **Nota — pre-4.5.6:** La implementación actual cambia el status a `UPDATED` y actualiza `priorityTimestamp` en todos los casos. ETAPA 4.5.6 reemplazará este comportamiento con las reglas condicionales descritas arriba.
+> **Nota — pre-4.5.6.1:** La implementación actual cambia el status a `UPDATED` y actualiza `priorityTimestamp` en todos los casos. ETAPA 4.5.6.1 reemplazará este comportamiento con las reglas condicionales descritas arriba.
 
 **Errores:**
 
@@ -798,7 +798,7 @@ Valores válidos: `PENDING`, `PREPARING`, `READY`, `DELIVERED`, `CANCELLED`.
 **Comportamiento especial al cambiar a `READY`:**
 Todos los items de la orden con `isNew: true` se limpian a `false` en la misma transacción antes de retornar.
 
-> **Nota — pre-4.5.6:** La implementación actual limpia `isNew` solo si el status previo era `UPDATED` o `PREPARING`. En ETAPA 4.5.6, la limpieza ocurrirá siempre que el status cambie a `READY` (aplica también desde `PENDING`).
+> **Nota — pre-4.5.6.1:** La implementación actual limpia `isNew` solo si el status previo era `UPDATED` o `PREPARING`. En ETAPA 4.5.6.1, la limpieza ocurrirá siempre que el status cambie a `READY` (aplica también desde `PENDING`).
 
 **Response `200`:** estructura completa de la orden con el nuevo status.
 
@@ -972,9 +972,9 @@ Claves a observar:
 - Los nuevos items tienen `isNew: true`
 - Los plates/items anteriores mantienen `isNew: false`
 - Todos los plates (históricos + nuevos) están incluidos en `plates`
-- `status` según reglas de modificación (ETAPA 4.5.6): PENDING→PENDING, PREPARING→PREPARING, READY→PENDING
+- `status` según reglas de modificación (ETAPA 4.5.6.1): PENDING→PENDING, PREPARING→PREPARING, READY→PENDING
 
-> **Nota — pre-4.5.6:** La implementación actual siempre asigna `status: "UPDATED"` en este payload.
+> **Nota — pre-4.5.6.1:** La implementación actual siempre asigna `status: "UPDATED"` en este payload.
 
 ---
 
@@ -1131,10 +1131,10 @@ socket.on('order-status-changed', ({ order }) => {
 - Recomendación: generar `plateNumber` como `max(existingPlateNumbers) + 1` en el frontend.
 
 **`isNew` y highlight verde**
-- Mostrar highlight verde en items donde `isNew === true`, independientemente del status de la orden (PENDING, PREPARING — ETAPA 4.5.6).
+- Mostrar highlight verde en items donde `isNew === true`, independientemente del status de la orden (PENDING, PREPARING — ETAPA 4.5.6.2).
 - Al recibir `order-status-changed` con status `READY`, los `isNew` ya vienen limpios desde el servidor.
-- **pre-4.5.6:** La implementación actual solo muestra highlight cuando status es `UPDATED` o `PREPARING`.
+- **pre-4.5.6.2:** La implementación actual solo muestra highlight cuando status es `UPDATED` o `PREPARING`.
 
 ---
 
-*Generado analizando el código fuente del backend. Última actualización: ETAPA 4.5.6 docs (4.6.1 ✅ backend, 4.6.2 ✅ frontend, 4.6.3 ✅ frontend, 4.5.6 ⬜ pendiente implementación).*
+*Generado analizando el código fuente del backend. Última actualización: ETAPA 4.5.6 docs (4.6.1 ✅ 4.6.2 ✅ 4.6.3 ✅ — 4.5.6.1 ⬜ Backend Queue Rules, 4.5.6.2 ⬜ Frontend Kitchen Visualization).*

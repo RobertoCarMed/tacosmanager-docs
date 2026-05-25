@@ -456,7 +456,7 @@ createdInRevision = 2
 
 # 13. Estados de Pedido
 
-Flujo oficial (ETAPA 4.5.6):
+Flujo oficial (ETAPA 4.5.6.1):
 
 ```txt
 PENDING → PREPARING → READY → DELIVERED
@@ -469,7 +469,7 @@ Estados válidos:
 - READY
 - DELIVERED
 - CANCELLED
-- ~~UPDATED~~ — `[DEPRECADO — ETAPA 4.5.6]`
+- ~~UPDATED~~ — `[DEPRECADO — ETAPA 4.5.6.1]`
 
 ---
 
@@ -509,19 +509,19 @@ Pedido cancelado. Estado terminal.
 
 ---
 
-## UPDATED `[DEPRECADO — ETAPA 4.5.6]`
+## UPDATED `[DEPRECADO — ETAPA 4.5.6.1]`
 
 Estado utilizado en implementaciones anteriores para señalar que un pedido recibió modificaciones mientras estaba en cocina.
 
-**Reemplazado en ETAPA 4.5.6** por un mecanismo de seguimiento de cambios independiente del estado (`hasPendingChanges`, `pendingChanges` o tracking por `createdInRevision`), eliminando la necesidad de un estado de modificación separado.
+**Reemplazado en ETAPA 4.5.6.1** por un mecanismo de seguimiento de cambios independiente del estado (`hasPendingChanges`, `pendingChanges` o tracking por `createdInRevision`), eliminando la necesidad de un estado de modificación separado.
 
-UPDATED no forma parte del flujo oficial a partir de ETAPA 4.5.6. No debe usarse en nuevas implementaciones.
+UPDATED no forma parte del flujo oficial a partir de ETAPA 4.5.6.1. No debe usarse en nuevas implementaciones.
 
 ---
 
 # 14. Prioridad de Cocina
 
-Prioridades globales (ETAPA 4.5.6 — objetivo):
+Prioridades globales (ETAPA 4.5.6.1 — objetivo):
 
 1. PREPARING
 2. PENDING
@@ -535,7 +535,7 @@ Los pedidos PENDING son trabajo nuevo que debe tomarse.
 
 Los pedidos READY están listos — permanecen visibles hasta ser entregados.
 
-> **Nota — Implementación pre-4.5.6:** La implementación actual coloca UPDATED primero con prioridad 1. ETAPA 4.5.6 elimina UPDATED y reordena la cola. Ver sección 16 para reglas de modificación de pedidos.
+> **Nota — Implementación pre-4.5.6.1:** La implementación actual coloca UPDATED primero con prioridad 1. ETAPA 4.5.6.1 elimina UPDATED y reordena la cola. Ver sección 16 para reglas de modificación de pedidos.
 
 ---
 
@@ -617,7 +617,7 @@ Comportamiento:
 
 Reemplaza el estado UPDATED (ver sección 13) como señal de que un pedido recibió modificaciones.
 
-El mecanismo exacto se definirá en ETAPA 4.5.6. Opciones bajo evaluación:
+El mecanismo exacto se definirá en ETAPA 4.5.6.1. Opciones bajo evaluación:
 
 - Campo `hasPendingChanges: boolean` en la orden
 - Campo `pendingChanges: number` (contador de revisiones no vistas por cocina)
@@ -675,7 +675,7 @@ El color verde permanece mientras el pedido tenga items recién agregados que a�
 
 Aplica en cualquier estado activo (PENDING, PREPARING).
 
-No depende del estado UPDATED (deprecado en ETAPA 4.5.6 — ver sección 13).
+No depende del estado UPDATED (deprecado en ETAPA 4.5.6.1 — ver sección 13).
 
 ---
 
@@ -800,7 +800,7 @@ Cuando un WAITER actualiza un pedido (Append Only):
 - El mecanismo de seguimiento de cambios se activa (ver sección 16a).
 - `order-updated` se emite a toda la room de la taquería.
 
-> **Nota — pre-4.5.6:** La implementación actual cambia el status a `UPDATED` automáticamente. Esto será reemplazado en ETAPA 4.5.6.
+> **Nota — pre-4.5.6.1:** La implementación actual cambia el status a `UPDATED` automáticamente. Esto será reemplazado en ETAPA 4.5.6.1.
 
 Cuando un COOK cambia el estado:
 
@@ -1070,7 +1070,7 @@ Por lo tanto deben permanecer visibles bajo el filtro `active`:
 - PREPARING
 - READY
 
-> **Nota — pre-4.5.6:** La implementación actual también incluye UPDATED como estado activo. UPDATED será removido en ETAPA 4.5.6.
+> **Nota — pre-4.5.6.1:** La implementación actual también incluye UPDATED como estado activo. UPDATED será removido en ETAPA 4.5.6.1.
 
 Sin importar cuándo fueron creados.
 
