@@ -372,7 +372,8 @@ AppProviders
 
 Ciclo de vida:
 - Cuando `user` cambia de `null` → authenticated: conecta socket con token de `authService.getMemoryToken()`
-- Cuando `user` cambia a `null` (logout): desconecta socket
+- Cuando `user` cambia a `null` (logout): desconecta socket, resetea `hasConnectedRef`
+- Registra handler `connect`: primera conexión → marca `hasConnectedRef = true`; reconexión → resync órdenes (ETAPA 4.7.2)
 - Registra handlers para `order-created`, `order-updated`, `order-status-changed`
 - Registra handler `disconnect`: si reason === `'io server disconnect'` → llama `signOut()` (ETAPA 4.7.1)
 - Limpia todos los handlers al desmontar o re-ejecutar (no listeners duplicados)
@@ -432,6 +433,40 @@ Cada reconexión ejecuta `handleConnection` en el servidor (re-valida JWT, re-un
 Razón disconnect `'io server disconnect'` = servidor rechazó la conexión (JWT expirado o inválido) → `signOut()` en `RealtimeProvider` redirige al login.
 
 Razones `'transport close'` y `'ping timeout'` = pérdida de red → Socket.IO reintenta reconexión automáticamente.
+
+### Resync After Reconnect (ETAPA 4.7.2)
+
+Al reconectar exitosamente, `RealtimeProvider` recupera el estado de órdenes perdido durante la desconexión.
+
+```txt
+Socket emite 'connect' (reconexión)
+      ↓
+onConnect() — hasConnectedRef.current === true → reconexión detectada
+      ↓
+resyncId = ++resyncIdRef.current
+      ↓
+resyncOrders(id): GET /orders
+      ↓
+Si id === resyncIdRef.current (no hay resync más reciente):
+      ↓
+Filtrar activos (excluir DELIVERED + CANCELLED)
+      ↓
+dispatch(setOrders(active)) → Redux actualizado con estado fresco
+```
+
+Refs utilizadas:
+- `hasConnectedRef` — distingue primera conexión (skip resync) de reconexiones (trigger resync)
+- `resyncIdRef` — protección anti-concurrencia: si múltiples `connect` se disparan antes de que el fetch complete, solo el más reciente actualiza el store
+
+Comportamiento de filtro en resync:
+- Usa filtro `'active'` (PENDING, PREPARING, READY) — el estado operacional de la taquería
+- Pedidos DELIVERED / CANCELLED no se incluyen (no son operacionales)
+- Si un usuario tenía un filtro histórico abierto (7d, 1m), `useFocusEffect` lo restaura al navegar
+
+Productos NO se resincronizan:
+- No existen eventos realtime para productos
+- El cache de `productService` está caliente desde el inicio de sesión
+- `ordersService.parseOrder()` resuelve nombres correctamente desde el cache existente
 
 ### Cleanup
 
@@ -507,4 +542,4 @@ src/shared/components/OrderCard.tsx               ← highlight isNew en variant
 
 ---
 
-*Última actualización: ETAPA 4.7.1 🔄 — ETAPA 4.5 ✅, ETAPA 4.6 ✅ y ETAPA 4.6.3 ✅ completadas. En progreso: ETAPA 4.7.1 Socket Reconnect.*
+*Última actualización: ETAPA 4.7.2 🔄 — ETAPA 4.5 ✅, ETAPA 4.6 ✅, ETAPA 4.6.3 ✅, ETAPA 4.7.1 ✅ completadas. En progreso: ETAPA 4.7.2 Resync After Reconnect.*

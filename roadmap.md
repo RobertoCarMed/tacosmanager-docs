@@ -54,14 +54,14 @@ Tecnologías principales:
 - 4.6.1 Backend Schema & API
 - 4.6.2 Frontend Create/Edit Order
 - 4.6.3 Kitchen Integration
+- 4.7.1 Socket Reconnect
 
 ## En Progreso
 
-- 4.7.1 Socket Reconnect
+- 4.7.2 Resync After Reconnect
 
 ## Pendiente
 
-- 4.7.2 Resync After Reconnect
 - 4.7.3 Multi-device Validation
 - 4.8 History & Filters
 - 4.9 Performance Optimization
@@ -1385,8 +1385,8 @@ Estado:
 
 ## Sub-etapas
 
-- 4.7.1 Socket Reconnect — 🔄 EN PROGRESO
-- 4.7.2 Resync After Reconnect — ⬜ PENDIENTE
+- 4.7.1 Socket Reconnect — ✅ COMPLETADA
+- 4.7.2 Resync After Reconnect — 🔄 EN PROGRESO
 - 4.7.3 Multi-device Validation — ⬜ PENDIENTE
 
 ---
@@ -1396,7 +1396,7 @@ Estado:
 
 Estado:
 
-🔄 EN PROGRESO
+✅ COMPLETADA
 
 ---
 
@@ -1433,7 +1433,7 @@ Robustez de la conexión Socket.IO en el cliente.
 
 Estado:
 
-⬜ PENDIENTE
+🔄 EN PROGRESO
 
 ---
 
@@ -1445,14 +1445,22 @@ Recuperar pedidos perdidos durante la desconexión.
 
 ## Implementar
 
-- Handler `connect` en `RealtimeProvider`: refetch `GET /orders` tras reconexión exitosa
-- `setOrders()` en Redux para reemplazar el estado con datos frescos del servidor
+- Handler `connect` en `RealtimeProvider`: detecta reconexiones vs primera conexión via `hasConnectedRef`
+- En reconexión: `GET /orders` directo via `apiClient`, filtra activos, dispatch `setOrders(active)`
+- Protección anti-concurrencia: `resyncIdRef` (ID incremental) — si llegan múltiples `connect` rápidos, solo el último resync actualiza el store
+- Error silencioso en resync: si `GET /orders` falla, el realtime sigue actualizando el store via eventos
+
+---
+
+## Decisión: productos NO se resincronizan
+
+Los productos se gestionan con cache in-memory (`productService`). No existen eventos realtime para productos. El cache se calienta en el inicio de sesión via `subscribeToOrders`. En resync, `ordersService.parseOrder()` usa el cache existente correctamente. No hay valor en refetch de productos al reconectar.
 
 ---
 
 ## Resultado esperado
 
-Al reconectar, el frontend recupera el estado completo desde el servidor y descarta cualquier desincronización acumulada durante la desconexión.
+Al reconectar, el frontend recupera el estado completo de órdenes activas desde el servidor y descarta cualquier desincronización acumulada durante la desconexión.
 
 ---
 
@@ -1900,13 +1908,13 @@ Una etapa se considera completada cuando:
 
 # Próxima Etapa
 
-ETAPA 4.7.1 🔄 EN PROGRESO
+ETAPA 4.7.2 🔄 EN PROGRESO
 
-Socket Reconnect — robustez de conexión Socket.IO en cliente.
+Resync After Reconnect — recuperación automática del estado de órdenes tras reconexión.
 
-Opciones explícitas de reconexión + logout automático por JWT expirado.
+onConnect → GET /orders → setOrders(active) con protección anti-concurrencia via resyncIdRef.
 
-Siguiente: 4.7.2 Resync After Reconnect → 4.7.3 Multi-device Validation → 5.0 MVP Launch
+Siguiente: 4.7.3 Multi-device Validation → 5.0 MVP Launch
 
 Ver estrategia comercial en: docs/business-model.md
 

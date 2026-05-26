@@ -897,7 +897,7 @@ socket.on('connect', () => {
 
 ## Estado de integración Frontend
 
-**ETAPA 4.5.4 — Integrado.**
+**ETAPA 4.5.4 ✅ — Integrado.**
 
 El frontend conecta via `socket.io-client@4` en `src/services/realtime/socketService.ts`.
 
@@ -910,6 +910,16 @@ Eventos integrados:
 
 No se realiza refetch REST tras eventos. El payload completo del socket se usa directamente.
 
+**ETAPA 4.7.1 ✅ — Reconexión robusta.**
+
+`socketService.connect()` define opciones explícitas de reconexión (`reconnectionAttempts: Infinity`, `reconnectionDelayMax: 5000ms`).
+
+`RealtimeProvider` maneja el evento `disconnect` con reason `'io server disconnect'` → `signOut()` automático.
+
+**ETAPA 4.7.2 🔄 — Resync After Reconnect.**
+
+`RealtimeProvider` registra handler `connect`. En reconexiones (no primera conexión), ejecuta `GET /orders` y actualiza Redux con órdenes activas. Protección anti-concurrencia via `resyncIdRef`.
+
 ---
 
-*Generado analizando el código fuente del backend. Fuentes: `src/realtime/**`, `src/orders/orders.service.ts`, `src/realtime/interfaces/`, `src/auth/auth.module.ts`. Última actualización: ETAPA 4.6.3 ✅. ETAPA 4.5 ✅ y ETAPA 4.6 ✅ completadas. Próxima: ETAPA 4.7 Realtime Reliability.*
+*Generado analizando el código fuente del backend. Fuentes: `src/realtime/**`, `src/orders/orders.service.ts`, `src/realtime/interfaces/`, `src/auth/auth.module.ts`. Última actualización: ETAPA 4.7.2 🔄. ETAPA 4.5 ✅, ETAPA 4.6 ✅, ETAPA 4.7.1 ✅ completadas.*
