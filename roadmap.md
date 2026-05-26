@@ -57,11 +57,12 @@ Tecnologías principales:
 
 ## En Progreso
 
-(ninguna)
+- 4.7.1 Socket Reconnect
 
 ## Pendiente
 
-- 4.7 Realtime Reliability
+- 4.7.2 Resync After Reconnect
+- 4.7.3 Multi-device Validation
 - 4.8 History & Filters
 - 4.9 Performance Optimization
 - 4.10 Product Management Improvements
@@ -1378,29 +1379,108 @@ Frontend:
 
 Estado:
 
+🔄 EN PROGRESO (4.7.1)
+
+---
+
+## Sub-etapas
+
+- 4.7.1 Socket Reconnect — 🔄 EN PROGRESO
+- 4.7.2 Resync After Reconnect — ⬜ PENDIENTE
+- 4.7.3 Multi-device Validation — ⬜ PENDIENTE
+
+---
+
+# ETAPA 4.7.1
+# Socket Reconnect
+
+Estado:
+
+🔄 EN PROGRESO
+
+---
+
+## Objetivos
+
+Robustez de la conexión Socket.IO en el cliente.
+
+---
+
+## Alcance
+
+Únicamente frontend. El backend ya soporta JWT authentication, rooms por taquería, handleConnection() con re-validación automática y join a taqueria:<id> en cada reconexión.
+
+---
+
+## Implementar
+
+- Opciones explícitas de reconexión en `socketService.connect()`: `reconnection: true`, `reconnectionAttempts: Infinity`, `reconnectionDelay: 1000`, `reconnectionDelayMax: 5000`, `timeout: 20000`
+- Handler `disconnect` en `RealtimeProvider`: si reason === 'io server disconnect' → `signOut()` automático
+- Cleanup del listener `disconnect` en el return del `useEffect`
+
+---
+
+## Resultado esperado
+
+- El cliente se reconecta automáticamente tras pérdida de red o timeout.
+- Si el servidor rechaza la conexión (JWT expirado), el usuario es redirigido al login sin intervención manual.
+- No hay listeners duplicados ni memory leaks.
+
+---
+
+# ETAPA 4.7.2
+# Resync After Reconnect
+
+Estado:
+
 ⬜ PENDIENTE
 
 ---
 
 ## Objetivos
 
-Preparar producción.
+Recuperar pedidos perdidos durante la desconexión.
 
 ---
 
 ## Implementar
 
-- Reconnection Strategy
-- Heartbeats
-- Connection Recovery
-- Cleanup
-- Memory Leak Prevention
+- Handler `connect` en `RealtimeProvider`: refetch `GET /orders` tras reconexión exitosa
+- `setOrders()` en Redux para reemplazar el estado con datos frescos del servidor
 
 ---
 
 ## Resultado esperado
 
-Realtime estable en producción.
+Al reconectar, el frontend recupera el estado completo desde el servidor y descarta cualquier desincronización acumulada durante la desconexión.
+
+---
+
+# ETAPA 4.7.3
+# Multi-device Validation
+
+Estado:
+
+⬜ PENDIENTE
+
+---
+
+## Objetivos
+
+Validar comportamiento con múltiples dispositivos simultáneos en la misma taquería.
+
+---
+
+## Implementar
+
+- Pruebas con múltiples cocineros y meseros conectados a la misma taquería
+- Validar que los eventos Socket.IO se propagan correctamente a todos los dispositivos del mismo tenant
+
+---
+
+## Resultado esperado
+
+Múltiples dispositivos en la misma taquería reciben actualizaciones en tiempo real sin conflictos ni pérdidas de eventos.
 
 ---
 
@@ -1820,13 +1900,13 @@ Una etapa se considera completada cuando:
 
 # Próxima Etapa
 
-ETAPA 4.7 ⬜ PENDIENTE
+ETAPA 4.7.1 🔄 EN PROGRESO
 
-Realtime Reliability — confiabilidad operativa para producción.
+Socket Reconnect — robustez de conexión Socket.IO en cliente.
 
-Reconnection Strategy, Heartbeats, Connection Recovery, Cleanup, Memory Leak Prevention.
+Opciones explícitas de reconexión + logout automático por JWT expirado.
 
-Ruta comercial: 4.7 → 5.0 MVP Launch → 6.0 Post Launch Features
+Siguiente: 4.7.2 Resync After Reconnect → 4.7.3 Multi-device Validation → 5.0 MVP Launch
 
 Ver estrategia comercial en: docs/business-model.md
 

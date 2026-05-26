@@ -374,7 +374,8 @@ Ciclo de vida:
 - Cuando `user` cambia de `null` → authenticated: conecta socket con token de `authService.getMemoryToken()`
 - Cuando `user` cambia a `null` (logout): desconecta socket
 - Registra handlers para `order-created`, `order-updated`, `order-status-changed`
-- Limpia handlers al desmontar o re-ejecutar (no listeners duplicados)
+- Registra handler `disconnect`: si reason === `'io server disconnect'` → llama `signOut()` (ETAPA 4.7.1)
+- Limpia todos los handlers al desmontar o re-ejecutar (no listeners duplicados)
 
 ### Flujo de evento
 
@@ -414,13 +415,23 @@ Socket.IO recibe eventos → addOrder / upsertOrder → actualizaciones incremen
 
 No se realiza refetch REST después de eventos realtime.
 
-### Reconexión
+### Reconexión (ETAPA 4.7.1)
 
-Socket.IO client tiene reconexión automática habilitada por defecto:
-- `reconnectionAttempts: Infinity`
-- `reconnectionDelay: 1000ms → 5000ms` (con jitter)
+`socketService.connect()` define opciones explícitas:
 
-Cada reconexión ejecuta `handleConnection` en el servidor (re-valida JWT, re-une a room).
+```txt
+reconnection: true
+reconnectionAttempts: Infinity
+reconnectionDelay: 1000ms
+reconnectionDelayMax: 5000ms
+timeout: 20000ms
+```
+
+Cada reconexión ejecuta `handleConnection` en el servidor (re-valida JWT, re-une a room automáticamente).
+
+Razón disconnect `'io server disconnect'` = servidor rechazó la conexión (JWT expirado o inválido) → `signOut()` en `RealtimeProvider` redirige al login.
+
+Razones `'transport close'` y `'ping timeout'` = pérdida de red → Socket.IO reintenta reconexión automáticamente.
 
 ### Cleanup
 
@@ -496,4 +507,4 @@ src/shared/components/OrderCard.tsx               ← highlight isNew en variant
 
 ---
 
-*Última actualización: ETAPA 4.6.3 ✅ — ETAPA 4.5 ✅ y ETAPA 4.6 ✅ completadas. Próxima: ETAPA 4.7 Realtime Reliability.*
+*Última actualización: ETAPA 4.7.1 🔄 — ETAPA 4.5 ✅, ETAPA 4.6 ✅ y ETAPA 4.6.3 ✅ completadas. En progreso: ETAPA 4.7.1 Socket Reconnect.*
