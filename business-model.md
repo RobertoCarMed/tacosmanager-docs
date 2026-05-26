@@ -186,14 +186,16 @@ Objetivo: Lanzamiento productivo.
 Sin nuevas funcionalidades de negocio — el foco es infraestructura y despliegue.
 
 ```txt
-5.0.1 🟡 — Environment Strategy (DEV / QA / PROD) — Backend ✅ implementado
-5.0.2 ⬜ — Backend Deployment (Railway + PostgreSQL)
+5.0.1 ✅ — Environment Strategy (DEV / QA / PROD) — Backend + Frontend completados
+5.0.2 ⬜ — Backend Deployment (Railway + PostgreSQL)  ← SIGUIENTE ETAPA ACTIVA
 5.0.3 ⬜ — Mobile Release Pipeline (Build flavors)
 5.0.4 ⬜ — CI/CD Automation (Backend + Frontend)
 5.0.5 ⬜ — Monitoring & Recovery (Sentry)
 5.0.6 ⬜ — Production Validation
 5.0.7 ⬜ — Play Store Release (Internal → Closed → Production)
 ```
+
+El MVP soporta múltiples ambientes y se encuentra preparado para despliegue cloud. El backend puede desplegarse en Railway sin modificar código: todas las variables críticas (`DATABASE_URL`, `JWT_SECRET`, `PORT`, `CORS_ORIGIN`, `SOCKET_ORIGIN`) se inyectan externamente.
 
 ---
 

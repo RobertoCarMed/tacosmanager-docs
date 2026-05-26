@@ -898,6 +898,65 @@ These are useful for reviewing history, not for live operation.
 
 ---
 
+# ✅ Environment Strategy (ETAPA 5.0.1 — COMPLETADA)
+
+Multi-environment support for backend and frontend with zero code changes between environments.
+
+## Backend
+
+- `@nestjs/config` (ConfigModule) registered globally in `AppModule`
+- Loads `.env.${NODE_ENV}` then falls back to `.env`
+- Validates `DATABASE_URL` and `JWT_SECRET` at startup — fails fast with clear error
+- `ConfiguredSocketIoAdapter` reads `SOCKET_ORIGIN` from ConfigService
+- HTTP CORS driven by `CORS_ORIGIN` env var
+- Scripts: `pnpm run start:dev` (development) · `start:qa` · `start:prod`
+- All 7 modules migrated from `process.env` to `ConfigService` injection
+
+**Variables soportadas:**
+
+| Variable | Requerida | Default |
+|----------|-----------|---------|
+| `DATABASE_URL` | ✅ | — |
+| `JWT_SECRET` | ✅ | — |
+| `NODE_ENV` | No | `development` |
+| `JWT_EXPIRES_IN` | No | `1d` |
+| `PORT` | No | `3000` |
+| `CORS_ORIGIN` | No | `*` |
+| `SOCKET_ORIGIN` | No | `*` |
+
+## Frontend
+
+- `react-native-config` inyecta variables de `.env.<ambiente>` en tiempo de build
+- Validación de variables al startup con error descriptivo en `src/config/env.ts`
+- `APP_CONFIG` centraliza `baseApiUrl`, `socketUrl`, `environment`
+- Selección manual: `ENVFILE=.env.qa npx react-native run-android`
+
+**Variables:**
+
+| Variable | Descripción |
+|----------|-------------|
+| `API_URL` | URL base del backend REST |
+| `SOCKET_URL` | URL del servidor Socket.IO |
+| `ENVIRONMENT` | Identificador del ambiente |
+
+## Estrategia de bases de datos
+
+| Ambiente | Base | Propósito |
+|----------|------|-----------|
+| DEV | PostgreSQL local | Desarrollo local |
+| QA | Railway independiente | Pruebas de integración |
+| PROD | Railway independiente | Producción — datos reales |
+
+Aislamiento total. Ningún ambiente comparte datos con otro.
+
+## Validaciones realizadas
+
+- ✅ Login / Auth · Products · Orders (DINE_IN, TAKEAWAY, DELIVERY)
+- ✅ Kitchen queue · Realtime events · Reconnect · Resync
+- ✅ Multi-device con múltiples roles simultáneos
+
+---
+
 # 🚀 Current MVP Status
 
 The project currently includes:
@@ -915,8 +974,9 @@ The project currently includes:
 - tablet-optimized UI
 - order classification (DINE_IN / TAKEAWAY / DELIVERY)
 - realtime reliability (socket reconnect + resync + multi-device validated)
+- multi-environment support (DEV / QA / PROD — zero code changes)
 
-**Next:** ETAPA 5.0 MVP Launch — deployment pipeline, Railway hosting, Play Store release.
+**Next:** ETAPA 5.0.2 Backend Deployment — Railway hosting, PostgreSQL administrado, despliegue cloud.
 
 ---
 

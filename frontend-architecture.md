@@ -1,7 +1,7 @@
 # TacosManager — Frontend Architecture
 
 Version: 1.2
-Última actualización: ETAPA 5.0.1 — Environment Strategy 🟡 En progreso
+Última actualización: ETAPA 5.0.1 — Environment Strategy ✅ Completada
 
 ---
 
@@ -544,7 +544,7 @@ src/shared/components/OrderCard.tsx               ← highlight isNew en variant
 
 ---
 
-## Environment Strategy — ETAPA 5.0.1 🟡 EN PROGRESO
+## Environment Strategy — ETAPA 5.0.1 ✅ COMPLETADA
 
 ### Herramienta
 
@@ -612,4 +612,4 @@ Aunque en todos los ambientes actuales apuntan al mismo host, se mantienen como 
 
 ---
 
-*Última actualización: ETAPA 5.0.1 🟡 EN PROGRESO — ETAPA 4.5 ✅, ETAPA 4.6 ✅, ETAPA 4.7 ✅ completadas. Próxima etapa activa: ETAPA 5.0 MVP Launch.*
+*Última actualización: ETAPA 5.0.1 ✅ COMPLETADA — ETAPA 4.5 ✅, ETAPA 4.6 ✅, ETAPA 4.7 ✅ completadas. Próxima etapa activa: ETAPA 5.0.2 Backend Deployment.*

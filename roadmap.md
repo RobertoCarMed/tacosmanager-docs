@@ -58,6 +58,7 @@ Tecnologías principales:
 - 4.7.2 Resync After Reconnect
 - 4.7.3 Multi-device Validation
 - 4.7 Realtime Reliability
+- 5.0.1 Environment Strategy
 
 ## En Progreso
 
@@ -1688,7 +1689,7 @@ Estrategia comercial y costos: docs/business-model.md
 
 Estado:
 
-🟡 EN PROGRESO
+✅ COMPLETADA
 
 ---
 
@@ -1836,6 +1837,22 @@ Servicios actualizados:
 
 - `src/services/api/client.ts` — Axios usa `APP_CONFIG.baseApiUrl`
 - `src/services/realtime/socketService.ts` — Socket.IO usa `APP_CONFIG.socketUrl`
+
+---
+
+## Validaciones realizadas
+
+Verificadas en la nueva arquitectura de configuración (ambientes DEV / QA / PROD):
+
+- ✅ Login y Auth (JWT firmado por `JWT_SECRET` desde ConfigService)
+- ✅ Products (CRUD completo)
+- ✅ Orders — DINE_IN, TAKEAWAY, DELIVERY
+- ✅ Kitchen (cola FIFO: PREPARING > PENDING > READY)
+- ✅ Realtime (order-created, order-updated, order-status-changed)
+- ✅ Reconnect y Resync after reconnect
+- ✅ Multi-device con múltiples roles simultáneos
+
+El sistema opera sin modificar código al cambiar de ambiente. Toda la configuración depende exclusivamente del entorno seleccionado vía `NODE_ENV` + archivos `.env.*`.
 
 ---
 

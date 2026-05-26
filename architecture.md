@@ -926,7 +926,9 @@ Etapa 5.0 🟡 EN PROGRESO
 
 MVP Launch — despliegue productivo en Railway + Play Store.
 
-5.0.1 🟡 Environment Strategy — Backend: `@nestjs/config` global, `ConfigModule.forRoot`, `ConfiguredSocketIoAdapter`, CORS configurable, validación al arranque. Scripts `start:dev/qa/prod` con `cross-env`. Frontend: `react-native-config` con `API_URL`, `SOCKET_URL`, `ENVIRONMENT`. Ver docs/roadmap.md ETAPA 5.0.1.
+5.0.1 ✅ Environment Strategy — Backend: `@nestjs/config` global, `ConfigModule.forRoot`, `ConfiguredSocketIoAdapter`, CORS configurable, validación al arranque, scripts `start:dev/qa/prod`. Frontend: `react-native-config` con `API_URL`, `SOCKET_URL`, `ENVIRONMENT`. Ambientes DEV/QA/PROD operativos. Ver docs/roadmap.md ETAPA 5.0.1.
+
+5.0.2 ⬜ Backend Deployment — Siguiente etapa activa. Despliegue en Railway + PostgreSQL administrado.
 
 Estrategia y costos: docs/business-model.md
 
