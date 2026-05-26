@@ -880,9 +880,11 @@ Realtime Reliability — confiabilidad operativa para producción.
 
 ---
 
-Etapa 5.0 ⬜ PENDIENTE
+Etapa 5.0 🟡 EN PROGRESO
 
 MVP Launch — despliegue productivo en Railway + Play Store.
+
+5.0.1 🟡 Environment Strategy — `react-native-config` con `API_URL`, `SOCKET_URL`, `ENVIRONMENT`. Archivos `.env.development`, `.env.qa`, `.env.production`. Validación de variables en startup. `APP_CONFIG` centraliza `baseApiUrl`, `socketUrl`, `environment`.
 
 Estrategia y costos: docs/business-model.md
 

@@ -1655,7 +1655,7 @@ Se trata de funcionalidades pendientes de UI que nunca fueron implementadas en e
 
 Estado:
 
-⬜ PENDIENTE
+🟡 EN PROGRESO
 
 ---
 
@@ -1688,21 +1688,74 @@ Estrategia comercial y costos: docs/business-model.md
 
 Estado:
 
-⬜ PENDIENTE
+🟡 EN PROGRESO
 
 ---
 
 ## Objetivo
 
-Definir y configurar ambientes de operación separados.
+Definir y configurar ambientes de operación separados con variables de entorno gestionadas por `react-native-config`.
 
 ---
 
 ## Ambientes
 
-- DEV
-- QA
-- PROD
+- DEV — Android emulator (`10.0.2.2:3000`)
+- QA — Servidor QA (Railway)
+- PROD — Servidor de producción (Railway)
+
+---
+
+## Variables de entorno
+
+| Variable | Descripción |
+|----------|-------------|
+| `API_URL` | URL base del backend REST |
+| `SOCKET_URL` | URL del servidor Socket.IO |
+| `ENVIRONMENT` | Identificador del ambiente (`development` / `qa` / `production`) |
+
+---
+
+## Archivos de configuración
+
+```txt
+.env              — Ambiente activo por defecto (desarrollo local)
+.env.development  — DEV (Android emulator)
+.env.qa           — QA
+.env.production   — PROD
+
+Todos gitignoreados excepto .env.example
+```
+
+Selección de ambiente en tiempo de ejecución:
+
+```bash
+ENVFILE=.env.qa npx react-native run-android
+ENVFILE=.env.production npx react-native run-android
+```
+
+La selección automática por flavor de Android se implementa en ETAPA 5.0.3.
+
+---
+
+## Implementación Frontend
+
+Punto de entrada único: `src/config/env.ts`
+
+- Valida que `API_URL`, `SOCKET_URL` y `ENVIRONMENT` estén presentes al iniciar
+- Lanza error descriptivo si falta alguna variable
+- Exporta `ENV` con los valores validados
+
+`APP_CONFIG` en `src/shared/constants/app.ts` expone:
+
+- `baseApiUrl` — URL base para el cliente Axios
+- `socketUrl` — URL para la conexión Socket.IO
+- `environment` — nombre del ambiente activo
+
+Servicios actualizados:
+
+- `src/services/api/client.ts` — Axios usa `APP_CONFIG.baseApiUrl`
+- `src/services/realtime/socketService.ts` — Socket.IO usa `APP_CONFIG.socketUrl`
 
 ---
 

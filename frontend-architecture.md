@@ -1,7 +1,7 @@
 # TacosManager — Frontend Architecture
 
-Version: 1.1
-Última actualización: ETAPA 4.6.3 — ETAPA 4.5 ✅ y ETAPA 4.6 ✅ completadas
+Version: 1.2
+Última actualización: ETAPA 5.0.1 — Environment Strategy 🟡 En progreso
 
 ---
 
@@ -350,7 +350,7 @@ Singleton que gestiona la conexión Socket.IO.
 
 ```txt
 socketService
- ├── connect(token)   → crea/reutiliza socket; conecta a APP_CONFIG.baseApiUrl
+ ├── connect(token)   → crea/reutiliza socket; conecta a APP_CONFIG.socketUrl
  ├── disconnect()     → desconecta y limpia listeners
  └── getSocket()      → retorna socket actual o null
 ```
@@ -542,4 +542,74 @@ src/shared/components/OrderCard.tsx               ← highlight isNew en variant
 
 ---
 
-*Última actualización: ETAPA 4.7 ✅ COMPLETADA — ETAPA 4.5 ✅, ETAPA 4.6 ✅, ETAPA 4.7.1 ✅, ETAPA 4.7.2 ✅, ETAPA 4.7.3 ✅ completadas. Próxima etapa activa: ETAPA 5.0 MVP Launch.*
+---
+
+## Environment Strategy — ETAPA 5.0.1 🟡 EN PROGRESO
+
+### Herramienta
+
+`react-native-config@^1.6.1` — inyecta variables de `.env` en tiempo de build.
+
+### Archivos de entorno
+
+```txt
+.env              — Ambiente activo por defecto (local dev, gitignoreado)
+.env.development  — DEV (Android emulator: 10.0.2.2:3000)
+.env.qa           — QA (Railway QA)
+.env.production   — PROD (Railway PROD)
+.env.example      — Plantilla pública (en git)
+
+Todos gitignoreados excepto .env.example
+```
+
+Selección manual de ambiente:
+
+```bash
+ENVFILE=.env.qa npx react-native run-android
+ENVFILE=.env.production npx react-native run-android
+```
+
+Selección automática por Android flavor: ETAPA 5.0.3.
+
+### Variables de entorno
+
+| Variable | Descripción |
+|----------|-------------|
+| `API_URL` | URL base del backend REST (usada por Axios) |
+| `SOCKET_URL` | URL del servidor Socket.IO |
+| `ENVIRONMENT` | Identificador del ambiente (`development` / `qa` / `production`) |
+
+### Flujo de configuración
+
+```txt
+.env.<ambiente>
+  └── react-native-config (Config)
+        └── src/config/env.ts
+              ├── Valida que API_URL, SOCKET_URL, ENVIRONMENT existan
+              ├── Lanza error descriptivo si falta alguna variable
+              └── Exporta ENV { apiUrl, socketUrl, environment }
+                    └── src/shared/constants/app.ts (APP_CONFIG)
+                          ├── baseApiUrl  → src/services/api/client.ts (Axios)
+                          ├── socketUrl   → src/services/realtime/socketService.ts (Socket.IO)
+                          └── environment → disponible para cualquier uso futuro
+```
+
+### Validación de variables
+
+`src/config/env.ts` lanza error en startup si alguna variable falta:
+
+```typescript
+// Error en startup si falta variable
+throw new Error(
+  `[TacosManager] Missing required environment variable: ${envVar}\n` +
+  'Configure your .env file or run with ENVFILE=.env.<environment>',
+);
+```
+
+### Separación API_URL / SOCKET_URL
+
+Aunque en todos los ambientes actuales apuntan al mismo host, se mantienen como variables independientes para soportar topologías futuras donde el servidor Socket.IO y el API REST puedan estar en hosts distintos.
+
+---
+
+*Última actualización: ETAPA 5.0.1 🟡 EN PROGRESO — ETAPA 4.5 ✅, ETAPA 4.6 ✅, ETAPA 4.7 ✅ completadas. Próxima etapa activa: ETAPA 5.0 MVP Launch.*
