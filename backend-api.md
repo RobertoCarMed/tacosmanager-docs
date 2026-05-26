@@ -1128,4 +1128,32 @@ socket.on('order-status-changed', ({ order }) => {
 
 ---
 
-*Generado analizando el código fuente del backend. Última actualización: ETAPA 4.6.3 ✅. ETAPA 4.5 ✅ y ETAPA 4.6 ✅ completadas. Próxima: ETAPA 4.7 Realtime Reliability.*
+---
+
+## Variables de entorno (ETAPA 5.0.1 ✅)
+
+El backend carga la configuración desde `.env.${NODE_ENV}` (y `.env` como fallback) usando `@nestjs/config`.
+
+| Variable | Requerida | Default | Descripción |
+|----------|-----------|---------|-------------|
+| `DATABASE_URL` | ✅ | — | Cadena de conexión PostgreSQL |
+| `JWT_SECRET` | ✅ | — | Clave secreta para firmar JWT |
+| `NODE_ENV` | No | `development` | Ambiente activo |
+| `JWT_EXPIRES_IN` | No | `1d` | Tiempo de expiración del token |
+| `PORT` | No | `3000` | Puerto HTTP |
+| `CORS_ORIGIN` | No | `*` | Origen permitido para HTTP |
+| `SOCKET_ORIGIN` | No | `*` | Origen permitido para Socket.IO |
+
+Para iniciar con un ambiente específico:
+
+```bash
+pnpm run start:dev   # development
+pnpm run start:qa    # qa
+pnpm run start:prod  # production
+```
+
+Ver plantilla completa: `.env.example`
+
+---
+
+*Generado analizando el código fuente del backend. Última actualización: ETAPA 5.0.1 🟡. ETAPA 4.5 ✅, 4.6 ✅, 4.7 ✅ completadas.*

@@ -179,20 +179,20 @@ Implementado: Socket Reconnect, Resync After Reconnect, Multi-device Validation.
 
 ---
 
-## Inmediato: ETAPA 5.0 MVP Launch ⬜
+## En Progreso: ETAPA 5.0 MVP Launch 🟡
 
 Objetivo: Lanzamiento productivo.
 
 Sin nuevas funcionalidades de negocio — el foco es infraestructura y despliegue.
 
 ```txt
-5.0.1 — Environment Strategy (DEV / QA / PROD)
-5.0.2 — Backend Deployment (Railway + PostgreSQL)
-5.0.3 — Mobile Release Pipeline (Build flavors)
-5.0.4 — CI/CD Automation (Backend + Frontend)
-5.0.5 — Monitoring & Recovery (Sentry)
-5.0.6 — Production Validation
-5.0.7 — Play Store Release (Internal → Closed → Production)
+5.0.1 🟡 — Environment Strategy (DEV / QA / PROD) — Backend ✅ implementado
+5.0.2 ⬜ — Backend Deployment (Railway + PostgreSQL)
+5.0.3 ⬜ — Mobile Release Pipeline (Build flavors)
+5.0.4 ⬜ — CI/CD Automation (Backend + Frontend)
+5.0.5 ⬜ — Monitoring & Recovery (Sentry)
+5.0.6 ⬜ — Production Validation
+5.0.7 ⬜ — Play Store Release (Internal → Closed → Production)
 ```
 
 ---

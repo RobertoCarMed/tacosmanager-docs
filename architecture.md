@@ -149,7 +149,7 @@ Auto-join taqueria:<taqueriaId>
 
 ```txt
 AuthModule
- ├── JwtModule.registerAsync(JWT_SECRET, expiresIn: 1d)
+ ├── JwtModule.registerAsync(ConfigService → JWT_SECRET, JWT_EXPIRES_IN)
  ├── exports: [AuthService, JwtModule]
  └── Todos los módulos que necesiten JwtService importan AuthModule
 ```
@@ -433,6 +433,48 @@ Ownership Validation
 Layer 4
 
 Tenant Isolation
+
+---
+
+# Environment Configuration (ETAPA 5.0.1 ✅)
+
+`@nestjs/config` (ConfigModule) registrado globalmente en `AppModule`.
+
+Carga de archivos:
+
+```txt
+1. .env.${NODE_ENV}   — ej. .env.development, .env.qa, .env.production
+2. .env               — fallback
+```
+
+Variables requeridas (validadas al arranque):
+
+```txt
+DATABASE_URL   — cadena de conexión PostgreSQL
+JWT_SECRET     — clave secreta JWT
+```
+
+Variables opcionales con defaults:
+
+```txt
+NODE_ENV       — development (default)
+JWT_EXPIRES_IN — 1d (default)
+PORT           — 3000 (default)
+CORS_ORIGIN    — * (default)
+SOCKET_ORIGIN  — * (default)
+```
+
+CORS HTTP: `app.enableCors({ origin: CORS_ORIGIN })` en `main.ts`.
+
+Socket.IO CORS: `ConfiguredSocketIoAdapter` (`src/realtime/socket-io.adapter.ts`) lee `SOCKET_ORIGIN` de ConfigService al iniciar.
+
+Scripts:
+
+```bash
+pnpm run start:dev   # NODE_ENV=development
+pnpm run start:qa    # NODE_ENV=qa
+pnpm run start:prod  # NODE_ENV=production
+```
 
 ---
 
@@ -884,7 +926,7 @@ Etapa 5.0 🟡 EN PROGRESO
 
 MVP Launch — despliegue productivo en Railway + Play Store.
 
-5.0.1 🟡 Environment Strategy — `react-native-config` con `API_URL`, `SOCKET_URL`, `ENVIRONMENT`. Archivos `.env.development`, `.env.qa`, `.env.production`. Validación de variables en startup. `APP_CONFIG` centraliza `baseApiUrl`, `socketUrl`, `environment`.
+5.0.1 🟡 Environment Strategy — Backend: `@nestjs/config` global, `ConfigModule.forRoot`, `ConfiguredSocketIoAdapter`, CORS configurable, validación al arranque. Scripts `start:dev/qa/prod` con `cross-env`. Frontend: `react-native-config` con `API_URL`, `SOCKET_URL`, `ENVIRONMENT`. Ver docs/roadmap.md ETAPA 5.0.1.
 
 Estrategia y costos: docs/business-model.md
 

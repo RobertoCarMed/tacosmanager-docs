@@ -1694,19 +1694,99 @@ Estado:
 
 ## Objetivo
 
-Definir y configurar ambientes de operación separados con variables de entorno gestionadas por `react-native-config`.
+Definir y configurar ambientes de operación separados para backend y frontend.
+
+Backend: variables de entorno por archivo `.env.*` cargadas por `@nestjs/config`.
+Frontend: variables por `react-native-config` (ver sección Frontend).
 
 ---
 
 ## Ambientes
 
-- DEV — Android emulator (`10.0.2.2:3000`)
+- DEV — desarrollo local (`localhost:3000`)
 - QA — Servidor QA (Railway)
 - PROD — Servidor de producción (Railway)
 
 ---
 
-## Variables de entorno
+## Implementación Backend ✅
+
+### Módulo de configuración
+
+`@nestjs/config` (ConfigModule) registrado globalmente en `AppModule`.
+
+Carga de archivos en orden de prioridad:
+
+```txt
+1. .env.${NODE_ENV}   (ej. .env.development, .env.qa, .env.production)
+2. .env               (fallback — valores por defecto locales)
+```
+
+Validación al arranque: si `DATABASE_URL` o `JWT_SECRET` no están definidos, la aplicación falla con mensaje claro.
+
+### Variables soportadas
+
+| Variable | Descripción | Requerida |
+|----------|-------------|-----------|
+| `NODE_ENV` | Ambiente activo (`development` / `qa` / `production`) | No (default: `development`) |
+| `DATABASE_URL` | Cadena de conexión PostgreSQL | ✅ |
+| `JWT_SECRET` | Clave secreta para firmar JWT | ✅ |
+| `JWT_EXPIRES_IN` | Tiempo de expiración JWT | No (default: `1d`) |
+| `PORT` | Puerto HTTP | No (default: `3000`) |
+| `CORS_ORIGIN` | Origen permitido para HTTP CORS | No (default: `*`) |
+| `SOCKET_ORIGIN` | Origen permitido para Socket.IO | No (default: `*`) |
+
+### Archivos de entorno
+
+```txt
+.env.development  — DEV local
+.env.qa           — QA
+.env.production   — PROD (plantilla — Railway inyecta las variables reales)
+.env.example      — plantilla documentada ← único archivo commiteado
+.env              — fallback local (gitignoreado)
+```
+
+Todos gitignoreados excepto `.env.example`.
+
+### Scripts de inicio
+
+```bash
+pnpm run start:dev   # NODE_ENV=development
+pnpm run start:qa    # NODE_ENV=qa
+pnpm run start:prod  # NODE_ENV=production
+```
+
+### Estrategia de bases de datos
+
+| Ambiente | Base de datos | Propósito |
+|----------|---------------|-----------|
+| DEV | PostgreSQL local (`localhost:5432`) | Desarrollo y pruebas locales |
+| QA | PostgreSQL Railway (instancia independiente) | Pruebas de integración |
+| PROD | PostgreSQL Railway (instancia independiente) | Producción — datos reales |
+
+Aislamiento total entre ambientes. Ninguna base comparte datos con otra.
+
+### CORS
+
+- HTTP: `app.enableCors({ origin: CORS_ORIGIN })` en `main.ts`
+- Socket.IO: `ConfiguredSocketIoAdapter` lee `SOCKET_ORIGIN` desde ConfigService
+
+### Archivos nuevos / modificados
+
+```txt
+src/config/env.validation.ts        — función de validación de vars requeridas
+src/realtime/socket-io.adapter.ts   — adaptador Socket.IO con CORS configurable
+src/main.ts                         — CORS HTTP + socket adapter configurable + ConfigService
+src/app.module.ts                   — ConfigModule.forRoot global
+src/auth/auth.module.ts             — ConfigService en lugar de process.env
+src/auth/strategies/jwt.strategy.ts — ConfigService en lugar de process.env
+src/prisma/prisma.service.ts        — ConfigService en lugar de process.env
+src/realtime/realtime.gateway.ts    — cors removido del decorador (maneja el adapter)
+```
+
+---
+
+## Variables de entorno Frontend
 
 | Variable | Descripción |
 |----------|-------------|
@@ -1716,7 +1796,7 @@ Definir y configurar ambientes de operación separados con variables de entorno 
 
 ---
 
-## Archivos de configuración
+## Archivos de configuración Frontend
 
 ```txt
 .env              — Ambiente activo por defecto (desarrollo local)
