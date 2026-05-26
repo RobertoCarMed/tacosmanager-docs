@@ -187,7 +187,7 @@ Sin nuevas funcionalidades de negocio — el foco es infraestructura y despliegu
 
 ```txt
 5.0.1 ✅ — Environment Strategy (DEV / QA / PROD) — Backend + Frontend completados
-5.0.2 ⬜ — Backend Deployment (Railway + PostgreSQL)  ← SIGUIENTE ETAPA ACTIVA
+5.0.2 🟡 — Backend Deployment (Railway + PostgreSQL)  ← ETAPA ACTIVA
 5.0.3 ⬜ — Mobile Release Pipeline (Build flavors)
 5.0.4 ⬜ — CI/CD Automation (Backend + Frontend)
 5.0.5 ⬜ — Monitoring & Recovery (Sentry)

@@ -64,6 +64,7 @@ En cada request el backend hace una consulta a BD para validar que el usuario si
 
 | Acción                                | WAITER | COOK |
 |---------------------------------------|--------|------|
+| `GET /health`                         | —      | —    |
 | `POST /auth/register`                 | —      | —    |
 | `POST /auth/login`                    | —      | —    |
 | `GET /auth/me`                        | ✅     | ✅   |
@@ -96,6 +97,27 @@ En cada request el backend hace una consulta a BD para validar que el usuario si
 - El backend **nunca acepta** `taqueriaId` del cliente — siempre lo toma del JWT.
 - Todas las queries filtran automáticamente por `taqueriaId`.
 - Un usuario no puede leer ni modificar datos de otra taquería.
+
+---
+
+## Endpoints — Health
+
+### `GET /health`
+
+Health check sin autenticación. Retorna el estado del proceso.
+
+**Sin JWT requerido.**
+
+**Response `200`:**
+```json
+{
+  "status": "ok",
+  "timestamp": "2026-05-25T10:00:00.000Z",
+  "environment": "production"
+}
+```
+
+> `GET /` retorna la misma respuesta. Railway usa `GET /health` para validar que el servicio está activo.
 
 ---
 
@@ -1156,4 +1178,4 @@ Ver plantilla completa: `.env.example`
 
 ---
 
-*Generado analizando el código fuente del backend. Última actualización: ETAPA 5.0.1 ✅ COMPLETADA. ETAPA 4.5 ✅, 4.6 ✅, 4.7 ✅ completadas. Próxima etapa activa: ETAPA 5.0.2 Backend Deployment.*
+*Generado analizando el código fuente del backend. Última actualización: ETAPA 5.0.2 🟡 EN PROGRESO. ETAPA 5.0.1 ✅ COMPLETADA. ETAPA 4.5 ✅, 4.6 ✅, 4.7 ✅ completadas. Próxima etapa activa: ETAPA 5.0.2 Backend Deployment.*

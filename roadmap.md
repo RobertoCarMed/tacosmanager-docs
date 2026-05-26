@@ -63,6 +63,7 @@ Tecnologías principales:
 ## En Progreso
 
 - 5.0 MVP Launch
+- 5.0.2 Backend Deployment
 
 ## Pendiente
 
@@ -1861,7 +1862,7 @@ El sistema opera sin modificar código al cambiar de ambiente. Toda la configura
 
 Estado:
 
-⬜ PENDIENTE
+🟡 EN PROGRESO
 
 ---
 
@@ -1873,8 +1874,108 @@ Desplegar backend en infraestructura de producción con base de datos administra
 
 ## Infraestructura
 
-- Railway
-- PostgreSQL administrado
+- Railway (API + PostgreSQL para QA y PROD)
+- Firebase Storage (imágenes de productos)
+- Dominio: Railway default (`*.up.railway.app`) — sin dominio custom en MVP
+
+---
+
+## Production Readiness — Implementado
+
+Auditoría de producción completada y correcciones aplicadas.
+
+### Hallazgos resueltos
+
+**Crítico**
+- `GET /` exponía `prisma.taqueria.findMany()` sin autenticación → convertido a health status sin DB
+
+**Alto**
+- Implementado health check endpoint `GET /health` → `{ status, timestamp, environment }`
+- Eliminado `dotenv` de dependencies (ya no se usa desde ETAPA 5.0.1 con `@nestjs/config`)
+- `socket.io-client` movido a devDependencies (solo se necesita en testing)
+
+**Medio**
+- Eliminado `PrismaService.isConnected` estático → `$connect()` idempotente de Prisma es suficiente
+
+**Bajo**
+- Agregado `postinstall: "prisma generate"` en package.json → Railway genera el cliente Prisma automáticamente después de `pnpm install`
+
+### Archivos modificados
+
+```
+src/app.service.ts       — eliminada dependencia de Prisma, retorna health status
+src/app.controller.ts    — GET / y GET /health retornan { status, timestamp, environment }
+src/app.controller.spec.ts — test actualizado al nuevo contrato
+src/prisma/prisma.service.ts — eliminado isConnected estático
+package.json             — postinstall, dotenv removido, socket.io-client → devDeps
+railway.json             — configuración de despliegue Railway (nuevo archivo)
+```
+
+---
+
+## railway.json — Configuración de despliegue
+
+```json
+{
+  "build": { "buildCommand": "pnpm run build" },
+  "deploy": {
+    "startCommand": "node dist/main",
+    "healthcheckPath": "/health",
+    "healthcheckTimeout": 30,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 3
+  }
+}
+```
+
+---
+
+## Variables de entorno requeridas en Railway
+
+Configurar en el dashboard de Railway para cada ambiente (QA / PROD):
+
+| Variable      | Descripción                              | Ejemplo PROD                 |
+|---------------|------------------------------------------|------------------------------|
+| NODE_ENV      | Ambiente activo                          | `production`                 |
+| DATABASE_URL  | Connection string PostgreSQL Railway     | `postgresql://...`           |
+| JWT_SECRET    | Secret JWT — string aleatorio seguro     | `<random-256-bit-string>`    |
+| JWT_EXPIRES_IN| Duración del token                       | `1d`                         |
+| PORT          | Puerto HTTP (Railway lo inyecta solo)    | `3000`                       |
+| CORS_ORIGIN   | Origen permitido para HTTP               | `https://app.up.railway.app` |
+| SOCKET_ORIGIN | Origen permitido para Socket.IO          | `https://app.up.railway.app` |
+
+> En Railway, `PORT` es inyectado automáticamente por la plataforma. No hace falta configurarlo manualmente.
+
+---
+
+## Railway Readiness Checklist
+
+```txt
+✅ PORT leído de env var (ConfigService.get('PORT', 3000))
+✅ DATABASE_URL leído de env var (ConfigService.getOrThrow)
+✅ JWT_SECRET leído de env var (ConfigService.getOrThrow)
+✅ CORS configurado desde env var
+✅ Socket.IO CORS configurado desde env var
+✅ app.listen(port) — Node.js enlaza en 0.0.0.0 por defecto
+✅ Health check en GET /health
+✅ railway.json con startCommand, healthcheckPath, restartPolicy
+✅ postinstall: prisma generate — cliente Prisma disponible post-install
+✅ Build: pnpm run build → dist/main.js (verificado)
+✅ Tests: 19/19 pasan
+✅ Sin valores hardcodeados de entorno en código fuente
+✅ .env.* gitignoreado — variables se inyectan externamente en Railway
+```
+
+---
+
+## Pendiente (próximos pasos de 5.0.2)
+
+- Crear proyecto en Railway (QA)
+- Provisionar PostgreSQL en Railway
+- Configurar variables de entorno en Railway dashboard
+- Ejecutar migraciones: `pnpm prisma migrate deploy`
+- Validar health check en URL de Railway
+- Smoke test de endpoints principales
 
 ---
 

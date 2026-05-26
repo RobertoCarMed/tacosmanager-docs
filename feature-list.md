@@ -975,8 +975,55 @@ The project currently includes:
 - order classification (DINE_IN / TAKEAWAY / DELIVERY)
 - realtime reliability (socket reconnect + resync + multi-device validated)
 - multi-environment support (DEV / QA / PROD — zero code changes)
+- production-ready backend (health check, Railway config, zero hardcoded values)
 
-**Next:** ETAPA 5.0.2 Backend Deployment — Railway hosting, PostgreSQL administrado, despliegue cloud.
+**Active:** ETAPA 5.0.2 Backend Deployment — Production Readiness Audit ✅. Pendiente: provisionar Railway QA, migrar DB, smoke test.
+
+---
+
+# 🟡 Backend Railway Readiness (ETAPA 5.0.2 — EN PROGRESO)
+
+Backend preparado para despliegue en Railway. Sin modificar código al deployar.
+
+## Cambios aplicados en Production Readiness Audit
+
+- `GET /health` — health check público, sin autenticación, sin DB. `{ status, timestamp, environment }`
+- `GET /` — misma respuesta (conveniente para devs)
+- `railway.json` — `buildCommand`, `startCommand`, `healthcheckPath`, `restartPolicy`
+- `postinstall: "prisma generate"` — cliente Prisma generado automáticamente en Railway post-install
+- `dotenv` eliminado de dependencies (reemplazado por `@nestjs/config` en ETAPA 5.0.1)
+- `socket.io-client` movido a devDependencies
+- `PrismaService.isConnected` estático eliminado — `$connect()` es idempotente
+
+## Railway Readiness Checklist
+
+```txt
+✅ PORT leído de env var
+✅ DATABASE_URL leído de env var (getOrThrow — falla al arranque si no existe)
+✅ JWT_SECRET leído de env var (getOrThrow)
+✅ CORS desde env var
+✅ Socket.IO CORS desde env var
+✅ Bind en 0.0.0.0 (comportamiento default de Node.js)
+✅ GET /health para health check de Railway
+✅ railway.json con start, healthcheck, restartPolicy
+✅ postinstall: prisma generate
+✅ Build limpio (nest build → dist/main.js)
+✅ Tests 19/19 pasan
+✅ Sin valores hardcodeados de entorno
+```
+
+## Variables requeridas en Railway dashboard
+
+| Variable      | QA                           | PROD                         |
+|---------------|------------------------------|------------------------------|
+| NODE_ENV      | `qa`                         | `production`                 |
+| DATABASE_URL  | Railway PostgreSQL (QA)      | Railway PostgreSQL (PROD)    |
+| JWT_SECRET    | Secret aleatorio largo        | Secret diferente al de QA    |
+| JWT_EXPIRES_IN| `1d`                         | `1d`                         |
+| CORS_ORIGIN   | `*` o URL QA frontend        | URL PROD frontend            |
+| SOCKET_ORIGIN | `*` o URL QA frontend        | URL PROD frontend            |
+
+> `PORT` es inyectado automáticamente por Railway.
 
 ---
 
