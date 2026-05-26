@@ -1814,7 +1814,7 @@ Una etapa se considera completada cuando:
 - docs/business-model.md
 - docs/architecture.md
 - docs/api-reference.md
-- docs/readmap.md
+- docs/roadmap.md
 
 ---
 

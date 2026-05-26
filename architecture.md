@@ -883,7 +883,7 @@ Etapa 6.0 ⬜ FUTURO
 
 Post Launch Features — QR Ordering, Analytics, Advanced Delivery, Self Ordering.
 
-Ver: docs/business-model.md y docs/readmap.md
+Ver: docs/business-model.md y docs/roadmap.md
 
 ---
 

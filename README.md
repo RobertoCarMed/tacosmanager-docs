@@ -10,7 +10,7 @@ Repositorio centralizado de documentación compartida para:
 - business-rules.md
 - business-model.md
 - feature-list.md
-- readmap.md
+- roadmap.md
 - backend-api.md
 - backend-realtime.md
 - architecture.md

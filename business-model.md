@@ -42,7 +42,7 @@ Digitalizar la operación diaria de taquerías mediante una aplicación móvil c
 
 Estas funcionalidades se evalúan post-lanzamiento en ETAPA 6.0.
 
-Ver roadmap técnico completo: docs/readmap.md
+Ver roadmap técnico completo: docs/roadmap.md
 
 ---
 
@@ -207,7 +207,7 @@ Evaluadas después del lanzamiento y tracción comercial inicial:
 - Advanced Delivery Management
 - Reporting avanzado
 
-Ver: docs/readmap.md
+Ver: docs/roadmap.md
 
 ---
 
@@ -241,7 +241,7 @@ Se diseñaron los modelos de datos para soportarlos en el futuro, pero no se imp
 
 # Documentos Relacionados
 
-- [docs/readmap.md](readmap.md) — Roadmap técnico completo de etapas
+- [docs/roadmap.md](roadmap.md) — Roadmap técnico completo de etapas
 - [docs/business-rules.md](business-rules.md) — Reglas funcionales del sistema (dominio técnico)
 - [docs/architecture.md](architecture.md) — Arquitectura técnica
 - [docs/feature-list.md](feature-list.md) — Lista completa de funcionalidades implementadas
