@@ -279,7 +279,7 @@ src/shared/utils/orderDisplay.ts → getOrderDisplayLabel(order)
 ```
 
 Helper importado por:
-- `src/features/kitchen/components/OrderCard.tsx` (KitchenScreen — grid de 2 columnas)
+- `src/features/kitchen/components/OrderCard.tsx` (KitchenScreen — paginación horizontal, 2 tarjetas por página)
 - `src/shared/components/OrderCard.tsx` (KitchenDashboardScreen + WaiterOrdersScreen)
 
 Kitchen NO agrupa por tipo. FIFO y priorización sin cambios.

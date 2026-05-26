@@ -269,15 +269,22 @@ EditOrderScreen — pedido DELIVERY
 
 ### Cola de cocina — KitchenScreen
 
+Diseño sin scroll vertical — optimizado para tablet en cocina (manos ocupadas).
+
 ```txt
 KitchenScreen
  ├── Filtro inicial: 'active' (pedidos no terminados, sin límite de fecha)
  │     Opciones disponibles: Activos | Hoy | Últimos 7 días | Último mes | Últimos 3 meses
  │
- ├── Lista de órdenes ordenada por prioridad (desde el backend)
- │     Prioridad (ETAPA 4.5.6.1 ✅): PREPARING > PENDING > READY
+ ├── Paginación horizontal — 2 tarjetas por página, sin scroll vertical
+ │     Deslizar → navegar entre páginas de pedidos
+ │     Indicador de página: • • • + "X / Y" (visible si hay más de 1 página)
+ │
+ ├── Órdenes ordenadas por prioridad: PREPARING > PENDING > READY
+ │     FIFO dentro de cada grupo (priorityTimestamp ASC)
  │
  └── OrderCard por cada orden activa
+       ├── Barra de acento lateral (color por estado: azul/amarillo/verde)
        ├── Encabezado
        │     ├── Identificador de pedido via getOrderDisplayLabel(order)
        │     │     🍽 Mesa 4 | 🥡 Roberto | 🛵 Roberto - Enviar | 🛵 Av. Juárez #123...
