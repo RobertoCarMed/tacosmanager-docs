@@ -436,23 +436,26 @@ Tenant Isolation
 
 ---
 
-# Realtime Architecture Frontend (Etapa 4.5.4)
+# Realtime Architecture Frontend (Etapa 4.5.4 — actualizado ETAPA 4.7 ✅)
 
 ```txt
 AppProviders
  └── AuthProvider
        └── RealtimeProvider
-             ├── socketService.connect(token) → io(APP_CONFIG.baseApiUrl, {auth: {token}})
+             ├── socketService.connect(token) → io(baseApiUrl, {auth:{token}, reconnection:true, reconnectionAttempts:Infinity, reconnectionDelayMax:5000, timeout:20000})
+             ├── socket.on('connect')              → primera conexión: hasConnectedRef=true; reconexión: GET /orders → setOrders(active)  [4.7.2]
+             ├── socket.on('disconnect', reason)   → 'io server disconnect' → signOut()  [4.7.1]
              ├── socket.on('order-created')        → dispatch(addOrder(parseOrder(payload)))
-             ├── socket.on('order-updated')         → dispatch(upsertOrder(parseOrder(payload)))
+             ├── socket.on('order-updated')        → dispatch(upsertOrder(parseOrder(payload)))
              └── socket.on('order-status-changed') → dispatch(upsertOrder(parseOrder(payload)))
 ```
 
 Reglas:
 - Conexión creada cuando user deja de ser null (post-login).
 - Desconexión cuando user vuelve a ser null (logout).
-- Listeners registrados con referencias named para cleanup limpio.
-- No se realiza refetch REST tras eventos realtime.
+- Listeners registrados con referencias named para cleanup limpio (sin duplicados).
+- En reconexión: `GET /orders` automático — resyncIdRef protege contra requests concurrentes.
+- No se realiza refetch REST tras eventos realtime normales.
 - REST mantiene responsabilidad de carga inicial y sync al re-enfocar pantallas.
 
 ---
@@ -865,9 +868,15 @@ Etapa 4.6 (Épica) ✅ COMPLETADA — Order Classification System:
 
 ---
 
-Etapa 4.7 ⬜ PENDIENTE
+Etapa 4.7 ✅ COMPLETADA
 
 Realtime Reliability — confiabilidad operativa para producción.
+
+4.7.1 ✅ Socket Reconnect — `socketService` con opciones explícitas de reconexión (`reconnectionAttempts: Infinity`, `reconnectionDelayMax: 5000ms`, `timeout: 20000ms`). Handler `disconnect` → `'io server disconnect'` → `signOut()` automático. Sin listeners duplicados.
+
+4.7.2 ✅ Resync After Reconnect — Handler `connect` en `RealtimeProvider`. Primera conexión excluida (`hasConnectedRef`). Reconexión → `GET /orders` → `setOrders(active)`. Protección anti-concurrencia via `resyncIdRef`.
+
+4.7.3 ✅ Multi-device Validation — Validado con Kitchen + Waiters + múltiples dispositivos. Order Classification (DINE_IN, TAKEAWAY, DELIVERY) end-to-end. Consistencia eventual garantizada.
 
 ---
 

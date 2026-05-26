@@ -767,6 +767,74 @@ No polling. No manual refresh. No redundant GET /orders after socket events.
 
 ---
 
+# 🔒 Realtime Reliability (ETAPA 4.7 — COMPLETADA)
+
+## ✅ Socket Reconnect (ETAPA 4.7.1)
+
+Explicit reconnection options configured in `socketService.connect()`:
+
+- `reconnection: true`
+- `reconnectionAttempts: Infinity`
+- `reconnectionDelay: 1000ms → 5000ms` (exponential backoff)
+- `timeout: 20000ms`
+
+On `disconnect` with reason `'io server disconnect'` (server rejected connection — JWT expired or invalid): automatic `signOut()` redirects to Login without user intervention.
+
+Single socket instance shared across the session. No duplicate listeners. Named handler references ensure clean cleanup on each effect cycle.
+
+---
+
+## ✅ Resync After Reconnect (ETAPA 4.7.2)
+
+On successful reconnect, `RealtimeProvider` automatically fetches `GET /orders` and updates the Redux store with current active orders.
+
+Strategy:
+- First connection is excluded from resync — `useFocusEffect` handles initial load.
+- `hasConnectedRef` distinguishes first connection from reconnections.
+- `resyncIdRef` (incrementing ID) prevents stale concurrent responses from overwriting newer data.
+- Silent error handling: if resync fetch fails, realtime events continue updating the store.
+- Products are NOT resynced: no realtime events exist for products, and the in-memory cache remains valid throughout the session.
+
+Guarantees:
+- Recovered orders created or updated while disconnected appear automatically.
+- No manual action required from the user.
+- Consistent eventual state after any network interruption.
+
+---
+
+## ✅ Multi-device Validation (ETAPA 4.7.3)
+
+Validated with multiple simultaneous devices connected to the same taquería:
+
+**Kitchen (COOK):**
+- All taquería orders visible in real time.
+- Priority queue (PREPARING > PENDING > READY) maintained across devices.
+- isNew green highlight displayed correctly.
+
+**Waiters (WAITER):**
+- Each waiter sees only their own orders.
+- Role-based isolation confirmed across sessions.
+
+**Realtime sync:**
+- State changes propagated instantly to all connected devices.
+- Order creation, editing, and status changes reflected without refresh.
+
+**Reconnection:**
+- Automatic reconnect verified on airplane mode and network switch.
+- Post-reconnect resync brings all devices to consistent state.
+
+**Order Classification:**
+- 🍽 DINE_IN — mesa reference visible and correct across kitchen and waiters.
+- 🥡 TAKEAWAY — customer name displayed correctly.
+- 🛵 DELIVERY — delivery address visible, truncated in KDS as expected.
+
+**Additional validations:**
+- No conflicting events between multiple simultaneous devices.
+- No duplicate dispatches or store corruption under concurrent load.
+- Multi-tenant isolation confirmed: each taquería receives only its own events.
+
+---
+
 # 📅 Order Filters
 
 ## ✅ Active Filter (Filtro por defecto — post-ETAPA 4.5.3)
@@ -845,6 +913,10 @@ The project currently includes:
 - multi-user taquería workflow
 - role-based permissions
 - tablet-optimized UI
+- order classification (DINE_IN / TAKEAWAY / DELIVERY)
+- realtime reliability (socket reconnect + resync + multi-device validated)
+
+**Next:** ETAPA 5.0 MVP Launch — deployment pipeline, Railway hosting, Play Store release.
 
 ---
 

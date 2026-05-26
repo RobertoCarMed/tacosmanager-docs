@@ -55,14 +55,16 @@ Tecnologías principales:
 - 4.6.2 Frontend Create/Edit Order
 - 4.6.3 Kitchen Integration
 - 4.7.1 Socket Reconnect
+- 4.7.2 Resync After Reconnect
+- 4.7.3 Multi-device Validation
+- 4.7 Realtime Reliability
 
 ## En Progreso
 
-- 4.7.2 Resync After Reconnect
+- 5.0 MVP Launch
 
 ## Pendiente
 
-- 4.7.3 Multi-device Validation
 - 4.8 History & Filters
 - 4.9 Performance Optimization
 - 4.10 Product Management Improvements
@@ -1379,15 +1381,15 @@ Frontend:
 
 Estado:
 
-🔄 EN PROGRESO (4.7.1)
+✅ COMPLETADA
 
 ---
 
 ## Sub-etapas
 
 - 4.7.1 Socket Reconnect — ✅ COMPLETADA
-- 4.7.2 Resync After Reconnect — 🔄 EN PROGRESO
-- 4.7.3 Multi-device Validation — ⬜ PENDIENTE
+- 4.7.2 Resync After Reconnect — ✅ COMPLETADA
+- 4.7.3 Multi-device Validation — ✅ COMPLETADA
 
 ---
 
@@ -1433,7 +1435,7 @@ Robustez de la conexión Socket.IO en el cliente.
 
 Estado:
 
-🔄 EN PROGRESO
+✅ COMPLETADA
 
 ---
 
@@ -1469,7 +1471,7 @@ Al reconectar, el frontend recupera el estado completo de órdenes activas desde
 
 Estado:
 
-⬜ PENDIENTE
+✅ COMPLETADA
 
 ---
 
@@ -1479,16 +1481,48 @@ Validar comportamiento con múltiples dispositivos simultáneos en la misma taqu
 
 ---
 
-## Implementar
+## Resultados validados
 
-- Pruebas con múltiples cocineros y meseros conectados a la misma taquería
-- Validar que los eventos Socket.IO se propagan correctamente a todos los dispositivos del mismo tenant
+### Kitchen (COOK)
+
+Visualiza correctamente todos los pedidos de la taquería en tiempo real.
+
+### Meseros (WAITER)
+
+Visualizan únicamente sus propios pedidos. El aislamiento por rol se mantiene.
+
+### Realtime
+
+Actualizaciones de estado y creación de pedidos sincronizadas correctamente en todos los dispositivos conectados.
+
+### Reconexión
+
+Recuperación correcta de estado post-reconexión. La resincronización automática (4.7.2) funciona en todos los dispositivos.
+
+### Order Classification
+
+Validado end-to-end en múltiples dispositivos:
+
+- 🍽 DINE_IN — referencia de mesa visible y correcta en cocina y meseros
+- 🥡 TAKEAWAY — nombre de cliente visible y correcto
+- 🛵 DELIVERY — dirección visible y truncamiento correcto en KDS
+
+### Validaciones adicionales
+
+- Reconexión automática verificada en modo avión y cambios de red
+- Resincronización de órdenes verificada tras desconexión
+- Cambios de estado propagados correctamente a todos los dispositivos
+- Edición de pedidos (Append Only) reflejada en cocina y meseros
+- isNew highlight verde funciona correctamente en múltiples sesiones simultáneas
 
 ---
 
-## Resultado esperado
+## Garantías de confiabilidad verificadas
 
-Múltiples dispositivos en la misma taquería reciben actualizaciones en tiempo real sin conflictos ni pérdidas de eventos.
+- Sin conflictos entre múltiples dispositivos conectados
+- Sin eventos perdidos en condiciones normales de red
+- Consistencia eventual garantizada mediante resync post-reconexión
+- Aislamiento multi-tenant confirmado (cada taquería recibe solo sus propios eventos)
 
 ---
 
@@ -1908,14 +1942,12 @@ Una etapa se considera completada cuando:
 
 # Próxima Etapa
 
-ETAPA 4.7.2 🔄 EN PROGRESO
+ETAPA 5.0 ⬜ MVP Launch — siguiente etapa activa del proyecto.
 
-Resync After Reconnect — recuperación automática del estado de órdenes tras reconexión.
+Despliegue productivo en Railway + PostgreSQL + Play Store.
 
-onConnect → GET /orders → setOrders(active) con protección anti-concurrencia via resyncIdRef.
+Sin nuevas funcionalidades de negocio — el foco es infraestructura y despliegue.
 
-Siguiente: 4.7.3 Multi-device Validation → 5.0 MVP Launch
+Ver estrategia comercial y costos en: docs/business-model.md
 
-Ver estrategia comercial en: docs/business-model.md
-
-ETAPA 4.5 ✅ completada. ETAPA 4.6 ✅ completada.
+ETAPA 4.5 ✅ completada. ETAPA 4.6 ✅ completada. ETAPA 4.7 ✅ completada.

@@ -542,4 +542,4 @@ src/shared/components/OrderCard.tsx               ← highlight isNew en variant
 
 ---
 
-*Última actualización: ETAPA 4.7.2 🔄 — ETAPA 4.5 ✅, ETAPA 4.6 ✅, ETAPA 4.6.3 ✅, ETAPA 4.7.1 ✅ completadas. En progreso: ETAPA 4.7.2 Resync After Reconnect.*
+*Última actualización: ETAPA 4.7 ✅ COMPLETADA — ETAPA 4.5 ✅, ETAPA 4.6 ✅, ETAPA 4.7.1 ✅, ETAPA 4.7.2 ✅, ETAPA 4.7.3 ✅ completadas. Próxima etapa activa: ETAPA 5.0 MVP Launch.*

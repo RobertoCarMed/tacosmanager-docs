@@ -916,10 +916,16 @@ No se realiza refetch REST tras eventos. El payload completo del socket se usa d
 
 `RealtimeProvider` maneja el evento `disconnect` con reason `'io server disconnect'` → `signOut()` automático.
 
-**ETAPA 4.7.2 🔄 — Resync After Reconnect.**
+**ETAPA 4.7.2 ✅ — Resync After Reconnect.**
 
 `RealtimeProvider` registra handler `connect`. En reconexiones (no primera conexión), ejecuta `GET /orders` y actualiza Redux con órdenes activas. Protección anti-concurrencia via `resyncIdRef`.
 
+**ETAPA 4.7.3 ✅ — Multi-device Validation.**
+
+Validado con múltiples dispositivos simultáneos. Kitchen, Waiters, Order Classification (DINE_IN, TAKEAWAY, DELIVERY), reconexión y resync verificados.
+
+**ETAPA 4.7 ✅ — Realtime Reliability COMPLETADA.**
+
 ---
 
-*Generado analizando el código fuente del backend. Fuentes: `src/realtime/**`, `src/orders/orders.service.ts`, `src/realtime/interfaces/`, `src/auth/auth.module.ts`. Última actualización: ETAPA 4.7.2 🔄. ETAPA 4.5 ✅, ETAPA 4.6 ✅, ETAPA 4.7.1 ✅ completadas.*
+*Generado analizando el código fuente del backend. Fuentes: `src/realtime/**`, `src/orders/orders.service.ts`, `src/realtime/interfaces/`, `src/auth/auth.module.ts`. Última actualización: ETAPA 4.7 ✅ COMPLETADA. Próxima etapa activa: ETAPA 5.0 MVP Launch.*

@@ -171,15 +171,15 @@ Evaluar crecimiento serio y potencial de expansión de mercado.
 
 # Roadmap Comercial
 
-## Inmediato: ETAPA 4.7 Realtime Reliability ⬜
+## Completado: ETAPA 4.7 Realtime Reliability ✅
 
 Objetivo: Confiabilidad operativa para producción.
 
-Implementar: Reconnection Strategy, Heartbeats, Connection Recovery, Cleanup.
+Implementado: Socket Reconnect, Resync After Reconnect, Multi-device Validation.
 
 ---
 
-## Lanzamiento: ETAPA 5.0 MVP Launch ⬜
+## Inmediato: ETAPA 5.0 MVP Launch ⬜
 
 Objetivo: Lanzamiento productivo.
 
