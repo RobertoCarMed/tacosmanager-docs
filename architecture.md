@@ -867,7 +867,23 @@ Etapa 4.6 (Épica) ✅ COMPLETADA — Order Classification System:
 
 Etapa 4.7 ⬜ PENDIENTE
 
-Realtime Reliability.
+Realtime Reliability — confiabilidad operativa para producción.
+
+---
+
+Etapa 5.0 ⬜ PENDIENTE
+
+MVP Launch — despliegue productivo en Railway + Play Store.
+
+Estrategia y costos: docs/business-model.md
+
+---
+
+Etapa 6.0 ⬜ FUTURO
+
+Post Launch Features — QR Ordering, Analytics, Advanced Delivery, Self Ordering.
+
+Ver: docs/business-model.md y docs/readmap.md
 
 ---
 

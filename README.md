@@ -8,8 +8,9 @@ Repositorio centralizado de documentación compartida para:
 ## Documentos
 
 - business-rules.md
+- business-model.md
 - feature-list.md
-- roadmap.md
+- readmap.md
 - backend-api.md
 - backend-realtime.md
 - architecture.md

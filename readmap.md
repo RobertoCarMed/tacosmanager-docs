@@ -65,8 +65,11 @@ Tecnologías principales:
 - 4.8 History & Filters
 - 4.9 Performance Optimization
 - 4.10 Product Management Improvements
-- Analytics
-- Production Deployment
+- 5.0 MVP Launch
+
+## Post-Lanzamiento
+
+- 6.0 Post Launch Features
 
 ---
 
@@ -1525,8 +1528,199 @@ Se trata de funcionalidades pendientes de UI que nunca fueron implementadas en e
 
 ---
 
-# ETAPA 5
-# Analytics & Reports
+# ETAPA 5.0
+# MVP Launch
+
+Estado:
+
+⬜ PENDIENTE
+
+---
+
+## Objetivo
+
+Lanzamiento productivo de TacosManager.
+
+Sin agregar nuevas funcionalidades de negocio — el foco es infraestructura y despliegue.
+
+Estrategia comercial y costos: docs/business-model.md
+
+---
+
+## Subetapas
+
+```txt
+5.0.1 — Environment Strategy
+5.0.2 — Backend Deployment
+5.0.3 — Mobile Release Pipeline
+5.0.4 — CI/CD Automation
+5.0.5 — Monitoring & Recovery
+5.0.6 — Production Validation
+5.0.7 — Play Store Release
+```
+
+---
+
+# ETAPA 5.0.1
+# Environment Strategy
+
+Estado:
+
+⬜ PENDIENTE
+
+---
+
+## Objetivo
+
+Definir y configurar ambientes de operación separados.
+
+---
+
+## Ambientes
+
+- DEV
+- QA
+- PROD
+
+---
+
+# ETAPA 5.0.2
+# Backend Deployment
+
+Estado:
+
+⬜ PENDIENTE
+
+---
+
+## Objetivo
+
+Desplegar backend en infraestructura de producción con base de datos administrada.
+
+---
+
+## Infraestructura
+
+- Railway
+- PostgreSQL administrado
+
+---
+
+# ETAPA 5.0.3
+# Mobile Release Pipeline
+
+Estado:
+
+⬜ PENDIENTE
+
+---
+
+## Objetivo
+
+Preparar build y distribución del app móvil por ambiente.
+
+---
+
+## Implementar
+
+- Build flavors (DEV / QA / PROD)
+- Configuración de entornos por flavor
+
+---
+
+# ETAPA 5.0.4
+# CI/CD Automation
+
+Estado:
+
+⬜ PENDIENTE
+
+---
+
+## Objetivo
+
+Automatizar integración y despliegue continuo.
+
+---
+
+## Implementar
+
+- CI/CD Backend
+- CI/CD Frontend
+
+---
+
+# ETAPA 5.0.5
+# Monitoring & Recovery
+
+Estado:
+
+⬜ PENDIENTE
+
+---
+
+## Objetivo
+
+Instrumentar el sistema para detectar y recuperar errores en producción.
+
+---
+
+## Implementar
+
+- Sentry (error tracking)
+- Logging estructurado
+- Alertas críticas
+
+---
+
+# ETAPA 5.0.6
+# Production Validation
+
+Estado:
+
+⬜ PENDIENTE
+
+---
+
+## Objetivo
+
+Validar operación completa del sistema en entorno productivo antes del release.
+
+---
+
+## Implementar
+
+- Pruebas operativas completas
+- Validación de flujos críticos (pedido → cocina → entrega)
+- Verificación de multi-tenancy en producción
+
+---
+
+# ETAPA 5.0.7
+# Play Store Release
+
+Estado:
+
+⬜ PENDIENTE
+
+---
+
+## Objetivo
+
+Publicar la app en Google Play Store de forma gradual.
+
+---
+
+## Fases
+
+- Internal Testing
+- Closed Testing
+- Production
+
+---
+
+# ETAPA 6.0
+# Post Launch Features
 
 Estado:
 
@@ -1534,13 +1728,29 @@ Estado:
 
 ---
 
-## Objetivos
+## Objetivo
 
-Métricas de negocio.
+Funcionalidades evaluadas para después del lanzamiento productivo.
+
+Decisiones estratégicas y comerciales: docs/business-model.md
 
 ---
 
-## Ejemplos
+## QR Ordering
+
+Pedidos iniciados por el cliente escaneando un código QR en la mesa.
+
+---
+
+## Customer Self Ordering
+
+Portal o app para que los clientes realicen pedidos directamente.
+
+---
+
+## Analytics & Reports
+
+Métricas de negocio:
 
 - Ventas por día
 - Productos más vendidos
@@ -1550,31 +1760,37 @@ Métricas de negocio.
 
 ---
 
-# ETAPA 6
-# Production Infrastructure
+## Advanced Delivery Management
 
-Estado:
+Gestión avanzada de domicilios:
 
-⬜ FUTURO
-
----
-
-## Objetivos
-
-Preparar despliegue profesional.
+- Seguimiento de entrega
+- App de repartidores
+- Estados adicionales de DELIVERY
 
 ---
 
-## Implementar
+## Reporting
 
-- CI/CD
-- GitHub Actions
-- VPS
-- Reverse Proxy
-- SSL
-- Monitoring
-- Logging
-- Backups
+Reportes avanzados para administración y toma de decisiones.
+
+---
+
+## History & Filters Avanzado
+
+Extensiones al historial y filtros de pedidos (ex-ETAPA 4.8).
+
+---
+
+## Performance Optimization
+
+Índices Prisma, paginación, optimización de queries para múltiples taquerías (ex-ETAPA 4.9).
+
+---
+
+## Product Management Improvements
+
+Edición de complementos y eliminación de productos desde UI (ex-ETAPA 4.10).
 
 ---
 
@@ -1595,9 +1811,10 @@ Una etapa se considera completada cuando:
 # Documentos Relacionados
 
 - docs/business-rules.md
+- docs/business-model.md
 - docs/architecture.md
 - docs/api-reference.md
-- docs/roadmap.md
+- docs/readmap.md
 
 ---
 
@@ -1605,8 +1822,12 @@ Una etapa se considera completada cuando:
 
 ETAPA 4.7 ⬜ PENDIENTE
 
-Realtime Reliability
+Realtime Reliability — confiabilidad operativa para producción.
 
 Reconnection Strategy, Heartbeats, Connection Recovery, Cleanup, Memory Leak Prevention.
+
+Ruta comercial: 4.7 → 5.0 MVP Launch → 6.0 Post Launch Features
+
+Ver estrategia comercial en: docs/business-model.md
 
 ETAPA 4.5 ✅ completada. ETAPA 4.6 ✅ completada.
