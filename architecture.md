@@ -934,6 +934,8 @@ MVP Launch — despliegue productivo en Railway + Play Store.
 
 5.0.3.1 ✅ Android Flavors — `productFlavors` (development/qa/production) en `android/app/build.gradle`. `project.ext.envConfigFiles` mapea cada variante a su `.env.*`. Flavor source sets para `app_name` diferenciado (TacosManager Dev / QA / TacosManager). applicationId: `.dev` / `.qa` / sin suffix. Scripts npm: `android:dev`, `android:qa`, `android:prod`, `build:android:qa`, `build:android:prod`.
 
+5.0.3.2 ✅ Build Automation — Scripts compuestos `build:qa` y `build:prod` (lint → typecheck → Gradle release). Scripts `typecheck` (`tsc --noEmit`), `clean`/`clean:android` (`gradlew clean`). Pipeline: 0 errores TypeScript + 0 errores ESLint requeridos antes de generar artefacto. Correcciones lint preexistentes aplicadas (import unused en `auth/types.ts`, dep innecesaria en `useOrders.ts`).
+
 Estrategia y costos: docs/business-model.md
 
 ---

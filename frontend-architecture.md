@@ -1,7 +1,7 @@
 # TacosManager — Frontend Architecture
 
-Version: 1.3
-Última actualización: ETAPA 5.0.3.1 — Android Flavors ✅ Completada
+Version: 1.4
+Última actualización: ETAPA 5.0.3.2 — Build Automation ✅ Completada
 
 ---
 
@@ -679,4 +679,40 @@ com.tacosmanager       ← production
 
 ---
 
-*Última actualización: ETAPA 5.0.3.1 ✅ COMPLETADA — ETAPA 4.5 ✅, ETAPA 4.6 ✅, ETAPA 4.7 ✅, ETAPA 5.0.1 ✅, ETAPA 5.0.3.1 ✅ completadas.*
+---
+
+## Build Automation — ETAPA 5.0.3.2 ✅ COMPLETADA
+
+### Scripts de calidad
+
+```bash
+npm run typecheck   # tsc --noEmit — 0 errores TypeScript requerido
+npm run lint        # eslint .     — 0 errores ESLint requerido
+```
+
+### Scripts de limpieza
+
+```bash
+npm run clean         # alias → clean:android
+npm run clean:android # gradlew clean → elimina android/build/ y android/app/build/
+```
+
+### Builds compuestos
+
+```bash
+npm run build:qa    # lint → typecheck → assembleQaRelease
+npm run build:prod  # lint → typecheck → bundleProductionRelease
+```
+
+El pipeline falla si lint o typecheck tienen errores — el artefacto no se genera.
+
+### Artefactos
+
+| Script | Artefacto | Ubicación |
+|--------|-----------|-----------|
+| `build:android:qa` | APK QA release | `android/app/build/outputs/apk/qa/release/app-qa-release.apk` |
+| `build:android:prod` | AAB Production | `android/app/build/outputs/bundle/productionRelease/app-production-release.aab` |
+
+---
+
+*Última actualización: ETAPA 5.0.3.2 ✅ COMPLETADA — ETAPA 4.5 ✅, ETAPA 4.6 ✅, ETAPA 4.7 ✅, ETAPA 5.0.1 ✅, ETAPA 5.0.3.1 ✅, ETAPA 5.0.3.2 ✅ completadas.*

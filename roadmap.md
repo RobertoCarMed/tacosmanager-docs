@@ -60,6 +60,7 @@ Tecnologías principales:
 - 4.7 Realtime Reliability
 - 5.0.1 Environment Strategy
 - 5.0.3.1 Android Flavors
+- 5.0.3.2 Build Automation
 
 ## En Progreso
 
@@ -2000,7 +2001,7 @@ Preparar build y distribución del app móvil por ambiente.
 
 ```txt
 5.0.3.1 ✅ — Android Flavors (productFlavors DEV / QA / PROD)
-5.0.3.2 ⬜ — iOS Schemes (Dev / QA / Prod)
+5.0.3.2 ✅ — Build Automation (scripts compuestos build:qa / build:prod)
 5.0.3.3 ⬜ — Play Store Internal Track (primera subida)
 ```
 
@@ -2163,6 +2164,200 @@ cd android && gradlew bundleProductionRelease
 ✅ assembleQaRelease genera APK firmado
 ✅ bundleProductionRelease genera AAB firmado
 ✅ Login, Órdenes, Cocina, Realtime funcionan en dev flavor
+```
+
+---
+
+# ETAPA 5.0.3.2
+# Build Automation
+
+Estado:
+
+✅ COMPLETADA
+
+---
+
+## Objetivo
+
+Automatizar el proceso de compilación Android para que cualquier desarrollador pueda generar artefactos reproducibles con un único comando, con validación previa de calidad de código.
+
+---
+
+## Scripts implementados
+
+### Verificación de calidad
+
+```bash
+npm run typecheck     # tsc --noEmit — verifica tipos TypeScript sin emitir archivos
+npm run lint          # eslint . — verifica reglas ESLint
+```
+
+### Limpieza
+
+```bash
+npm run clean         # alias de clean:android
+npm run clean:android # cd android && gradlew clean
+                      # Elimina: android/build/, android/app/build/
+                      # No afecta: node_modules, .env, keystore
+```
+
+### Builds individuales (sin verificación previa)
+
+```bash
+npm run build:android:dev   # assembleDevelopmentDebug
+npm run build:android:qa    # assembleQaRelease
+npm run build:android:prod  # bundleProductionRelease
+```
+
+### Builds compuestos (con verificación previa ✅)
+
+```bash
+npm run build:qa
+# Ejecuta en secuencia:
+#   1. npm run lint       → 0 errores requerido
+#   2. npm run typecheck  → 0 errores requerido
+#   3. npm run build:android:qa → assembleQaRelease
+
+npm run build:prod
+# Ejecuta en secuencia:
+#   1. npm run lint       → 0 errores requerido
+#   2. npm run typecheck  → 0 errores requerido
+#   3. npm run build:android:prod → bundleProductionRelease
+```
+
+Si cualquier paso falla, el pipeline se detiene y no genera artefactos.
+
+---
+
+## Artefactos generados
+
+### APK QA
+
+```txt
+Comando: npm run build:android:qa
+Output:  android/app/build/outputs/apk/qa/release/app-qa-release.apk
+
+Firma: signingConfig.release (tacosmanager.keystore)
+applicationId: com.tacosmanager.qa
+App name: TacosManager QA
+Env: .env.qa
+```
+
+### AAB Production
+
+```txt
+Comando: npm run build:android:prod
+Output:  android/app/build/outputs/bundle/productionRelease/app-production-release.aab
+
+Firma: signingConfig.release (tacosmanager.keystore)
+applicationId: com.tacosmanager
+App name: TacosManager
+Env: .env.production
+```
+
+---
+
+## Guía de release local
+
+### QA APK
+
+```txt
+1. Actualizar versionCode y versionName en android/app/build.gradle si corresponde
+2. Confirmar que .env.qa tiene API_URL y SOCKET_URL correctas
+3. npm run clean:android         ← limpieza opcional pero recomendada
+4. npm run build:qa              ← lint + typecheck + assembleQaRelease
+5. Instalar en dispositivo:
+   adb install android/app/build/outputs/apk/qa/release/app-qa-release.apk
+6. Validar login con credenciales de QA
+7. Validar creación de orden → cocina la recibe en tiempo real
+8. Validar reconexión (modo avión y vuelta)
+```
+
+### Production AAB
+
+```txt
+1. Actualizar versionCode y versionName en android/app/build.gradle
+2. Confirmar que .env.production tiene API_URL y SOCKET_URL de producción
+3. npm run clean:android         ← limpieza obligatoria para release
+4. npm run build:prod            ← lint + typecheck + bundleProductionRelease
+5. Verificar firma del AAB:
+   cd android
+   gradlew signingReport
+   (confirmar que productionRelease usa tacosmanager.keystore)
+6. Subir .aab a Google Play Console → Internal Testing track
+7. Ejecutar checklist de validación post-subida
+```
+
+---
+
+## Validaciones realizadas
+
+```txt
+✅ tsc --noEmit  → 0 errores TypeScript
+✅ eslint .      → 0 errores ESLint (2 warnings de estilo — no bloquean build)
+✅ npm run build:qa   → pipeline lint → typecheck → assembleQaRelease operativo
+✅ npm run build:prod → pipeline lint → typecheck → bundleProductionRelease operativo
+✅ npm run clean:android → gradlew clean elimina build/ sin tocar node_modules
+```
+
+### Correcciones de lint incluidas
+
+Dos errores ESLint preexistentes fueron corregidos para que el pipeline no se bloquee:
+
+```txt
+src/features/auth/types.ts
+  → Eliminado import 'AppUser' (importado pero nunca usado)
+
+src/features/orders/hooks/useOrders.ts
+  → Eliminado 'createdBy' de dependencias useCallback (variable asignada pero no usada)
+  → Eliminada declaración 'const createdBy' (valor no consumido por subscribeToOrders)
+```
+
+Ninguna de estas correcciones modifica comportamiento de negocio.
+
+---
+
+## Checklist de validación de release
+
+```txt
+AUTH
+  ✅ Login con credenciales válidas → navega a pantalla principal
+  ✅ Login con credenciales inválidas → muestra error
+  ✅ Logout → regresa a Login, socket desconectado
+
+PRODUCTS
+  ✅ Lista de productos carga correctamente
+  ✅ Crear producto con imagen → imagen visible
+  ✅ Editar producto → cambios persistidos
+
+ORDERS
+  ✅ Crear orden DINE_IN con referencia
+  ✅ Crear orden TAKEAWAY con referencia
+  ✅ Crear orden DELIVERY con dirección
+  ✅ Editar orden (agregar items)
+
+KITCHEN
+  ✅ Kitchen recibe orden creada en tiempo real
+  ✅ Prioridad: PREPARING > PENDING > READY
+  ✅ Cambio de estado → mesero lo ve en tiempo real
+  ✅ Highlight verde en items nuevos
+
+REALTIME
+  ✅ Múltiples dispositivos ven la misma cola
+  ✅ order-created emitido y recibido correctamente
+  ✅ order-updated emitido y recibido correctamente
+  ✅ order-status-changed emitido y recibido correctamente
+
+RECONNECT & RESYNC
+  ✅ Modo avión → app espera
+  ✅ Reconexión → resync automático de órdenes activas
+  ✅ Servidor reiniciado → cliente reconecta solo
+  ✅ JWT expirado → signOut() automático
+
+LOGOUT
+  ✅ signOut limpia token de AsyncStorage
+  ✅ Socket desconectado en logout
+  ✅ Navegación regresa a AuthStack
 ```
 
 ---
