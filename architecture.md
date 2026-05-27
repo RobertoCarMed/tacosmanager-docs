@@ -936,6 +936,8 @@ MVP Launch — despliegue productivo en Railway + Play Store.
 
 5.0.3.2 ✅ Build Automation — Scripts compuestos `build:qa` y `build:prod` (lint → typecheck → Gradle release). Scripts `typecheck` (`tsc --noEmit`), `clean`/`clean:android` (`gradlew clean`). Pipeline: 0 errores TypeScript + 0 errores ESLint requeridos antes de generar artefacto. Correcciones lint preexistentes aplicadas (import unused en `auth/types.ts`, dep innecesaria en `useOrders.ts`).
 
+5.0.3.3 ✅ Mobile CI/CD — `.github/workflows/mobile-ci.yml`. Job 1 (`validate-and-build-qa`): todos los triggers → lint + typecheck + assembleQaRelease, APK artifact en main. Job 2 (`build-production`): solo main, después de Job 1 → bundleProductionRelease, AAB artifact. Java 17 + Node LTS + Gradle cache. Secrets: `KEYSTORE_PASSWORD`, `KEY_PASSWORD`. Scripts corregidos: `./gradlew` (Linux compatible).
+
 Estrategia y costos: docs/business-model.md
 
 ---

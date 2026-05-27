@@ -1,7 +1,7 @@
 # TacosManager — Frontend Architecture
 
-Version: 1.4
-Última actualización: ETAPA 5.0.3.2 — Build Automation ✅ Completada
+Version: 1.5
+Última actualización: ETAPA 5.0.3.3 — Mobile CI/CD ✅ Completada
 
 ---
 
@@ -715,4 +715,52 @@ El pipeline falla si lint o typecheck tienen errores — el artefacto no se gene
 
 ---
 
-*Última actualización: ETAPA 5.0.3.2 ✅ COMPLETADA — ETAPA 4.5 ✅, ETAPA 4.6 ✅, ETAPA 4.7 ✅, ETAPA 5.0.1 ✅, ETAPA 5.0.3.1 ✅, ETAPA 5.0.3.2 ✅ completadas.*
+---
+
+## Mobile CI/CD — ETAPA 5.0.3.3 ✅ COMPLETADA
+
+Workflow: `.github/workflows/mobile-ci.yml`
+
+| Trigger | Jobs | Artefactos |
+|---------|------|------------|
+| `pull_request` | Validate & Build QA | Ninguno |
+| `push → main` | Validate & Build QA + Build Production | APK QA + AAB Production |
+
+### Flujo Pull Request
+
+```txt
+checkout → java 17 → node LTS → gradle cache → npm ci
+  → create .env.qa → create .env (secrets)
+  → lint → typecheck → build:android:qa
+Si cualquier paso falla → PR bloqueado
+```
+
+### Flujo Push a main
+
+```txt
+Job 1 (igual que PR) + upload APK artifact
+Job 2 (después de Job 1):
+  checkout → setup → npm ci → create .env.production → create .env (secrets)
+  → build:android:prod → upload AAB artifact
+```
+
+### Descargar artefactos
+
+```txt
+GitHub → Actions → workflow run (main) → Artifacts
+  app-qa-release-<sha>          → APK QA instalable
+  app-production-release-<sha>  → AAB para Play Store
+```
+
+### GitHub Secrets necesarios
+
+```txt
+KEYSTORE_PASSWORD   → contraseña del keystore (MYAPP_UPLOAD_STORE_PASSWORD)
+KEY_PASSWORD        → contraseña de la clave  (MYAPP_UPLOAD_KEY_PASSWORD)
+```
+
+Configurar en: `GitHub → Settings → Secrets and variables → Actions → New repository secret`
+
+---
+
+*Última actualización: ETAPA 5.0.3.3 ✅ COMPLETADA — ETAPA 4.5 ✅, ETAPA 4.6 ✅, ETAPA 4.7 ✅, ETAPA 5.0.1 ✅, ETAPA 5.0.3.1 ✅, ETAPA 5.0.3.2 ✅, ETAPA 5.0.3.3 ✅ completadas.*

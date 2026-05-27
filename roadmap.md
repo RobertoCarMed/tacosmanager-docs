@@ -61,6 +61,7 @@ Tecnologías principales:
 - 5.0.1 Environment Strategy
 - 5.0.3.1 Android Flavors
 - 5.0.3.2 Build Automation
+- 5.0.3.3 Mobile CI/CD
 
 ## En Progreso
 
@@ -2002,7 +2003,8 @@ Preparar build y distribución del app móvil por ambiente.
 ```txt
 5.0.3.1 ✅ — Android Flavors (productFlavors DEV / QA / PROD)
 5.0.3.2 ✅ — Build Automation (scripts compuestos build:qa / build:prod)
-5.0.3.3 ⬜ — Play Store Internal Track (primera subida)
+5.0.3.3 ✅ — Mobile CI/CD (GitHub Actions: PR validate + main release)
+5.0.3.4 ⬜ — Play Store Internal Track (primera subida)
 ```
 
 ---
@@ -2358,6 +2360,171 @@ LOGOUT
   ✅ signOut limpia token de AsyncStorage
   ✅ Socket desconectado en logout
   ✅ Navegación regresa a AuthStack
+```
+
+---
+
+# ETAPA 5.0.3.3
+# Mobile CI/CD
+
+Estado:
+
+✅ COMPLETADA
+
+---
+
+## Objetivo
+
+Pipeline GitHub Actions que valida automáticamente cada Pull Request y genera artefactos firmados en cada push a `main`.
+
+---
+
+## Archivo creado
+
+```txt
+.github/workflows/mobile-ci.yml
+```
+
+---
+
+## Triggers
+
+| Evento | Jobs ejecutados |
+|--------|-----------------|
+| `pull_request` | Validate & Build QA (sin artefactos) |
+| `push → main` | Validate & Build QA + Build Production (con artefactos) |
+
+---
+
+## Jobs
+
+### Job 1: `validate-and-build-qa`
+
+Ejecutado en: todos los triggers.
+
+```txt
+1. Checkout
+2. Setup Java 17 (Temurin)
+3. Setup Node LTS (con cache npm)
+4. Setup Gradle (con cache Gradle)
+5. npm ci
+6. Crear .env.qa (API URLs QA)
+7. Crear .env (signing credentials desde secrets)
+8. Accept Android SDK licenses
+9. npm run lint
+10. npm run typecheck
+11. npm run build:android:qa   → assembleQaRelease
+12. Upload APK artifact (solo si push a main)
+```
+
+Si cualquier paso falla → workflow falla → no se genera artefacto.
+
+### Job 2: `build-production`
+
+Ejecutado solo en: `push → main`, después de que Job 1 exitoso.
+
+```txt
+1. Checkout
+2. Setup Java 17 (Temurin)
+3. Setup Node LTS (con cache npm)
+4. Setup Gradle (con cache Gradle)
+5. npm ci
+6. Crear .env.production (API URLs Producción)
+7. Crear .env (signing credentials desde secrets)
+8. Accept Android SDK licenses
+9. npm run build:android:prod  → bundleProductionRelease
+10. Upload AAB artifact
+```
+
+---
+
+## Artefactos generados (push a main)
+
+| Job | Artefacto | Retención |
+|-----|-----------|-----------|
+| Job 1 | `app-qa-release-<sha>.apk` | 30 días |
+| Job 2 | `app-production-release-<sha>.aab` | 30 días |
+
+Descarga: GitHub → pestaña Actions → workflow run → sección Artifacts.
+
+---
+
+## GitHub Secrets requeridos
+
+Configurar en: `GitHub → Settings → Secrets and variables → Actions`
+
+| Secret | Descripción |
+|--------|-------------|
+| `KEYSTORE_PASSWORD` | `MYAPP_UPLOAD_STORE_PASSWORD` del keystore |
+| `KEY_PASSWORD` | `MYAPP_UPLOAD_KEY_PASSWORD` del keystore |
+
+No se necesita el archivo keystore como secret — `android/app/tacosmanager.keystore` está en el repositorio.
+
+No se necesita `KEY_ALIAS` como secret — el valor `tacosmanager-key` es público en `gradle.properties`.
+
+---
+
+## Archivos en CI (no en git, creados en runtime)
+
+| Archivo | Origen | Contenido |
+|---------|--------|-----------|
+| `.env.qa` | Inline en workflow | `API_URL`, `SOCKET_URL`, `ENVIRONMENT=qa` |
+| `.env.production` | Inline en workflow | `API_URL`, `SOCKET_URL`, `ENVIRONMENT=production` |
+| `.env` | GitHub Secrets | `MYAPP_UPLOAD_STORE_FILE`, `KEY_ALIAS`, passwords |
+
+---
+
+## Fix incluido: compatibilidad Linux en scripts npm
+
+Los scripts de Gradle se corrigieron de `gradlew` a `./gradlew` para compatibilidad con Linux (CI) y Windows (local):
+
+```txt
+build:android:dev   → cd android && ./gradlew assembleDevelopmentDebug
+build:android:qa    → cd android && ./gradlew assembleQaRelease
+build:android:prod  → cd android && ./gradlew bundleProductionRelease
+clean:android       → cd android && ./gradlew clean
+```
+
+---
+
+## Cómo validar el pipeline
+
+```txt
+1. Hacer push del branch con .github/workflows/mobile-ci.yml
+2. Abrir GitHub → pestaña Actions
+3. Verificar que "Mobile CI" aparece en la lista
+4. Abrir el workflow run
+5. Confirmar que los jobs pasan:
+   - "Validate & Build QA" → verde ✅
+   - "Build Production" → verde ✅ (solo en main)
+6. En el run de main, desplazarse a sección "Artifacts"
+7. Confirmar que aparecen:
+   - app-qa-release-<sha>
+   - app-production-release-<sha>
+8. Descargar y verificar los artefactos
+```
+
+### Interpretar fallos del pipeline
+
+| Fallo | Causa | Solución |
+|-------|-------|---------|
+| `Lint` falla | Error ESLint en código | Corregir el error en el archivo indicado |
+| `TypeCheck` falla | Error TypeScript | Corregir el tipo indicado en la traza |
+| `Build QA APK` falla (signing) | Secrets no configurados | Agregar `KEYSTORE_PASSWORD` y `KEY_PASSWORD` en GitHub Secrets |
+| `Build QA APK` falla (Gradle) | Dependencia faltante o error de compilación | Revisar logs de Gradle en el step |
+| `Build Production` falla | Job 1 falló (needs) | Arreglar Job 1 primero |
+
+---
+
+## Checklist de mantenimiento del pipeline
+
+```txt
+□ Al actualizar compileSdkVersion o buildToolsVersion → verificar que el runner de CI los descarga
+□ Al agregar dependencia con Gradle → verificar que el cache Gradle sigue funcionando
+□ Al cambiar API URLs de QA o PROD → actualizar los pasos "Create .env.*" en el workflow
+□ Al renovar el keystore → actualizar los secrets en GitHub Settings
+□ Al rotar contraseñas → actualizar KEYSTORE_PASSWORD y KEY_PASSWORD en GitHub Settings
+□ Periodicamente revisar retención de artefactos (30 días actualmente)
 ```
 
 ---
