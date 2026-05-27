@@ -930,6 +930,10 @@ MVP Launch — despliegue productivo en Railway + Play Store.
 
 5.0.2 🟡 Backend Deployment — EN PROGRESO. Production Readiness Audit completada: health check (`GET /health`), dotenv eliminado, socket.io-client a devDeps, PrismaService simplificado, postinstall prisma generate, railway.json creado. Pendiente: provisionar Railway QA, migrar DB, smoke test.
 
+5.0.3 🟡 Mobile Release Pipeline — EN PROGRESO.
+
+5.0.3.1 ✅ Android Flavors — `productFlavors` (development/qa/production) en `android/app/build.gradle`. `project.ext.envConfigFiles` mapea cada variante a su `.env.*`. Flavor source sets para `app_name` diferenciado (TacosManager Dev / QA / TacosManager). applicationId: `.dev` / `.qa` / sin suffix. Scripts npm: `android:dev`, `android:qa`, `android:prod`, `build:android:qa`, `build:android:prod`.
+
 Estrategia y costos: docs/business-model.md
 
 ---

@@ -1,7 +1,7 @@
 # TacosManager — Frontend Architecture
 
-Version: 1.2
-Última actualización: ETAPA 5.0.1 — Environment Strategy ✅ Completada
+Version: 1.3
+Última actualización: ETAPA 5.0.3.1 — Android Flavors ✅ Completada
 
 ---
 
@@ -562,14 +562,7 @@ src/shared/components/OrderCard.tsx               ← highlight isNew en variant
 Todos gitignoreados excepto .env.example
 ```
 
-Selección manual de ambiente:
-
-```bash
-ENVFILE=.env.qa npx react-native run-android
-ENVFILE=.env.production npx react-native run-android
-```
-
-Selección automática por Android flavor: ETAPA 5.0.3.
+Selección automática por Android flavor: ETAPA 5.0.3.1 ✅ COMPLETADA (ver sección abajo).
 
 ### Variables de entorno
 
@@ -612,4 +605,78 @@ Aunque en todos los ambientes actuales apuntan al mismo host, se mantienen como 
 
 ---
 
-*Última actualización: ETAPA 5.0.1 ✅ COMPLETADA — ETAPA 4.5 ✅, ETAPA 4.6 ✅, ETAPA 4.7 ✅ completadas. Próxima etapa activa: ETAPA 5.0.2 Backend Deployment.*
+---
+
+## Android Flavors — ETAPA 5.0.3.1 ✅ COMPLETADA
+
+### productFlavors
+
+Tres flavors definidos en `android/app/build.gradle`:
+
+| Flavor | applicationId | App Name | .env file |
+|--------|---------------|----------|-----------|
+| `development` | `com.tacosmanager.dev` | TacosManager Dev | `.env.development` |
+| `qa` | `com.tacosmanager.qa` | TacosManager QA | `.env.qa` |
+| `production` | `com.tacosmanager` | TacosManager | `.env.production` |
+
+### Selección automática de .env
+
+`react-native-config` lee `project.ext.envConfigFiles` en `build.gradle`:
+
+```gradle
+project.ext.envConfigFiles = [
+    developmentdebug: ".env.development",
+    developmentrelease: ".env.development",
+    qadebug: ".env.qa",
+    qarelease: ".env.qa",
+    productiondebug: ".env.production",
+    productionrelease: ".env.production",
+]
+```
+
+El código TypeScript (`src/config/env.ts`) no necesita cambios — `Config.API_URL`, `Config.SOCKET_URL`, `Config.ENVIRONMENT` son inyectados automáticamente por el flavor activo.
+
+### App names por flavor
+
+Cada flavor tiene su propio source set de recursos:
+
+```txt
+android/app/src/
+├── main/res/values/strings.xml        → "TacosManager"       (production hereda esto)
+├── development/res/values/strings.xml → "TacosManager Dev"
+└── qa/res/values/strings.xml          → "TacosManager QA"
+```
+
+### Variantes Android generadas
+
+```txt
+developmentDebug    qaDebug    productionDebug
+developmentRelease  qaRelease  productionRelease
+```
+
+`debuggableVariants = ["developmentDebug", "qaDebug", "productionDebug"]` — las variantes debug usan Metro; las release bundlean JS.
+
+### Scripts npm
+
+```bash
+npm run android:dev    # developmentDebug — Metro, .env.development
+npm run android:qa     # qaDebug          — Metro, .env.qa
+npm run android:prod   # productionDebug  — Metro, .env.production
+
+npm run build:android:qa    # assembleQaRelease   → APK firmado
+npm run build:android:prod  # bundleProductionRelease → AAB para Play Store
+```
+
+### Coexistencia en dispositivo
+
+Los tres flavors pueden instalarse simultáneamente porque tienen `applicationId` distinto:
+
+```txt
+com.tacosmanager.dev   ← development
+com.tacosmanager.qa    ← qa
+com.tacosmanager       ← production
+```
+
+---
+
+*Última actualización: ETAPA 5.0.3.1 ✅ COMPLETADA — ETAPA 4.5 ✅, ETAPA 4.6 ✅, ETAPA 4.7 ✅, ETAPA 5.0.1 ✅, ETAPA 5.0.3.1 ✅ completadas.*

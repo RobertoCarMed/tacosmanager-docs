@@ -59,11 +59,13 @@ Tecnologías principales:
 - 4.7.3 Multi-device Validation
 - 4.7 Realtime Reliability
 - 5.0.1 Environment Strategy
+- 5.0.3.1 Android Flavors
 
 ## En Progreso
 
 - 5.0 MVP Launch
 - 5.0.2 Backend Deployment
+- 5.0.3 Mobile Release Pipeline
 
 ## Pendiente
 
@@ -1816,7 +1818,7 @@ ENVFILE=.env.qa npx react-native run-android
 ENVFILE=.env.production npx react-native run-android
 ```
 
-La selección automática por flavor de Android se implementa en ETAPA 5.0.3.
+La selección automática por flavor de Android se implementa en ETAPA 5.0.3.1 ✅ COMPLETADA.
 
 ---
 
@@ -1984,7 +1986,7 @@ Configurar en el dashboard de Railway para cada ambiente (QA / PROD):
 
 Estado:
 
-⬜ PENDIENTE
+🟡 EN PROGRESO
 
 ---
 
@@ -1994,10 +1996,174 @@ Preparar build y distribución del app móvil por ambiente.
 
 ---
 
-## Implementar
+## Subetapas
 
-- Build flavors (DEV / QA / PROD)
-- Configuración de entornos por flavor
+```txt
+5.0.3.1 ✅ — Android Flavors (productFlavors DEV / QA / PROD)
+5.0.3.2 ⬜ — iOS Schemes (Dev / QA / Prod)
+5.0.3.3 ⬜ — Play Store Internal Track (primera subida)
+```
+
+---
+
+# ETAPA 5.0.3.1
+# Android Flavors
+
+Estado:
+
+✅ COMPLETADA
+
+---
+
+## Objetivo
+
+Implementar `productFlavors` Android para seleccionar automáticamente el archivo `.env` correcto según el ambiente, sin modificar código.
+
+---
+
+## Flavors implementados
+
+| Flavor | applicationId | App Name | Env file |
+|--------|---------------|----------|----------|
+| `development` | `com.tacosmanager.dev` | TacosManager Dev | `.env.development` |
+| `qa` | `com.tacosmanager.qa` | TacosManager QA | `.env.qa` |
+| `production` | `com.tacosmanager` | TacosManager | `.env.production` |
+
+---
+
+## Variantes generadas
+
+```txt
+developmentDebug    — desarrollo local con Metro
+developmentRelease  — build firmado con .env.development
+
+qaDebug             — QA con Metro (testing en dispositivo)
+qaRelease           — APK firmado para distribución QA
+
+productionDebug     — producción con Metro (diagnóstico)
+productionRelease   — AAB firmado para Play Store
+```
+
+---
+
+## Archivos modificados
+
+```txt
+android/app/build.gradle
+  ├── project.ext.envConfigFiles  — mapeo flavor → .env.*
+  ├── react.debuggableVariants    — todas las variantes *Debug
+  ├── flavorDimensions "environment"
+  └── productFlavors { development, qa, production }
+
+android/app/src/development/res/values/strings.xml  — "TacosManager Dev"
+android/app/src/qa/res/values/strings.xml           — "TacosManager QA"
+android/app/src/main/res/values/strings.xml         — "TacosManager" (sin cambios)
+
+package.json
+  ├── android       → --flavor development (default)
+  ├── android:dev   → --flavor development
+  ├── android:qa    → --flavor qa
+  ├── android:prod  → --flavor production
+  ├── build:android:dev  → assembleDevelopmentDebug
+  ├── build:android:qa   → assembleQaRelease
+  └── build:android:prod → bundleProductionRelease
+```
+
+---
+
+## Cómo selecciona react-native-config el archivo .env
+
+```gradle
+project.ext.envConfigFiles = [
+    developmentdebug: ".env.development",
+    developmentrelease: ".env.development",
+    qadebug: ".env.qa",
+    qarelease: ".env.qa",
+    productiondebug: ".env.production",
+    productionrelease: ".env.production",
+]
+```
+
+Las claves son los nombres de variante en **minúsculas** (`{flavor}{buildType}`), tal como los procesa Gradle. `dotenv.gradle` de react-native-config los lee automáticamente y expone las variables vía `Config.*` en JS.
+
+---
+
+## Keystore (sin cambios)
+
+El `signingConfig.release` sigue leyendo las credenciales del `.env` raíz (que contiene las contraseñas reales y está gitignoreado). Los flavors no modifican la configuración de firma.
+
+---
+
+## Comandos de ejecución
+
+### Desarrollo (debug, Metro)
+
+```bash
+npm run android:dev       # com.tacosmanager.dev — Metro
+npm run android:qa        # com.tacosmanager.qa  — Metro
+npm run android:prod      # com.tacosmanager      — Metro
+```
+
+### APK QA (firmado release)
+
+```bash
+npm run build:android:qa
+# equivalente Gradle:
+cd android && gradlew assembleQaRelease
+# Output: android/app/build/outputs/apk/qa/release/app-qa-release.apk
+```
+
+### AAB Production (Play Store)
+
+```bash
+npm run build:android:prod
+# equivalente Gradle:
+cd android && gradlew bundleProductionRelease
+# Output: android/app/build/outputs/bundle/productionRelease/app-production-release.aab
+```
+
+### Tareas Gradle individuales
+
+```bash
+cd android && gradlew assembleDevelopmentDebug
+cd android && gradlew assembleQaDebug
+cd android && gradlew assembleProductionDebug
+
+cd android && gradlew assembleDevelopmentRelease
+cd android && gradlew assembleQaRelease
+cd android && gradlew assembleProductionRelease
+
+cd android && gradlew bundleProductionRelease
+```
+
+---
+
+## Criterios de validación
+
+```txt
+✅ Instalar developmentDebug → app_name "TacosManager Dev"
+✅ Instalar qaDebug          → app_name "TacosManager QA"
+✅ Instalar productionDebug  → app_name "TacosManager"
+
+✅ Pueden coexistir en el mismo dispositivo (applicationId diferente)
+   com.tacosmanager.dev
+   com.tacosmanager.qa
+   com.tacosmanager
+
+✅ Verificar Config.ENVIRONMENT en cada flavor:
+   development → "development"
+   qa          → "qa"
+   production  → "production"
+
+✅ Verificar Config.API_URL en cada flavor:
+   development → http://10.0.2.2:3000
+   qa          → https://api-qa.tacosmanager.com
+   production  → https://api.tacosmanager.com
+
+✅ assembleQaRelease genera APK firmado
+✅ bundleProductionRelease genera AAB firmado
+✅ Login, Órdenes, Cocina, Realtime funcionan en dev flavor
+```
 
 ---
 
