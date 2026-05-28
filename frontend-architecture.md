@@ -1,7 +1,7 @@
 # TacosManager — Frontend Architecture
 
-Version: 1.5
-Última actualización: ETAPA 5.0.3.3 — Mobile CI/CD ✅ Completada
+Version: 1.6
+Última actualización: ETAPA 5.0.3 ✅ Completada — ETAPA 5.0.4 🟡 En Progreso
 
 ---
 
@@ -763,4 +763,63 @@ Configurar en: `GitHub → Settings → Secrets and variables → Actions → Ne
 
 ---
 
-*Última actualización: ETAPA 5.0.3.3 ✅ COMPLETADA — ETAPA 4.5 ✅, ETAPA 4.6 ✅, ETAPA 4.7 ✅, ETAPA 5.0.1 ✅, ETAPA 5.0.3.1 ✅, ETAPA 5.0.3.2 ✅, ETAPA 5.0.3.3 ✅ completadas.*
+---
+
+## CI/CD Automation — ETAPA 5.0.4 🟡 EN PROGRESO
+
+La ETAPA 5.0.3 entregó el pipeline Mobile base. La ETAPA 5.0.4 lo extiende y agrega pipeline para Backend.
+
+### Estado actual del pipeline Mobile (heredado de 5.0.3.3)
+
+```txt
+.github/workflows/mobile-ci.yml
+  Job 1: validate-and-build-qa
+    Triggers: pull_request + push→main
+    Steps:    lint → typecheck → assembleQaRelease
+    Artifact: APK QA (solo en main, 30 días)
+
+  Job 2: build-production
+    Trigger:  push→main (después de Job 1)
+    Steps:    bundleProductionRelease
+    Artifact: AAB Production (30 días)
+```
+
+### Próximas mejoras (5.0.4.1 — Mobile Pipeline Optimization)
+
+- Separar lint+typecheck en job independiente para visibilidad de fallos más rápida
+- Cache de node_modules por hash de package-lock.json
+- Nombres de jobs descriptivos para branch protection rules
+
+### Pipeline Backend (5.0.4.2 — Backend CI Pipeline)
+
+Pipeline pendiente de implementar en el repositorio NestJS:
+
+```txt
+Triggers: pull_request + push→main
+Jobs:
+  validate:
+    lint (ESLint) → typecheck (tsc) → tests (jest) → prisma validate
+  build-check (solo main):
+    pnpm run build → verifica que dist/ compila sin errores
+
+Base de datos en CI: postgres:15-alpine (service container GitHub Actions)
+DATABASE_URL: postgresql://postgres:postgres@localhost:5432/tacosmanager_test
+```
+
+### Branch Protection (5.0.4.3)
+
+Status checks obligatorios para merge a main (pendiente de configurar en GitHub):
+
+| Repositorio | Status Checks requeridos |
+|-------------|--------------------------|
+| Mobile | `Validate & Build QA` (o job `lint-typecheck` si se separa en 5.0.4.1) |
+| Backend | `validate` (lint + typecheck + tests + prisma validate) |
+
+### Relación Mobile ↔ Backend en CI
+
+Los pipelines son independientes (repos separados). No hay orquestación cruzada en MVP. La coordinación es manual: el backend se despliega en Railway y el mobile apunta a la URL correcta via `.env.*`.
+
+---
+
+*Última actualización: ETAPA 5.0.3 ✅ COMPLETADA (2026-05-27) — ETAPA 5.0.4 🟡 EN PROGRESO*
+*ETAPA 4.5 ✅, ETAPA 4.6 ✅, ETAPA 4.7 ✅, ETAPA 5.0.1 ✅, ETAPA 5.0.3 ✅ completadas.*

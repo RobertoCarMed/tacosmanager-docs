@@ -62,19 +62,23 @@ Tecnologías principales:
 - 5.0.3.1 Android Flavors
 - 5.0.3.2 Build Automation
 - 5.0.3.3 Mobile CI/CD
+- 5.0.3 Mobile Release Pipeline ✅
 
 ## En Progreso
 
 - 5.0 MVP Launch
 - 5.0.2 Backend Deployment
-- 5.0.3 Mobile Release Pipeline
+- 5.0.4 CI/CD Automation
 
 ## Pendiente
 
 - 4.8 History & Filters
 - 4.9 Performance Optimization
 - 4.10 Product Management Improvements
-- 5.0 MVP Launch
+- 5.0.4.1 Mobile Pipeline Optimization
+- 5.0.4.2 Backend CI Pipeline
+- 5.0.4.3 Branch Protection & Status Checks
+- 5.0.4.4 CI/CD Conventions & Documentation
 
 ## Post-Lanzamiento
 
@@ -1988,7 +1992,9 @@ Configurar en el dashboard de Railway para cada ambiente (QA / PROD):
 
 Estado:
 
-🟡 EN PROGRESO
+✅ COMPLETADA
+
+Fecha de cierre: 2026-05-27
 
 ---
 
@@ -2004,8 +2010,19 @@ Preparar build y distribución del app móvil por ambiente.
 5.0.3.1 ✅ — Android Flavors (productFlavors DEV / QA / PROD)
 5.0.3.2 ✅ — Build Automation (scripts compuestos build:qa / build:prod)
 5.0.3.3 ✅ — Mobile CI/CD (GitHub Actions: PR validate + main release)
-5.0.3.4 ⬜ — Play Store Internal Track (primera subida)
+5.0.3.4 ⬜ — Play Store Internal Track (primera subida) [DIFERIDO a ETAPA 5.0.7]
 ```
+
+## Resultado Final
+
+Pipeline completo Mobile funcionando en GitHub Actions:
+
+- Pull Request → lint + typecheck + build QA (validación automática)
+- Push a main → lint + typecheck + build QA + build Production (artefactos firmados)
+- APK QA y AAB Production publicados como GitHub Artifacts
+- Firma con keystore validada en CI
+- Soporte Linux (gradlew con permisos correctos)
+- GitHub Secrets configurados (KEYSTORE_PASSWORD, KEY_PASSWORD)
 
 ---
 
@@ -2534,20 +2551,201 @@ clean:android       → cd android && ./gradlew clean
 
 Estado:
 
+🟡 EN PROGRESO
+
+---
+
+## Objetivo
+
+Expandir el pipeline CI/CD existente para cubrir validaciones técnicas completas de Mobile y Backend, con enfoque MVP Production Ready: simple, mantenible, económico y profesional.
+
+---
+
+## Contexto
+
+La ETAPA 5.0.3.3 entregó un pipeline Mobile funcional en GitHub Actions. La ETAPA 5.0.4 extiende ese trabajo en dos frentes:
+
+1. **Mobile** — optimizar y estructurar mejor el pipeline existente.
+2. **Backend** — crear pipeline CI para el repositorio NestJS.
+
+No se implementará en esta etapa: deploy automático a producción, Play Store publishing, Fastlane, Docker registry, Kubernetes, Terraform, AWS, Sentry ni Analytics.
+
+---
+
+## Subetapas
+
+```txt
+5.0.4.1 ⬜ — Mobile Pipeline Optimization
+5.0.4.2 ⬜ — Backend CI Pipeline
+5.0.4.3 ⬜ — Branch Protection & Status Checks
+5.0.4.4 ⬜ — CI/CD Conventions & Documentation
+```
+
+---
+
+# ETAPA 5.0.4.1
+# Mobile Pipeline Optimization
+
+Estado:
+
 ⬜ PENDIENTE
 
 ---
 
 ## Objetivo
 
-Automatizar integración y despliegue continuo.
+Mejorar el pipeline mobile existente sin romper funcionalidad actual.
 
 ---
 
-## Implementar
+## Alcance
 
-- CI/CD Backend
-- CI/CD Frontend
+- Separación de jobs: `lint-typecheck`, `build-qa`, `build-production` como jobs independientes para mejor visibilidad de fallos
+- Cache optimizado: node_modules y Gradle separados por lock file hash
+- Status checks claros: nombres de job descriptivos para branch protection
+- Manejo de fallos legible: mensajes de error descriptivos por step
+- Reutilización: extraer steps comunes (setup-java, setup-node, setup-gradle) en composite action o workflow reutilizable si aplica
+
+## Restricciones
+
+- NO eliminar el workflow actual — migrar incrementalmente
+- NO cambiar lógica de firma ni secrets
+- Mantener artefactos APK/AAB con misma naming convention
+
+---
+
+# ETAPA 5.0.4.2
+# Backend CI Pipeline
+
+Estado:
+
+⬜ PENDIENTE
+
+---
+
+## Objetivo
+
+Crear pipeline GitHub Actions para el repositorio NestJS que valide automáticamente cada PR y push a main.
+
+---
+
+## Alcance
+
+### Validaciones por Pull Request
+
+- lint (ESLint)
+- typecheck (tsc --noEmit)
+- tests (jest — los 19 tests existentes)
+- prisma validate (verifica schema.prisma sin conectar a DB)
+
+### Pipeline adicional en push a main
+
+- Health verification: build de producción compila sin errores
+- Artefacto opcional: dist/ comprimido para diagnóstico
+
+### Variables de entorno en CI
+
+- `DATABASE_URL` de test: PostgreSQL service container (GitHub Actions nativo)
+- `JWT_SECRET`: secret de CI (valor fijo para testing)
+- Sin conexión a Railway en CI — base de datos local del runner
+
+## Estrategia de base de datos en CI
+
+```txt
+GitHub Actions service: postgres:15-alpine
+DATABASE_URL: postgresql://postgres:postgres@localhost:5432/tacosmanager_test
+```
+
+Migración automática antes de correr tests:
+```bash
+npx prisma migrate deploy
+```
+
+---
+
+# ETAPA 5.0.4.3
+# Branch Protection & Status Checks
+
+Estado:
+
+⬜ PENDIENTE
+
+---
+
+## Objetivo
+
+Configurar reglas de protección de ramas en GitHub para que ningún PR pueda mergearse sin pasar los pipelines definidos.
+
+---
+
+## Alcance
+
+### Mobile Repository
+
+Status checks obligatorios para merge a main:
+
+- `Lint & TypeCheck` (de validate-and-build-qa o job separado)
+- `Build QA` (build exitoso como prueba de compilación)
+
+### Backend Repository
+
+Status checks obligatorios para merge a main:
+
+- `Lint & TypeCheck`
+- `Tests`
+- `Prisma Validate`
+
+### Configuración en GitHub
+
+- Settings → Branches → Branch protection rules → main
+- Require status checks to pass before merging: ✅
+- Require branches to be up to date before merging: ✅
+- Require pull request reviews: opcional (definir por repo)
+
+---
+
+# ETAPA 5.0.4.4
+# CI/CD Conventions & Documentation
+
+Estado:
+
+⬜ PENDIENTE
+
+---
+
+## Objetivo
+
+Documentar la estrategia CI/CD completa del proyecto para que sea mantenible sin depender del conocimiento tácito del desarrollador.
+
+---
+
+## Alcance
+
+- Documento `docs/cicd-strategy.md` con:
+  - Flujo PR → QA → Production (Mobile y Backend)
+  - Relación entre repositorios Mobile ↔ Backend en CI
+  - Convenciones de naming para workflows, jobs y artefactos
+  - Guía de mantenimiento: cuándo actualizar secrets, cuándo tocar workflows
+  - Riesgos identificados y mitigaciones
+  - Decisiones arquitectónicas (por qué no Fastlane, por qué no Docker en CI, etc.)
+
+---
+
+## Flujo CI/CD Objetivo (post-5.0.4)
+
+```txt
+Pull Request abierto
+  ├── Mobile:  lint → typecheck → build:qa  ──→ ✅/❌ Status Check
+  └── Backend: lint → typecheck → tests → prisma validate ──→ ✅/❌ Status Check
+
+Merge a main
+  ├── Mobile:  validate + build:qa (APK artifact) → build:prod (AAB artifact)
+  └── Backend: validate + tests + build dist
+
+Artifacts disponibles en GitHub Actions:
+  ├── app-qa-release-<sha>.apk      (30 días)
+  └── app-production-release-<sha>.aab  (30 días)
+```
 
 ---
 
@@ -2721,12 +2919,16 @@ Una etapa se considera completada cuando:
 
 # Próxima Etapa
 
-ETAPA 5.0 ⬜ MVP Launch — siguiente etapa activa del proyecto.
+ETAPA 5.0.4 🟡 CI/CD Automation — etapa activa actual.
 
-Despliegue productivo en Railway + PostgreSQL + Play Store.
+Expandir pipeline CI/CD para Mobile y Backend con enfoque MVP Production Ready.
+
+Paralelo activo: ETAPA 5.0.2 Backend Deployment (Railway + PostgreSQL).
 
 Sin nuevas funcionalidades de negocio — el foco es infraestructura y despliegue.
 
 Ver estrategia comercial y costos en: docs/business-model.md
+Ver estrategia CI/CD en: docs/cicd-strategy.md (se crea en ETAPA 5.0.4.4)
 
 ETAPA 4.5 ✅ completada. ETAPA 4.6 ✅ completada. ETAPA 4.7 ✅ completada.
+ETAPA 5.0.3 ✅ completada (2026-05-27).

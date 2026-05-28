@@ -930,13 +930,38 @@ MVP Launch — despliegue productivo en Railway + Play Store.
 
 5.0.2 🟡 Backend Deployment — EN PROGRESO. Production Readiness Audit completada: health check (`GET /health`), dotenv eliminado, socket.io-client a devDeps, PrismaService simplificado, postinstall prisma generate, railway.json creado. Pendiente: provisionar Railway QA, migrar DB, smoke test.
 
-5.0.3 🟡 Mobile Release Pipeline — EN PROGRESO.
+5.0.3 ✅ Mobile Release Pipeline — COMPLETADA (2026-05-27).
 
 5.0.3.1 ✅ Android Flavors — `productFlavors` (development/qa/production) en `android/app/build.gradle`. `project.ext.envConfigFiles` mapea cada variante a su `.env.*`. Flavor source sets para `app_name` diferenciado (TacosManager Dev / QA / TacosManager). applicationId: `.dev` / `.qa` / sin suffix. Scripts npm: `android:dev`, `android:qa`, `android:prod`, `build:android:qa`, `build:android:prod`.
 
 5.0.3.2 ✅ Build Automation — Scripts compuestos `build:qa` y `build:prod` (lint → typecheck → Gradle release). Scripts `typecheck` (`tsc --noEmit`), `clean`/`clean:android` (`gradlew clean`). Pipeline: 0 errores TypeScript + 0 errores ESLint requeridos antes de generar artefacto. Correcciones lint preexistentes aplicadas (import unused en `auth/types.ts`, dep innecesaria en `useOrders.ts`).
 
 5.0.3.3 ✅ Mobile CI/CD — `.github/workflows/mobile-ci.yml`. Job 1 (`validate-and-build-qa`): todos los triggers → lint + typecheck + assembleQaRelease, APK artifact en main. Job 2 (`build-production`): solo main, después de Job 1 → bundleProductionRelease, AAB artifact. Java 17 + Node LTS + Gradle cache. Secrets: `KEYSTORE_PASSWORD`, `KEY_PASSWORD`. Scripts corregidos: `./gradlew` (Linux compatible).
+
+---
+
+Etapa 5.0.4 🟡 EN PROGRESO
+
+CI/CD Automation — expandir pipeline existente a Mobile + Backend con enfoque MVP Production Ready.
+
+5.0.4.1 ⬜ Mobile Pipeline Optimization — separación de jobs, cache optimizado, status checks claros.
+5.0.4.2 ⬜ Backend CI Pipeline — lint + typecheck + tests + prisma validate en GitHub Actions para el repositorio NestJS.
+5.0.4.3 ⬜ Branch Protection & Status Checks — configurar reglas en GitHub para ambos repositorios.
+5.0.4.4 ⬜ CI/CD Conventions & Documentation — `docs/cicd-strategy.md` con flujo PR → QA → Production, convenciones y decisiones.
+
+Flujo CI/CD objetivo post-5.0.4:
+
+```txt
+PR abierto
+  Mobile:  lint → typecheck → build:qa  ──→ ✅/❌ Status Check
+  Backend: lint → typecheck → tests → prisma validate ──→ ✅/❌ Status Check
+
+Merge a main
+  Mobile:  validate + build:qa (APK artifact) → build:prod (AAB artifact)
+  Backend: validate + tests + build dist
+```
+
+No incluye: deploy automático, Play Store publishing, Fastlane, Docker registry, Kubernetes, Terraform, Sentry.
 
 Estrategia y costos: docs/business-model.md
 
