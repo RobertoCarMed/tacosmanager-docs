@@ -10,6 +10,36 @@ Base URL
 
 ---
 
+# System
+
+## GET /health
+
+Health check del servicio. No requiere autenticación.
+
+Response:
+
+```json
+{
+  "status": "ok",
+  "timestamp": "2026-05-27T12:00:00.000Z",
+  "environment": "development"
+}
+```
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `status` | `string` | Estado del servicio — siempre `"ok"` si el proceso responde |
+| `timestamp` | `string` | ISO 8601 — momento en que se procesó la request |
+| `environment` | `string` | Ambiente activo (`development` / `qa` / `production`) |
+
+Usado por: Railway healthcheck, Backend CI pipeline (Health Check QA en push a main).
+
+## GET /
+
+Alias de `GET /health`. Devuelve el mismo payload.
+
+---
+
 # Authentication
 
 ---

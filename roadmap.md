@@ -63,6 +63,7 @@ Tecnologías principales:
 - 5.0.3.2 Build Automation
 - 5.0.3.3 Mobile CI/CD
 - 5.0.3 Mobile Release Pipeline ✅
+- 5.0.4.2 Backend CI Pipeline ✅
 
 ## En Progreso
 
@@ -76,7 +77,6 @@ Tecnologías principales:
 - 4.9 Performance Optimization
 - 4.10 Product Management Improvements
 - 5.0.4.1 Mobile Pipeline Optimization
-- 5.0.4.2 Backend CI Pipeline
 - 5.0.4.3 Branch Protection & Status Checks
 - 5.0.4.4 CI/CD Conventions & Documentation
 
@@ -2576,7 +2576,7 @@ No se implementará en esta etapa: deploy automático a producción, Play Store 
 
 ```txt
 5.0.4.1 ⬜ — Mobile Pipeline Optimization
-5.0.4.2 ⬜ — Backend CI Pipeline
+5.0.4.2 ✅ — Backend CI Pipeline
 5.0.4.3 ⬜ — Branch Protection & Status Checks
 5.0.4.4 ⬜ — CI/CD Conventions & Documentation
 ```
@@ -2619,7 +2619,9 @@ Mejorar el pipeline mobile existente sin romper funcionalidad actual.
 
 Estado:
 
-⬜ PENDIENTE
+✅ COMPLETADA
+
+Fecha de cierre: 2026-05-27
 
 ---
 
@@ -2629,37 +2631,67 @@ Crear pipeline GitHub Actions para el repositorio NestJS que valide automáticam
 
 ---
 
-## Alcance
-
-### Validaciones por Pull Request
-
-- lint (ESLint)
-- typecheck (tsc --noEmit)
-- tests (jest — los 19 tests existentes)
-- prisma validate (verifica schema.prisma sin conectar a DB)
-
-### Pipeline adicional en push a main
-
-- Health verification: build de producción compila sin errores
-- Artefacto opcional: dist/ comprimido para diagnóstico
-
-### Variables de entorno en CI
-
-- `DATABASE_URL` de test: PostgreSQL service container (GitHub Actions nativo)
-- `JWT_SECRET`: secret de CI (valor fijo para testing)
-- Sin conexión a Railway en CI — base de datos local del runner
-
-## Estrategia de base de datos en CI
+## Archivo creado
 
 ```txt
-GitHub Actions service: postgres:15-alpine
-DATABASE_URL: postgresql://postgres:postgres@localhost:5432/tacosmanager_test
+.github/workflows/backend-ci.yml
 ```
 
-Migración automática antes de correr tests:
-```bash
-npx prisma migrate deploy
+---
+
+## Triggers
+
+| Evento | Jobs ejecutados |
+|--------|-----------------|
+| `pull_request` | Lint · Build · Validate |
+| `push → main` | Lint · Build · Validate + Health Check QA |
+
+---
+
+## Validaciones implementadas
+
+### Flujo PR (todos los triggers)
+
+```txt
+1. Checkout
+2. Setup pnpm (latest) + Node.js LTS con cache pnpm
+3. pnpm install --frozen-lockfile
+4. pnpm lint      — ESLint sobre src/
+5. pnpm build     — nest build (TypeScript completo)
+6. prisma validate — valida schema.prisma sin conexión a BD
 ```
+
+### Flujo Main (adicional — solo push a main)
+
+```txt
+7. Health Check QA
+   GET $QA_API_URL/health → valida { status: "ok" }
+```
+
+---
+
+## Decisiones de implementación
+
+- **Sin DATABASE_URL en CI**: el schema Prisma usa driver adapter (sin `url` en datasource), por lo que `prisma validate` y `prisma generate` (postinstall) no requieren conexión a BD.
+- **Sin tests en esta etapa**: los tests unitarios existentes (19) no se corren en este pipeline MVP — se incluirán en optimizaciones futuras.
+- **Sin artefactos**: el alcance es solo validación de calidad, no publicación de builds.
+- **Job único con step condicional**: no se duplica la lógica de setup/install entre PR y main.
+
+---
+
+## Variables requeridas en GitHub
+
+| Variable | Tipo | Descripción |
+|----------|------|-------------|
+| `QA_API_URL` | Variable (no Secret) | URL base del backend Railway QA |
+
+Configurar en: GitHub → Settings → Secrets and variables → Actions → Variables
+
+---
+
+## Documentación
+
+Ver: `docs/cicd-backend.md`
 
 ---
 
