@@ -1,7 +1,7 @@
 # TacosManager — Mobile CI/CD
 
-Version: 1.0
-Última actualización: ETAPA 5.0.4.1 — Mobile Pipeline Optimization 🟡 EN PROGRESO
+Version: 1.1
+Última actualización: ETAPA 5.0.4.1 — Mobile Pipeline Optimization ✅ COMPLETADA (2026-05-28)
 
 ---
 
@@ -267,4 +267,83 @@ El pipeline no modifica ninguna de estas configuraciones:
 ✅ tacosmanager.keystore       — android/app/ (sin cambios)
 ✅ react-native-config         — dotenv.gradle + envConfigFiles (sin cambios)
 ✅ Scripts npm                 — build:android:qa, build:android:prod (sin cambios)
+```
+
+---
+
+## Validaciones — ETAPA 5.0.4.1 ✅
+
+Validaciones ejecutadas en GitHub Actions el 2026-05-28:
+
+### Pull Requests (feature→dev, dev→qa, qa→main)
+
+```txt
+✅ Mobile • Lint & TypeCheck  — ejecutado
+✅ Mobile • Build QA APK      — NO ejecutado (correcto)
+✅ Mobile • Build Production AAB — NO ejecutado (correcto)
+```
+
+### Push a dev
+
+```txt
+✅ Mobile • Lint & TypeCheck  — ejecutado
+✅ Mobile • Build QA APK      — NO ejecutado (correcto)
+```
+
+### Push a qa
+
+```txt
+✅ Mobile • Lint & TypeCheck  — ejecutado
+✅ Mobile • Build QA APK      — ejecutado
+✅ APK QA artifact            — generado y disponible
+✅ Mobile • Build Production AAB — NO ejecutado (correcto)
+```
+
+### Push a main
+
+```txt
+✅ Mobile • Lint & TypeCheck      — ejecutado
+✅ Mobile • Build QA APK          — ejecutado
+✅ Mobile • Build Production AAB  — ejecutado
+✅ APK QA artifact                — generado
+✅ AAB Production artifact        — generado
+```
+
+### Variables y ambientes
+
+```txt
+✅ QA_API_URL / QA_SOCKET_URL       — configuradas y consumidas correctamente
+✅ PROD_API_URL / PROD_SOCKET_URL   — configuradas y consumidas correctamente
+✅ .env.qa generado dinámicamente   — sin URLs hardcodeadas
+✅ .env.production generado dinámicamente — sin URLs hardcodeadas
+```
+
+### Cache y artefactos
+
+```txt
+✅ npm cache operativo (por package-lock.json)
+✅ Gradle cache operativo (dependencias Android)
+✅ lint-typecheck sin Java/Gradle — ejecución más rápida
+✅ Retención 30 días en ambos artefactos
+```
+
+---
+
+## Lecciones aprendidas
+
+### Submodule en detached HEAD
+
+Al trabajar con submódulos en detached HEAD y luego hacer `git checkout main` con cambios pendientes, se generan conflictos de merge con commits previos. Solución correcta: verificar que el submódulo esté en la rama `main` antes de iniciar cambios, o hacer `git stash` antes de cambiar de rama y resolver conflictos manualmente partiendo del estado upstream.
+
+### Estrategia `needs` + `if` en GitHub Actions
+
+Para ejecución condicional por rama con jobs dependientes:
+- La condición `if` en un job se evalúa de forma independiente al resultado del `needs`.
+- Si el job necesitado es saltado (`skipped`), el dependiente también se salta por defecto.
+- Para push a main: los 3 jobs corren en cascada. Para push a qa: solo los primeros 2. Para PRs/dev: solo el primero.
+- El diseño evita la necesidad de condiciones `if: always()` o manejo explícito de `skipped`.
+
+### Repository Variables vs Secrets
+
+Las Repository Variables son la herramienta correcta para URLs de ambiente: visibles en logs, editables sin rotación, sin aprobación de org. Los Secrets se reservan para credenciales sensibles (contraseñas de keystore). Esta separación es semánticamente correcta y reduce la fricción operativa al cambiar de infraestructura.
 ```

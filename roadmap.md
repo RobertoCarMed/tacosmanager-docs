@@ -63,6 +63,7 @@ Tecnologías principales:
 - 5.0.3.2 Build Automation
 - 5.0.3.3 Mobile CI/CD
 - 5.0.3 Mobile Release Pipeline ✅
+- 5.0.4.1 Mobile Pipeline Optimization ✅
 - 5.0.4.2 Backend CI Pipeline ✅
 
 ## En Progreso
@@ -70,7 +71,6 @@ Tecnologías principales:
 - 5.0 MVP Launch
 - 5.0.2 Backend Deployment
 - 5.0.4 CI/CD Automation
-- 5.0.4.1 Mobile Pipeline Optimization
 
 ## Pendiente
 
@@ -2588,7 +2588,9 @@ No se implementará en esta etapa: deploy automático a producción, Play Store 
 
 Estado:
 
-🟡 EN PROGRESO
+✅ COMPLETADA
+
+Fecha de cierre: 2026-05-28
 
 ---
 
@@ -2598,19 +2600,19 @@ Optimizar y profesionalizar el pipeline móvil para mantenibilidad, velocidad, o
 
 ---
 
-## Implementado
+## Entregables
 
-### Reestructuración en 3 jobs separados
+### Arquitectura final del pipeline
 
 ```txt
-Mobile • Lint & TypeCheck   ← todos los triggers
+Mobile • Lint & TypeCheck   ← todos los triggers (PRs y push a dev/qa/main)
         ↓
 Mobile • Build QA APK       ← push a qa y main
         ↓
 Mobile • Build Production AAB ← push a main únicamente
 ```
 
-### Estrategia de ejecución por rama
+### Estrategia de ramas
 
 | Evento | Lint & TypeCheck | Build QA APK | Build Production AAB |
 |--------|:---:|:---:|:---:|
@@ -2619,11 +2621,37 @@ Mobile • Build Production AAB ← push a main únicamente
 | Push → qa | ✅ | ✅ + artifact | — |
 | Push → main | ✅ | ✅ + artifact | ✅ + artifact |
 
-### Optimización de cache
+**Objetivo de PR:** validación rápida de código sin compilar — reviewers ven el check verde en segundos.
 
-- Node: `actions/setup-node@v4` con `cache: npm` basado en lockfile
-- Gradle + Android SDK: `gradle/actions/setup-gradle@v4`
-- Job lint-typecheck sin Java/Gradle — ejecución significativamente más rápida
+**Objetivo de push a dev:** igual que PR — integración sin costo de compilación.
+
+**Objetivo de push a qa:** APK instalable para pruebas funcionales en dispositivo real.
+
+**Objetivo de push a main:** pipeline completo para producción.
+
+### Estrategia de ambientes
+
+`.env.qa` y `.env.production` generados dinámicamente desde GitHub Repository Variables. Sin URLs hardcodeadas en el workflow.
+
+| Variable | Ambiente | Uso |
+|----------|----------|-----|
+| `QA_API_URL` | QA | URL base del backend QA |
+| `QA_SOCKET_URL` | QA | URL Socket.IO QA |
+| `PROD_API_URL` | Production | URL base del backend Production |
+| `PROD_SOCKET_URL` | Production | URL Socket.IO Production |
+
+### Estrategia de artefactos
+
+| Artefacto | Trigger | Retención |
+|-----------|---------|-----------|
+| `app-qa-release-<sha>.apk` | push → qa, push → main | 30 días |
+| `app-production-release-<sha>.aab` | push → main | 30 días |
+
+### Estrategia de cache
+
+- **Node:** `actions/setup-node@v4` con `cache: npm` basado en `package-lock.json`
+- **Gradle + Android SDK:** `gradle/actions/setup-gradle@v4`
+- **Optimización clave:** `lint-typecheck` no instala Java ni Gradle — tiempo de ejecución reducido
 
 ### Nombres de jobs (Branch Protection ready)
 
@@ -2633,24 +2661,100 @@ Mobile • Build QA APK
 Mobile • Build Production AAB
 ```
 
-### Environment Management
-
-Eliminadas URLs hardcodeadas. Variables generadas dinámicamente desde GitHub Repository Variables:
-
-| Variable | Ambiente |
-|----------|----------|
-| `QA_API_URL` | QA |
-| `QA_SOCKET_URL` | QA |
-| `PROD_API_URL` | Production |
-| `PROD_SOCKET_URL` | Production |
-
-### Manejo de errores
-
-Anotaciones `::error::` en lint, typecheck, build QA y build Production.
-
 ### Composite Action
 
-No implementada — con solo 2 jobs de build, el overhead supera el beneficio. Decisión documentada en docs/cicd-mobile.md.
+No implementada. Con solo 2 jobs de build, el overhead de un archivo `action.yml` adicional supera el beneficio. Decisión documentada en `docs/cicd-mobile.md`.
+
+---
+
+## Validaciones ejecutadas
+
+### Pull Requests (feature→dev, dev→qa, qa→main)
+
+```txt
+✅ Mobile • Lint & TypeCheck ejecutado
+✅ Build QA APK NO ejecutado (correcto)
+✅ Build Production AAB NO ejecutado (correcto)
+```
+
+### Push a dev
+
+```txt
+✅ Mobile • Lint & TypeCheck ejecutado
+✅ Build QA APK NO ejecutado (correcto)
+```
+
+### Push a qa
+
+```txt
+✅ Mobile • Lint & TypeCheck ejecutado
+✅ Mobile • Build QA APK ejecutado
+✅ APK QA artifact generado y disponible en GitHub Actions
+✅ Build Production AAB NO ejecutado (correcto)
+```
+
+### Push a main
+
+```txt
+✅ Mobile • Lint & TypeCheck ejecutado
+✅ Mobile • Build QA APK ejecutado
+✅ Mobile • Build Production AAB ejecutado
+✅ APK QA artifact generado
+✅ AAB Production artifact generado
+```
+
+### Variables GitHub
+
+```txt
+✅ QA_API_URL configurada y consumida correctamente
+✅ QA_SOCKET_URL configurada y consumida correctamente
+✅ PROD_API_URL configurada y consumida correctamente
+✅ PROD_SOCKET_URL configurada y consumida correctamente
+```
+
+### Generación de archivos de ambiente
+
+```txt
+✅ .env.qa generado dinámicamente con valores de QA_API_URL y QA_SOCKET_URL
+✅ .env.production generado dinámicamente con valores de PROD_API_URL y PROD_SOCKET_URL
+✅ Sin URLs hardcodeadas en el workflow
+```
+
+### Cache
+
+```txt
+✅ npm cache operativo (node_modules cacheados por package-lock.json)
+✅ Gradle cache operativo (dependencias Android cacheadas)
+✅ Job lint-typecheck sin Java/Gradle — ejecución más rápida confirmada
+```
+
+### Artefactos
+
+```txt
+✅ app-qa-release-<sha>.apk disponible en push a qa y main
+✅ app-production-release-<sha>.aab disponible solo en push a main
+```
+
+---
+
+## Lecciones aprendidas
+
+### Submodule en detached HEAD
+
+El submódulo `docs` estaba en HEAD detached al momento de crear los cambios. Al hacer `git checkout main` en el submódulo con cambios pendientes, se generaron conflictos de merge con commits previos de ETAPA 5.0.4.2. Solución: `git stash` → `checkout main` → resolver conflictos manualmente partiendo del estado upstream y re-aplicando solo los cambios relevantes.
+
+**Aplicar en futuro:** siempre verificar que el submódulo `docs` esté en la rama `main` antes de crear archivos nuevos, para evitar conflictos de merge al momento del commit.
+
+### Estrategia de `needs` + `if` en GitHub Actions
+
+Para implementar la ejecución condicional por rama, se combinaron `needs` (dependencias entre jobs) con condiciones `if` explícitas. Puntos clave:
+- Si un job es saltado por su `if`, los jobs dependientes también son saltados automáticamente.
+- La condición `if` en `build-production` evalúa el ref de forma independiente — no depende de que `build-qa` haya corrido para decidir si ejecutar.
+- Para push a main: los 3 jobs corren en cascada. Para push a qa: solo corren los primeros 2. Para PRs y dev: solo corre el primero.
+
+### GitHub Repository Variables vs Secrets
+
+Las Repository Variables (no secretas) son la herramienta correcta para URLs de ambiente — son visibles en logs, editables sin rotación, y no requieren aprobación de org. Los Secrets (`KEYSTORE_PASSWORD`, `KEY_PASSWORD`) se mantienen para credenciales sensibles.
 
 ---
 
@@ -2669,19 +2773,6 @@ docs/architecture.md
 
 ```txt
 docs/cicd-mobile.md
-```
-
----
-
-## Pendientes para cerrar la etapa
-
-```txt
-□ Configurar GitHub Repository Variables: QA_API_URL, QA_SOCKET_URL, PROD_API_URL, PROD_SOCKET_URL
-□ Validar pipeline en push a dev → solo lint-typecheck ejecuta
-□ Validar pipeline en push a qa → lint-typecheck + build QA APK + artifact
-□ Validar pipeline en push a main → pipeline completo (3 jobs + 2 artifacts)
-□ Validar que PRs solo ejecutan lint-typecheck
-□ Confirmar nombres de jobs en GitHub Actions UI para Branch Protection
 ```
 
 ---
