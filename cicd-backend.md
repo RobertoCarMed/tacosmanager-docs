@@ -1,6 +1,6 @@
 # Backend CI — TacosManager
 
-Versión: 1.1
+Versión: 2.0
 Etapa: 5.0.4.2
 Estado: ✅ COMPLETADA
 
@@ -8,16 +8,32 @@ Estado: ✅ COMPLETADA
 
 # Objetivo
 
-Validar automáticamente la calidad del backend NestJS antes de permitir merges a `main`.
+Validar automáticamente la calidad del backend NestJS en cada etapa del ciclo de promoción de ramas, y verificar el estado del servicio QA al promover código a ese ambiente.
 
 El pipeline garantiza que:
 
 - El código no tiene errores de lint
 - El build TypeScript compila sin errores
 - El schema Prisma es válido
-- El backend desplegado en QA responde correctamente (solo en push a main)
+- El backend desplegado en QA responde correctamente (solo en push a `qa`)
 
 Esta etapa **no incluye** deploy automático, publicación de artefactos ni tests de integración con base de datos externa.
+
+---
+
+# Flujo de ramas oficial
+
+```txt
+feature/*
+    ↓  (PR → dev)
+   dev
+    ↓  (PR → qa)
+   qa
+    ↓  (PR → main)
+  main
+```
+
+El CI/CD está alineado con este flujo. Cada etapa tiene responsabilidades diferentes.
 
 ---
 
@@ -31,16 +47,22 @@ Esta etapa **no incluye** deploy automático, publicación de artefactos ni test
 
 # Triggers
 
-| Evento | Descripción |
-|--------|-------------|
-| `pull_request` | Cualquier PR abierto o actualizado |
-| `push → main` | Push directo o merge de PR a la rama main |
+| Evento | Rama destino | Jobs ejecutados |
+|--------|-------------|-----------------|
+| `pull_request` | `dev` | Lint · Build · Validate |
+| `pull_request` | `qa` | Lint · Build · Validate |
+| `pull_request` | `main` | Lint · Build · Validate |
+| `push` | `dev` | Lint · Build · Validate |
+| `push` | `qa` | Lint · Build · Validate · **Health Check QA** |
+| `push` | `main` | Lint · Build · Validate |
 
 ---
 
-# Flujo PR
+# Jobs
 
-Ejecutado en: todos los `pull_request` y `push → main`.
+## Job: validate
+
+Ejecutado en: todos los triggers.
 
 ```txt
 1. Checkout del repositorio
@@ -52,13 +74,11 @@ Ejecutado en: todos los `pull_request` y `push → main`.
 7. prisma validate ← valida schema.prisma sin conexión a BD
 ```
 
-Si cualquier paso falla → el workflow falla → el merge queda bloqueado.
+Si cualquier paso falla → el workflow falla → el merge queda bloqueado (cuando branch protection esté configurada).
 
----
+## Job: health-check-qa
 
-# Flujo Main (adicional al flujo PR)
-
-Ejecutado solo en: `push → main`.
+Ejecutado en: `push → qa` únicamente. Requiere que `validate` haya pasado.
 
 ```txt
 8. Health Check QA
@@ -67,6 +87,53 @@ Ejecutado solo en: `push → main`.
 ```
 
 Si el health check falla → el workflow falla.
+
+---
+
+# Responsabilidades por rama
+
+## dev
+
+Rama de integración continua. Recibe merges de `feature/*`.
+
+| Evento | Validaciones |
+|--------|-------------|
+| PR → dev | lint · build · prisma validate |
+| push → dev | lint · build · prisma validate |
+
+No hay health checks en `dev` — no existe un ambiente desplegado asociado.
+
+## qa
+
+Rama de staging. Recibe merges de `dev`.
+
+| Evento | Validaciones |
+|--------|-------------|
+| PR → qa | lint · build · prisma validate |
+| push → qa | lint · build · prisma validate · **Health Check QA** |
+
+El Health Check QA vive aquí porque `qa` es el trigger de promoción al ambiente QA desplegado en Railway. Verificar el servicio **después del merge** — no antes — garantiza que el código que acaba de llegar al ambiente responde correctamente.
+
+## main
+
+Rama de producción. Recibe merges de `qa`.
+
+| Evento | Validaciones |
+|--------|-------------|
+| PR → main | lint · build · prisma validate |
+| push → main | lint · build · prisma validate |
+
+El Production Health Check no está implementado todavía — se conectará cuando el ambiente de producción esté disponible. Ver sección **Production Health Check (futuro)**.
+
+---
+
+# Por qué QA Health Check vive en `qa` y no en `main`
+
+El Health Check QA tiene como propósito verificar que el backend desplegado en Railway QA responde correctamente **después de que código nuevo llega a ese ambiente**.
+
+El push a `qa` es el evento que dispara el despliegue a Railway QA. Por lo tanto, el health check debe ejecutarse en ese trigger — no en `main`, que corresponde a producción.
+
+Ejecutar el Health Check QA en `main` sería conceptualmente incorrecto: validaría el ambiente QA en un momento en que el código de producción ya ha avanzado más allá de QA.
 
 ---
 
@@ -124,13 +191,30 @@ Si el endpoint no es alcanzable o devuelve un `status` distinto de `"ok"`, el wo
 
 ---
 
+# Production Health Check (futuro)
+
+Pendiente de infraestructura. Se implementará cuando el ambiente de producción en Railway esté disponible.
+
+Estructura prevista:
+
+| Parámetro | Valor |
+|-----------|-------|
+| Trigger | `push → main` |
+| Variable | `PROD_API_URL` (GitHub Variables) |
+| Endpoint | `GET $PROD_API_URL/health` |
+| Validación | `status === "ok"` |
+
+El placeholder está documentado en `.github/workflows/backend-ci.yml` como comentario. Para activarlo: agregar el job `health-check-prod` con `if: github.event_name == 'push' && github.ref == 'refs/heads/main'` y `needs: validate`.
+
+---
+
 # Variables requeridas en GitHub
 
 ## Variables de repositorio (Settings → Secrets and variables → Actions → Variables)
 
 | Variable | Descripción | Cuándo se usa |
 |----------|-------------|---------------|
-| `QA_API_URL` | URL base del backend en Railway QA (ej. `https://tacos-manager-api-qa.up.railway.app`) | Push a main — Health Check QA |
+| `QA_API_URL` | URL base del backend en Railway QA (ej. `https://tacos-manager-api-qa.up.railway.app`) | Push a `qa` — Health Check QA |
 
 **No incluir** `/health` en el valor de la variable. El workflow lo agrega automáticamente.
 
@@ -194,7 +278,7 @@ PrismaConfigEnvError: Cannot resolve environment variable DATABASE_URL
 
 **Causa:** `postinstall` ejecuta `prisma generate`, que lee `prisma.config.ts`. La función `env('DATABASE_URL')` de Prisma lanza este error si la variable no está definida en el entorno del runner.
 
-**Solución:** Verificar que el job tiene definida la variable `DATABASE_URL` (valor dummy) en la sección `env:` del job. Ver sección **DATABASE_URL en CI**.
+**Solución:** Verificar que el job `validate` tiene definida la variable `DATABASE_URL` (valor dummy) en la sección `env:`. Ver sección **DATABASE_URL en CI**.
 
 ---
 
@@ -264,13 +348,26 @@ PrismaConfigEnvError: Cannot resolve environment variable DATABASE_URL
 
 ---
 
+## El workflow no se activa en PR hacia `dev`
+
+**Síntoma:** Se abre un PR de `feature/*` hacia `dev` pero el workflow no se ejecuta.
+
+**Causa:** El trigger `pull_request` del workflow especifica `branches: [dev, qa, main]`. Si la rama base del PR es diferente (ej. `develop`, `staging`), el workflow no se activa.
+
+**Solución:** Verificar que la rama base del PR coincide exactamente con `dev`, `qa` o `main`.
+
+---
+
 # Checklist de mantenimiento
 
 ```txt
 □ Al cambiar la URL del servicio Railway QA → actualizar QA_API_URL en GitHub Variables
+□ Al crear el ambiente de producción → implementar health-check-prod en el workflow
+□ Al agregar PROD_API_URL → configurarla en GitHub Variables (no Secret)
 □ Al actualizar la versión de pnpm en el proyecto → verificar que el workflow sigue pasando
 □ Al actualizar Node.js en el proyecto → actualizar node-version en el workflow si es necesario
 □ Al agregar nuevas reglas ESLint → verificar que pnpm lint sigue pasando en CI
+□ Al renombrar ramas (dev/qa/main) → actualizar los triggers del workflow
 □ Periódicamente verificar que ubuntu-latest sigue teniendo jq pre-instalado
 ```
 
@@ -278,46 +375,54 @@ PrismaConfigEnvError: Cannot resolve environment variable DATABASE_URL
 
 # Casos de prueba manuales
 
-## 1. Verificar que el pipeline se activa en PR
+## 1. Verificar que PR hacia `dev` ejecuta validaciones
 
 ```txt
-1. Crear un branch nuevo con cualquier cambio
-2. Abrir un Pull Request hacia main
+1. Crear un branch feature/* con cualquier cambio
+2. Abrir un Pull Request hacia dev
 3. Ir a GitHub → pestaña Actions
 4. Confirmar que "Backend CI" aparece y ejecuta el job "Lint · Build · Validate"
 5. Todos los pasos deben pasar (verde ✅)
-6. El paso "Health Check QA" NO debe ejecutarse en PR
+6. El job "Health Check QA" NO debe aparecer
 ```
 
-## 2. Verificar que el pipeline se activa en push a main
+## 2. Verificar que PR hacia `qa` ejecuta validaciones
 
 ```txt
-1. Hacer merge de un PR o push directo a main
+1. Abrir un Pull Request de dev hacia qa
 2. Ir a GitHub → pestaña Actions
-3. Confirmar que "Backend CI" se ejecuta
-4. Los pasos de validación (lint, build, prisma validate) deben pasar
-5. El paso "Health Check QA" DEBE ejecutarse
-6. Confirmar que el health check pasa correctamente
+3. Confirmar que "Lint · Build · Validate" pasa
+4. El job "Health Check QA" NO debe ejecutarse (solo se activa en push, no en PR)
 ```
 
-## 3. Verificar que lint falla correctamente
+## 3. Verificar que push a `qa` ejecuta Health Check QA
 
 ```txt
-1. Crear un branch con un error de lint no auto-corregible (ej. variable no usada con explicit any)
-2. Abrir un PR
+1. Hacer merge de un PR hacia qa
+2. Ir a GitHub → pestaña Actions
+3. Confirmar que se ejecutan ambos jobs: "Lint · Build · Validate" y "Health Check QA"
+4. Confirmar que "Health Check QA" pasa (verde ✅)
+```
+
+## 4. Verificar que push a `main` NO ejecuta Health Check QA
+
+```txt
+1. Hacer merge de un PR hacia main
+2. Ir a GitHub → pestaña Actions
+3. Confirmar que solo se ejecuta "Lint · Build · Validate"
+4. El job "Health Check QA" NO debe aparecer
+```
+
+## 5. Verificar que lint falla correctamente
+
+```txt
+1. Crear un branch con un error de lint no auto-corregible
+2. Abrir un PR hacia dev (o qa o main)
 3. Confirmar que el paso "Lint" falla (rojo ❌)
 4. Confirmar que el merge queda bloqueado (si branch protection está configurada)
 ```
 
-## 4. Verificar que build falla correctamente
-
-```txt
-1. Crear un branch con un error TypeScript intencional (ej. tipo incorrecto)
-2. Abrir un PR
-3. Confirmar que el paso "Build" falla (rojo ❌)
-```
-
-## 5. Verificar health check manual
+## 6. Verificar health check manual
 
 ```txt
 1. Obtener la URL del servicio Railway QA

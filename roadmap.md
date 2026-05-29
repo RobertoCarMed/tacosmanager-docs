@@ -2627,7 +2627,21 @@ Fecha de cierre: 2026-05-27
 
 ## Objetivo
 
-Crear pipeline GitHub Actions para el repositorio NestJS que valide automáticamente cada PR y push a main.
+Crear pipeline GitHub Actions para el repositorio NestJS que valide automáticamente la calidad del código en cada etapa del ciclo de promoción de ramas, y verifique el estado del servicio QA al promover código a ese ambiente.
+
+---
+
+## Flujo de ramas
+
+```txt
+feature/*
+    ↓  (PR → dev)
+   dev
+    ↓  (PR → qa)
+   qa
+    ↓  (PR → main)
+  main
+```
 
 ---
 
@@ -2641,16 +2655,20 @@ Crear pipeline GitHub Actions para el repositorio NestJS que valide automáticam
 
 ## Triggers
 
-| Evento | Jobs ejecutados |
-|--------|-----------------|
-| `pull_request` | Lint · Build · Validate |
-| `push → main` | Lint · Build · Validate + Health Check QA |
+| Evento | Rama destino | Jobs ejecutados |
+|--------|-------------|-----------------|
+| `pull_request` | `dev` | Lint · Build · Validate |
+| `pull_request` | `qa` | Lint · Build · Validate |
+| `pull_request` | `main` | Lint · Build · Validate |
+| `push` | `dev` | Lint · Build · Validate |
+| `push` | `qa` | Lint · Build · Validate · **Health Check QA** |
+| `push` | `main` | Lint · Build · Validate |
 
 ---
 
 ## Validaciones implementadas
 
-### Flujo PR (todos los triggers)
+### Job: validate (todos los triggers)
 
 ```txt
 1. Checkout
@@ -2661,7 +2679,7 @@ Crear pipeline GitHub Actions para el repositorio NestJS que valide automáticam
 6. prisma validate — valida schema.prisma sin conexión a BD
 ```
 
-### Flujo Main (adicional — solo push a main)
+### Job: health-check-qa (solo push → qa)
 
 ```txt
 7. Health Check QA
@@ -2672,10 +2690,13 @@ Crear pipeline GitHub Actions para el repositorio NestJS que valide automáticam
 
 ## Decisiones de implementación
 
-- **Sin DATABASE_URL en CI**: el schema Prisma usa driver adapter (sin `url` en datasource), por lo que `prisma validate` y `prisma generate` (postinstall) no requieren conexión a BD.
+- **Flujo `feature/* → dev → qa → main`**: el CI está alineado con el ciclo de promoción real del proyecto.
+- **Health Check QA en `push → qa`**: el push a `qa` dispara el despliegue a Railway QA — verificar el servicio en ese evento es semánticamente correcto.
+- **Sin Health Check en `main`**: producción no tiene infraestructura activa todavía. Placeholder documentado en el workflow para cuando esté disponible.
+- **DATABASE_URL dummy en CI**: `prisma generate` (postinstall) y `prisma validate` leen `prisma.config.ts` → `env('DATABASE_URL')`. El valor dummy satisface la resolución sin conexión real.
 - **Sin tests en esta etapa**: los tests unitarios existentes (19) no se corren en este pipeline MVP — se incluirán en optimizaciones futuras.
 - **Sin artefactos**: el alcance es solo validación de calidad, no publicación de builds.
-- **Job único con step condicional**: no se duplica la lógica de setup/install entre PR y main.
+- **Dos jobs separados**: `validate` y `health-check-qa` — separación clara de responsabilidades entre validación de código y verificación de ambiente.
 
 ---
 
