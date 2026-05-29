@@ -2621,7 +2621,7 @@ Estado:
 
 ✅ COMPLETADA
 
-Fecha de cierre: 2026-05-27
+Fecha de cierre: 2026-05-28
 
 ---
 
@@ -2713,6 +2713,38 @@ Configurar en: GitHub → Settings → Secrets and variables → Actions → Var
 ## Documentación
 
 Ver: `docs/cicd-backend.md`
+
+---
+
+## Entregables
+
+| Entregable | Descripción |
+|-----------|-------------|
+| `.github/workflows/backend-ci.yml` | Workflow GitHub Actions con job `validate` y job `health-check-qa` |
+| `docs/cicd-backend.md` | Documentación completa del pipeline: triggers, jobs, variables, troubleshooting |
+| `GET /health` | Endpoint implementado en ETAPA 5.0.2, consumido por el Health Check QA |
+| `QA_API_URL` | Repository Variable configurada en GitHub Actions |
+| `DATABASE_URL` dummy | Valor hardcodeado en el workflow para resolver `prisma.config.ts` sin BD real |
+
+---
+
+## Lecciones aprendidas
+
+### prisma.config.ts requiere DATABASE_URL aunque no haya conexión
+
+`prisma generate` y `prisma validate` cargan `prisma.config.ts` antes de ejecutar cualquier operación. La función `env('DATABASE_URL')` lanza `PrismaConfigEnvError` si la variable no está definida, independientemente de si se abre o no una conexión. La solución es definir un valor dummy a nivel de job en el workflow.
+
+### postinstall como vector de fallo en CI
+
+El script `postinstall` en `package.json` ejecuta `prisma generate` automáticamente al instalar dependencias. En entornos CI sin variables de entorno completas, este hook puede fallar con errores difíciles de trazar si no se anticipan las dependencias implícitas del comando.
+
+### El Health Check QA debe vivir en `push → qa`, no en `push → main`
+
+Ejecutar el health check en `main` valida el ambiente QA en un momento posterior al despliegue — la verificación pierde relevancia inmediata. El trigger correcto es `push → qa` porque ese evento corresponde al momento en que el código llega al ambiente QA.
+
+### DATABASE_URL dummy no debe ser Secret
+
+Un Secret de GitHub enmascara el valor en los logs y agrega fricción operativa. Dado que el valor es intencionalmente falso y no contiene credenciales reales, hardcodearlo en el workflow es más legible y auto-documentado.
 
 ---
 

@@ -952,13 +952,17 @@ CI/CD Automation — expandir pipeline existente a Mobile + Backend con enfoque 
 Flujo CI/CD objetivo post-5.0.4:
 
 ```txt
-PR abierto
+PR abierto (→ dev / qa / main)
   Mobile:  lint → typecheck → build:qa  ──→ ✅/❌ Status Check
-  Backend: lint → typecheck → tests → prisma validate ──→ ✅/❌ Status Check
+  Backend: lint → build → prisma validate ──→ ✅/❌ Status Check
 
-Merge a main
+Push a qa
+  Mobile:  validate + build:qa (APK artifact)
+  Backend: validate + Health Check QA
+
+Push a main
   Mobile:  validate + build:qa (APK artifact) → build:prod (AAB artifact)
-  Backend: validate + tests + build dist
+  Backend: validate  [Production Health Check — pendiente infraestructura]
 ```
 
 No incluye: deploy automático, Play Store publishing, Fastlane, Docker registry, Kubernetes, Terraform, Sentry.
@@ -970,6 +974,91 @@ Estrategia y costos: docs/business-model.md
 Etapa 6.0 ⬜ FUTURO
 
 Post Launch Features — QR Ordering, Analytics, Advanced Delivery, Self Ordering.
+
+---
+
+# Backend CI/CD
+
+Etapa: 5.0.4.2 ✅ COMPLETADA (2026-05-28)
+
+---
+
+## Archivo
+
+```txt
+.github/workflows/backend-ci.yml
+```
+
+---
+
+## Flujo de ramas
+
+```txt
+feature/*
+    ↓  (PR → dev)
+   dev
+    ↓  (PR → qa)
+   qa
+    ↓  (PR → main)
+  main
+```
+
+---
+
+## Triggers y jobs
+
+| Evento | Rama destino | Jobs ejecutados |
+|--------|-------------|-----------------|
+| `pull_request` | `dev` | validate |
+| `pull_request` | `qa` | validate |
+| `pull_request` | `main` | validate |
+| `push` | `dev` | validate |
+| `push` | `qa` | validate → health-check-qa |
+| `push` | `main` | validate |
+
+---
+
+## Job: validate
+
+```txt
+pnpm install --frozen-lockfile
+pnpm lint       (ESLint)
+pnpm build      (nest build — TypeScript completo)
+prisma validate (schema.prisma sin conexión a BD)
+```
+
+Variable de entorno: `DATABASE_URL=postgresql://prisma:prisma@localhost:5432/ci_dummy`
+
+La `DATABASE_URL` dummy es necesaria porque `postinstall` ejecuta `prisma generate`, que carga `prisma.config.ts`. La función `env('DATABASE_URL')` lanza `PrismaConfigEnvError` si la variable no está definida, incluso sin conexión real.
+
+## Job: health-check-qa
+
+```txt
+GET $QA_API_URL/health → valida { status: "ok" }
+```
+
+Solo se ejecuta en `push → qa`. Requiere que `validate` haya pasado.
+
+Variable de repositorio GitHub: `QA_API_URL` (no Secret — valor público de Railway QA).
+
+---
+
+## Production Health Check (pendiente)
+
+Trigger: `push → main`
+Variable: `PROD_API_URL`
+Endpoint: `GET $PROD_API_URL/health`
+
+Placeholder documentado en el workflow. Se activará cuando el ambiente de producción en Railway esté disponible.
+
+---
+
+## Decisiones de diseño
+
+- **Health Check QA en `push → qa`**: semánticamente correcto — ese push es el que promueve código al ambiente QA.
+- **Sin tests unitarios en esta etapa**: los 19 tests existentes se incorporarán en una optimización futura.
+- **Dos jobs separados**: separan validación de código (siempre) de verificación de ambiente (solo en qa).
+- **DATABASE_URL hardcodeada en workflow**: valor fake, auto-documentado, sin credenciales reales — no justifica un Secret.
 
 Ver: docs/business-model.md y docs/roadmap.md
 

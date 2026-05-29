@@ -266,6 +266,26 @@ El valor es intencionalmente falso y sin credenciales reales. Hardcodearlo en el
 
 ---
 
+# Lecciones aprendidas
+
+## prisma.config.ts requiere DATABASE_URL aunque no haya conexión
+
+`prisma generate` y `prisma validate` cargan `prisma.config.ts` antes de ejecutar. La función `env('DATABASE_URL')` lanza `PrismaConfigEnvError` si la variable no está definida — incluso cuando no se abre ninguna conexión real. La solución es definir un valor dummy en el entorno del job.
+
+## postinstall como vector de fallo silencioso en CI
+
+El script `postinstall` en `package.json` ejecuta `prisma generate` automáticamente durante `pnpm install`. En entornos CI sin variables completas, el fallo ocurre en el paso de instalación (no en "Prisma validate"), lo que puede resultar confuso al diagnosticar. Anticipar las dependencias implícitas de los hooks de `package.json` es crítico al configurar CI.
+
+## El Health Check QA pertenece a `push → qa`, no a `push → main`
+
+El diseño original ejecutaba el health check en `push → main`. Esto es semánticamente incorrecto: `main` corresponde a producción, y validar el ambiente QA desde ese trigger desacopla la verificación del momento en que el código llega al ambiente. El trigger correcto es `push → qa`.
+
+## DATABASE_URL dummy no debe ser Secret de GitHub
+
+Un Secret enmascara el valor en los logs y agrega fricción operativa sin beneficio de seguridad cuando el valor es intencionalmente falso. Hardcodearlo en el workflow lo hace auto-documentado y explícito para quien revise el pipeline.
+
+---
+
 # Troubleshooting
 
 ## Install falla: PrismaConfigEnvError
