@@ -1,6 +1,6 @@
 # Backend CI — TacosManager
 
-Versión: 2.1
+Versión: 2.2
 Etapa: 5.0.4.2 (pipeline) / 5.0.4.3 (branch protection)
 Estado: ✅ COMPLETADA
 
@@ -49,20 +49,20 @@ El CI/CD está alineado con este flujo. Cada etapa tiene responsabilidades difer
 
 | Evento | Rama destino | Jobs ejecutados |
 |--------|-------------|-----------------|
-| `pull_request` | `dev` | Lint · Build · Validate |
-| `pull_request` | `qa` | Lint · Build · Validate |
-| `pull_request` | `main` | Lint · Build · Validate |
-| `push` | `dev` | Lint · Build · Validate |
-| `push` | `qa` | Lint · Build · Validate · **Health Check QA** |
-| `push` | `main` | Lint · Build · Validate |
+| `pull_request` | `dev` | `Backend • Lint, Build & Validate` |
+| `pull_request` | `qa` | `Backend • Lint, Build & Validate` |
+| `pull_request` | `main` | `Backend • Lint, Build & Validate` |
+| `push` | `dev` | `Backend • Lint, Build & Validate` |
+| `push` | `qa` | `Backend • Lint, Build & Validate` · `Backend • Health Check QA` |
+| `push` | `main` | `Backend • Lint, Build & Validate` |
 
 ---
 
 # Jobs
 
-## Job: validate
+## Job: `Backend • Lint, Build & Validate`
 
-Ejecutado en: todos los triggers.
+Job ID: `validate` — Ejecutado en: todos los triggers.
 
 ```txt
 1. Checkout del repositorio
@@ -76,9 +76,11 @@ Ejecutado en: todos los triggers.
 
 Si cualquier paso falla → el workflow falla → el merge queda bloqueado (cuando branch protection esté configurada).
 
-## Job: health-check-qa
+**Status check requerido en branch protection:** `Backend • Lint, Build & Validate`
 
-Ejecutado en: `push → qa` únicamente. Requiere que `validate` haya pasado.
+## Job: `Backend • Health Check QA`
+
+Job ID: `health-check-qa` — Ejecutado en: `push → qa` únicamente. Requiere que `validate` haya pasado.
 
 ```txt
 8. Health Check QA
@@ -110,7 +112,7 @@ Rama de staging. Recibe merges de `dev`.
 | Evento | Validaciones |
 |--------|-------------|
 | PR → qa | lint · build · prisma validate |
-| push → qa | lint · build · prisma validate · **Health Check QA** |
+| push → qa | lint · build · prisma validate · **Backend • Health Check QA** |
 
 El Health Check QA vive aquí porque `qa` es el trigger de promoción al ambiente QA desplegado en Railway. Verificar el servicio **después del merge** — no antes — garantiza que el código que acaba de llegar al ambiente responde correctamente.
 
@@ -401,9 +403,9 @@ PrismaConfigEnvError: Cannot resolve environment variable DATABASE_URL
 1. Crear un branch feature/* con cualquier cambio
 2. Abrir un Pull Request hacia dev
 3. Ir a GitHub → pestaña Actions
-4. Confirmar que "Backend CI" aparece y ejecuta el job "Lint · Build · Validate"
+4. Confirmar que "Backend CI" aparece y ejecuta el job "Backend • Lint, Build & Validate"
 5. Todos los pasos deben pasar (verde ✅)
-6. El job "Health Check QA" NO debe aparecer
+6. El job "Backend • Health Check QA" NO debe aparecer
 ```
 
 ## 2. Verificar que PR hacia `qa` ejecuta validaciones
@@ -411,8 +413,8 @@ PrismaConfigEnvError: Cannot resolve environment variable DATABASE_URL
 ```txt
 1. Abrir un Pull Request de dev hacia qa
 2. Ir a GitHub → pestaña Actions
-3. Confirmar que "Lint · Build · Validate" pasa
-4. El job "Health Check QA" NO debe ejecutarse (solo se activa en push, no en PR)
+3. Confirmar que "Backend • Lint, Build & Validate" pasa
+4. El job "Backend • Health Check QA" NO debe ejecutarse (solo se activa en push, no en PR)
 ```
 
 ## 3. Verificar que push a `qa` ejecuta Health Check QA
@@ -420,8 +422,8 @@ PrismaConfigEnvError: Cannot resolve environment variable DATABASE_URL
 ```txt
 1. Hacer merge de un PR hacia qa
 2. Ir a GitHub → pestaña Actions
-3. Confirmar que se ejecutan ambos jobs: "Lint · Build · Validate" y "Health Check QA"
-4. Confirmar que "Health Check QA" pasa (verde ✅)
+3. Confirmar que se ejecutan ambos jobs: "Backend • Lint, Build & Validate" y "Backend • Health Check QA"
+4. Confirmar que "Backend • Health Check QA" pasa (verde ✅)
 ```
 
 ## 4. Verificar que push a `main` NO ejecuta Health Check QA
@@ -429,8 +431,8 @@ PrismaConfigEnvError: Cannot resolve environment variable DATABASE_URL
 ```txt
 1. Hacer merge de un PR hacia main
 2. Ir a GitHub → pestaña Actions
-3. Confirmar que solo se ejecuta "Lint · Build · Validate"
-4. El job "Health Check QA" NO debe aparecer
+3. Confirmar que solo se ejecuta "Backend • Lint, Build & Validate"
+4. El job "Backend • Health Check QA" NO debe aparecer
 ```
 
 ## 5. Verificar que lint falla correctamente

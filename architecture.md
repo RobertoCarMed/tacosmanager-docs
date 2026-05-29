@@ -958,7 +958,7 @@ PR abierto (→ dev / qa / main)
 
 Push a qa
   Mobile:  validate + build:qa (APK artifact)
-  Backend: validate + Health Check QA
+  Backend: validate + Backend • Health Check QA
 
 Push a main
   Mobile:  validate + build:qa (APK artifact) → build:prod (AAB artifact)

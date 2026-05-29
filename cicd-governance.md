@@ -35,7 +35,7 @@ Workflow: `.github/workflows/backend-ci.yml`
 | Nombre en GitHub Actions | Job ID | Corre en PR | Corre en push |
 |--------------------------|--------|:-----------:|:-------------:|
 | `Backend • Lint, Build & Validate` | `validate` | Siempre | Siempre |
-| `health-check-qa` | `health-check-qa` | No (skipped) | push → qa |
+| `Backend • Health Check QA` | `health-check-qa` | No (skipped) | push → qa |
 
 ---
 
@@ -210,7 +210,7 @@ Los builds son **quality gates post-merge**: corren después de que el merge fue
 ✓ Mobile • Lint & TypeCheck    — debe pasar
 ✓ Mobile • Build QA APK        — debe pasar (APK para pruebas)
 ✓ Backend • Lint, Build & Validate — debe pasar
-✓ health-check-qa              — debe pasar (Railway QA responde)
+✓ Backend • Health Check QA    — debe pasar (Railway QA responde)
 ```
 
 **Merge a main:**
