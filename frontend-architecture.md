@@ -767,59 +767,53 @@ Configurar en: `GitHub → Settings → Secrets and variables → Actions → Ne
 
 ## CI/CD Automation — ETAPA 5.0.4 🟡 EN PROGRESO
 
-La ETAPA 5.0.3 entregó el pipeline Mobile base. La ETAPA 5.0.4 lo extiende y agrega pipeline para Backend.
+La ETAPA 5.0.3 entregó el pipeline Mobile base. La ETAPA 5.0.4 lo extiende y profesionaliza.
 
-### Estado actual del pipeline Mobile (heredado de 5.0.3.3)
+### Mobile CI/CD — ETAPA 5.0.4.1 🟡 EN PROGRESO
 
-```txt
-.github/workflows/mobile-ci.yml
-  Job 1: validate-and-build-qa
-    Triggers: pull_request + push→main
-    Steps:    lint → typecheck → assembleQaRelease
-    Artifact: APK QA (solo en main, 30 días)
-
-  Job 2: build-production
-    Trigger:  push→main (después de Job 1)
-    Steps:    bundleProductionRelease
-    Artifact: AAB Production (30 días)
-```
-
-### Próximas mejoras (5.0.4.1 — Mobile Pipeline Optimization)
-
-- Separar lint+typecheck en job independiente para visibilidad de fallos más rápida
-- Cache de node_modules por hash de package-lock.json
-- Nombres de jobs descriptivos para branch protection rules
-
-### Pipeline Backend (5.0.4.2 — Backend CI Pipeline)
-
-Pipeline pendiente de implementar en el repositorio NestJS:
+Workflow: `.github/workflows/mobile-ci.yml` — Documentación completa: `docs/cicd-mobile.md`
 
 ```txt
-Triggers: pull_request + push→main
-Jobs:
-  validate:
-    lint (ESLint) → typecheck (tsc) → tests (jest) → prisma validate
-  build-check (solo main):
-    pnpm run build → verifica que dist/ compila sin errores
-
-Base de datos en CI: postgres:15-alpine (service container GitHub Actions)
-DATABASE_URL: postgresql://postgres:postgres@localhost:5432/tacosmanager_test
+Mobile • Lint & TypeCheck    ← todos los triggers (PRs y push a dev/qa/main)
+        ↓
+Mobile • Build QA APK        ← push a qa y main
+        ↓
+Mobile • Build Production AAB ← push a main únicamente
 ```
+
+| Evento | Lint & TypeCheck | Build QA APK | Build Production AAB |
+|--------|:---:|:---:|:---:|
+| PR → dev / qa / main | ✅ | — | — |
+| Push → dev | ✅ | — | — |
+| Push → qa | ✅ | ✅ + artifact | — |
+| Push → main | ✅ | ✅ + artifact | ✅ + artifact |
+
+**Environment:** `.env.qa` y `.env.production` generados desde GitHub Repository Variables (`QA_API_URL`, `QA_SOCKET_URL`, `PROD_API_URL`, `PROD_SOCKET_URL`). Sin URLs hardcodeadas.
+
+**Artefactos:**
+
+```txt
+app-qa-release-<sha>.apk        → push qa y main (30 días)
+app-production-release-<sha>.aab → push main (30 días)
+```
+
+### Pipeline Backend — ETAPA 5.0.4.2 ✅ COMPLETADA
+
+Ver: repositorio NestJS + `docs/cicd-backend.md`
 
 ### Branch Protection (5.0.4.3)
 
-Status checks obligatorios para merge a main (pendiente de configurar en GitHub):
+Status checks obligatorios para merge (pendiente de configurar en GitHub):
 
 | Repositorio | Status Checks requeridos |
 |-------------|--------------------------|
-| Mobile | `Validate & Build QA` (o job `lint-typecheck` si se separa en 5.0.4.1) |
-| Backend | `validate` (lint + typecheck + tests + prisma validate) |
+| Mobile | `Mobile • Lint & TypeCheck` |
+| Backend | `Backend • Lint, Build & Validate` |
 
 ### Relación Mobile ↔ Backend en CI
 
-Los pipelines son independientes (repos separados). No hay orquestación cruzada en MVP. La coordinación es manual: el backend se despliega en Railway y el mobile apunta a la URL correcta via `.env.*`.
+Pipelines independientes (repos separados). La coordinación es manual: el backend se despliega en Railway y el mobile apunta a las URLs correctas via GitHub Repository Variables.
 
 ---
 
-*Última actualización: ETAPA 5.0.3 ✅ COMPLETADA (2026-05-27) — ETAPA 5.0.4 🟡 EN PROGRESO*
-*ETAPA 4.5 ✅, ETAPA 4.6 ✅, ETAPA 4.7 ✅, ETAPA 5.0.1 ✅, ETAPA 5.0.3 ✅ completadas.*
+*Última actualización: ETAPA 5.0.4.1 🟡 EN PROGRESO — ETAPA 4.5 ✅, ETAPA 4.6 ✅, ETAPA 4.7 ✅, ETAPA 5.0.1 ✅, ETAPA 5.0.3 ✅, ETAPA 5.0.4.2 ✅ completadas.*

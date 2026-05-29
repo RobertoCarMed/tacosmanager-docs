@@ -70,13 +70,13 @@ Tecnologías principales:
 - 5.0 MVP Launch
 - 5.0.2 Backend Deployment
 - 5.0.4 CI/CD Automation
+- 5.0.4.1 Mobile Pipeline Optimization
 
 ## Pendiente
 
 - 4.8 History & Filters
 - 4.9 Performance Optimization
 - 4.10 Product Management Improvements
-- 5.0.4.1 Mobile Pipeline Optimization
 - 5.0.4.3 Branch Protection & Status Checks
 - 5.0.4.4 CI/CD Conventions & Documentation
 
@@ -2588,29 +2588,107 @@ No se implementará en esta etapa: deploy automático a producción, Play Store 
 
 Estado:
 
-⬜ PENDIENTE
+🟡 EN PROGRESO
 
 ---
 
 ## Objetivo
 
-Mejorar el pipeline mobile existente sin romper funcionalidad actual.
+Optimizar y profesionalizar el pipeline móvil para mantenibilidad, velocidad, observabilidad e integración futura con Branch Protection. SIN romper la funcionalidad actual.
 
 ---
 
-## Alcance
+## Implementado
 
-- Separación de jobs: `lint-typecheck`, `build-qa`, `build-production` como jobs independientes para mejor visibilidad de fallos
-- Cache optimizado: node_modules y Gradle separados por lock file hash
-- Status checks claros: nombres de job descriptivos para branch protection
-- Manejo de fallos legible: mensajes de error descriptivos por step
-- Reutilización: extraer steps comunes (setup-java, setup-node, setup-gradle) en composite action o workflow reutilizable si aplica
+### Reestructuración en 3 jobs separados
 
-## Restricciones
+```txt
+Mobile • Lint & TypeCheck   ← todos los triggers
+        ↓
+Mobile • Build QA APK       ← push a qa y main
+        ↓
+Mobile • Build Production AAB ← push a main únicamente
+```
 
-- NO eliminar el workflow actual — migrar incrementalmente
-- NO cambiar lógica de firma ni secrets
-- Mantener artefactos APK/AAB con misma naming convention
+### Estrategia de ejecución por rama
+
+| Evento | Lint & TypeCheck | Build QA APK | Build Production AAB |
+|--------|:---:|:---:|:---:|
+| PR → dev / qa / main | ✅ | — | — |
+| Push → dev | ✅ | — | — |
+| Push → qa | ✅ | ✅ + artifact | — |
+| Push → main | ✅ | ✅ + artifact | ✅ + artifact |
+
+### Optimización de cache
+
+- Node: `actions/setup-node@v4` con `cache: npm` basado en lockfile
+- Gradle + Android SDK: `gradle/actions/setup-gradle@v4`
+- Job lint-typecheck sin Java/Gradle — ejecución significativamente más rápida
+
+### Nombres de jobs (Branch Protection ready)
+
+```txt
+Mobile • Lint & TypeCheck
+Mobile • Build QA APK
+Mobile • Build Production AAB
+```
+
+### Environment Management
+
+Eliminadas URLs hardcodeadas. Variables generadas dinámicamente desde GitHub Repository Variables:
+
+| Variable | Ambiente |
+|----------|----------|
+| `QA_API_URL` | QA |
+| `QA_SOCKET_URL` | QA |
+| `PROD_API_URL` | Production |
+| `PROD_SOCKET_URL` | Production |
+
+### Manejo de errores
+
+Anotaciones `::error::` en lint, typecheck, build QA y build Production.
+
+### Composite Action
+
+No implementada — con solo 2 jobs de build, el overhead supera el beneficio. Decisión documentada en docs/cicd-mobile.md.
+
+---
+
+## Archivos
+
+### Modificados
+
+```txt
+.github/workflows/mobile-ci.yml
+docs/roadmap.md
+docs/frontend-architecture.md
+docs/architecture.md
+```
+
+### Creados
+
+```txt
+docs/cicd-mobile.md
+```
+
+---
+
+## Pendientes para cerrar la etapa
+
+```txt
+□ Configurar GitHub Repository Variables: QA_API_URL, QA_SOCKET_URL, PROD_API_URL, PROD_SOCKET_URL
+□ Validar pipeline en push a dev → solo lint-typecheck ejecuta
+□ Validar pipeline en push a qa → lint-typecheck + build QA APK + artifact
+□ Validar pipeline en push a main → pipeline completo (3 jobs + 2 artifacts)
+□ Validar que PRs solo ejecutan lint-typecheck
+□ Confirmar nombres de jobs en GitHub Actions UI para Branch Protection
+```
+
+---
+
+## Documentación
+
+Ver: docs/cicd-mobile.md
 
 ---
 

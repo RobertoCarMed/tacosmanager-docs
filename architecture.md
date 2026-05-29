@@ -944,7 +944,7 @@ Etapa 5.0.4 🟡 EN PROGRESO
 
 CI/CD Automation — expandir pipeline existente a Mobile + Backend con enfoque MVP Production Ready.
 
-5.0.4.1 ⬜ Mobile Pipeline Optimization — separación de jobs, cache optimizado, status checks claros.
+5.0.4.1 🟡 Mobile Pipeline Optimization — `.github/workflows/mobile-ci.yml` reestructurado en 3 jobs: `Mobile • Lint & TypeCheck` → `Mobile • Build QA APK` → `Mobile • Build Production AAB`. Estrategia por rama: PRs y push a dev → solo lint+typecheck; push a qa → APK QA; push a main → pipeline completo. GitHub Repository Variables para URLs (`QA_API_URL`, `QA_SOCKET_URL`, `PROD_API_URL`, `PROD_SOCKET_URL`). Sin URLs hardcodeadas. Nombres de jobs listos para Branch Protection. Ver `docs/cicd-mobile.md`.
 5.0.4.2 ✅ Backend CI Pipeline — `.github/workflows/backend-ci.yml` alineado al flujo `feature/* → dev → qa → main`. Job `validate` (lint + build + prisma validate) en todos los triggers. Job `health-check-qa` solo en `push → qa`. `DATABASE_URL` dummy en CI para `prisma generate`/`prisma validate`. Variable requerida: `QA_API_URL`. Placeholder para Production Health Check (`push → main`) pendiente de infraestructura. Ver `docs/cicd-backend.md`.
 5.0.4.3 ⬜ Branch Protection & Status Checks — configurar reglas en GitHub para ambos repositorios.
 5.0.4.4 ⬜ CI/CD Conventions & Documentation — `docs/cicd-strategy.md` con flujo PR → QA → Production, convenciones y decisiones.
