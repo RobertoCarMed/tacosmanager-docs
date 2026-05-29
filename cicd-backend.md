@@ -1,7 +1,7 @@
 # Backend CI — TacosManager
 
-Versión: 2.0
-Etapa: 5.0.4.2
+Versión: 2.1
+Etapa: 5.0.4.2 (pipeline) / 5.0.4.3 (branch protection)
 Estado: ✅ COMPLETADA
 
 ---
@@ -449,3 +449,19 @@ PrismaConfigEnvError: Cannot resolve environment variable DATABASE_URL
 2. Ejecutar: curl -s $QA_API_URL/health
 3. Confirmar que la respuesta es: { "status": "ok", ... }
 ```
+
+---
+
+# Branch Protection
+
+El nombre exacto del status check para configurar en branch protection rules:
+
+```txt
+Backend • Lint, Build & Validate
+```
+
+Aplica como required status check en dev, qa y main para el repositorio Backend.
+
+Configuración completa: ver `docs/cicd-governance.md`
+
+Estrategia de ramas: ver `docs/branch-strategy.md`

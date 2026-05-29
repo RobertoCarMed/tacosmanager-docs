@@ -71,13 +71,13 @@ Tecnologías principales:
 - 5.0 MVP Launch
 - 5.0.2 Backend Deployment
 - 5.0.4 CI/CD Automation
+- 5.0.4.3 Branch Protection & Status Checks
 
 ## Pendiente
 
 - 4.8 History & Filters
 - 4.9 Performance Optimization
 - 4.10 Product Management Improvements
-- 5.0.4.3 Branch Protection & Status Checks
 - 5.0.4.4 CI/CD Conventions & Documentation
 
 ## Post-Lanzamiento
@@ -2577,7 +2577,7 @@ No se implementará en esta etapa: deploy automático a producción, Play Store 
 ```txt
 5.0.4.1 ⬜ — Mobile Pipeline Optimization
 5.0.4.2 ✅ — Backend CI Pipeline
-5.0.4.3 ⬜ — Branch Protection & Status Checks
+5.0.4.3 🟡 — Branch Protection & Status Checks
 5.0.4.4 ⬜ — CI/CD Conventions & Documentation
 ```
 
@@ -2922,39 +2922,122 @@ Un Secret de GitHub enmascara el valor en los logs y agrega fricción operativa.
 
 Estado:
 
-⬜ PENDIENTE
+🟡 EN PROGRESO
 
 ---
 
 ## Objetivo
 
-Configurar reglas de protección de ramas en GitHub para que ningún PR pueda mergearse sin pasar los pipelines definidos.
+Diseñar y documentar la estrategia de branch protection para los repositorios Mobile y Backend, y generar la guía de configuración manual para GitHub.
 
 ---
 
 ## Alcance
 
-### Mobile Repository
+Solo documentación y guías de configuración.
 
-Status checks obligatorios para merge a main:
+NO se modifica código de aplicación, lógica de workflows, backend ni frontend.
 
-- `Lint & TypeCheck` (de validate-and-build-qa o job separado)
-- `Build QA` (build exitoso como prueba de compilación)
+---
 
-### Backend Repository
+## Implementado
 
-Status checks obligatorios para merge a main:
+### Estrategia de ramas definida
 
-- `Lint & TypeCheck`
-- `Tests`
-- `Prisma Validate`
+```txt
+feature/* → dev → qa → main
+```
 
-### Configuración en GitHub
+Documentada en: `docs/branch-strategy.md`
 
-- Settings → Branches → Branch protection rules → main
-- Require status checks to pass before merging: ✅
-- Require branches to be up to date before merging: ✅
-- Require pull request reviews: opcional (definir por repo)
+### Tabla de Branch Protection por rama
+
+| Rama | PR required | Reviews | Status checks requeridos |
+|------|:-----------:|:-------:|--------------------------|
+| `dev` | ✅ | 0 | `Mobile • Lint & TypeCheck` · `Backend • Lint, Build & Validate` |
+| `qa` | ✅ | 1 | `Mobile • Lint & TypeCheck` · `Backend • Lint, Build & Validate` |
+| `main` | ✅ | 1 | `Mobile • Lint & TypeCheck` · `Backend • Lint, Build & Validate` |
+
+### Status checks exactos
+
+**Mobile Repository:**
+```txt
+Mobile • Lint & TypeCheck          ← corre en todos los PR y push
+Mobile • Build QA APK              ← post-merge (push a qa y main)
+Mobile • Build Production AAB      ← post-merge (push a main)
+```
+
+**Backend Repository:**
+```txt
+Backend • Lint, Build & Validate   ← corre en todos los PR y push
+health-check-qa                    ← post-merge (push a qa)
+```
+
+### Limitación documentada
+
+Los builds de Android (`Mobile • Build QA APK`, `Mobile • Build Production AAB`) son skipped en eventos PR — no pueden ser status checks de PR sin modificar los workflows. Documentado en `docs/cicd-governance.md` sección "Limitaciones actuales".
+
+### Guía paso a paso
+
+Documentada en: `docs/cicd-governance.md`
+
+### Estrategia de calidad post-merge
+
+Documentada en: `docs/cicd-governance.md` sección "Estrategia de calidad post-merge"
+
+### Riesgos y recomendaciones
+
+Documentados en: `docs/cicd-governance.md`
+
+---
+
+## Archivos
+
+### Creados
+
+```txt
+docs/branch-strategy.md
+docs/cicd-governance.md
+```
+
+### Modificados
+
+```txt
+docs/roadmap.md
+docs/architecture.md
+docs/cicd-backend.md
+docs/cicd-mobile.md
+docs/frontend-architecture.md
+```
+
+---
+
+## Pendientes para cerrar la etapa
+
+```txt
+Mobile Repository
+□ Configurar branch protection en dev
+□ Configurar branch protection en qa
+□ Configurar branch protection en main
+
+Backend Repository
+□ Configurar branch protection en dev
+□ Configurar branch protection en qa
+□ Configurar branch protection en main
+
+Validación funcional
+□ PR sin CI verde queda bloqueado
+□ PR con CI verde puede mergearse
+□ Push directo a main bloqueado
+□ Include administrators activo en main
+```
+
+---
+
+## Documentación
+
+- `docs/branch-strategy.md` — estrategia de ramas completa
+- `docs/cicd-governance.md` — configuración y guía paso a paso
 
 ---
 

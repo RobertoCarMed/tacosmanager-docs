@@ -219,23 +219,34 @@ Reevaluar si se agregan más de 3 jobs de build en el futuro.
 
 ## Compatibilidad con Branch Protection
 
-Los nombres de los jobs están diseñados para ser usados directamente como **required status checks**:
+Los nombres de los jobs están diseñados para ser usados directamente como **required status checks** en GitHub.
+
+### Status check usable en PR (branch protection)
 
 ```txt
-Mobile • Lint & TypeCheck
-Mobile • Build QA APK
-Mobile • Build Production AAB
+Mobile • Lint & TypeCheck       ← corre en todos los PR y push
 ```
 
-Configuración recomendada en Branch Protection:
+### Quality gates post-merge (no configurables como checks de PR)
 
-| Rama | Required Status Checks |
-|------|------------------------|
-| `dev` | `Mobile • Lint & TypeCheck` |
-| `qa` | `Mobile • Lint & TypeCheck` |
-| `main` | `Mobile • Lint & TypeCheck` |
+```txt
+Mobile • Build QA APK           ← solo en push a qa y main (skipped en PR)
+Mobile • Build Production AAB   ← solo en push a main (skipped en PR)
+```
 
-Los jobs de build no se requieren como checks de PR — se ejecutan solo en push, después del merge.
+Los jobs de build son `skipped` en eventos `pull_request` — requerirlos como status checks de PR bloquearía todos los PRs. Son quality gates que corren post-merge.
+
+### Configuración recomendada en Branch Protection
+
+| Rama | Required Status Check (PR) | Quality gate post-merge |
+|------|---------------------------|------------------------|
+| `dev` | `Mobile • Lint & TypeCheck` | lint + typecheck |
+| `qa` | `Mobile • Lint & TypeCheck` | + APK QA |
+| `main` | `Mobile • Lint & TypeCheck` | + APK QA + AAB Production |
+
+Configuración completa y guía paso a paso: `docs/cicd-governance.md`
+
+Estrategia de ramas: `docs/branch-strategy.md`
 
 ---
 
