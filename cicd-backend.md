@@ -1,6 +1,6 @@
 # Backend CI — TacosManager
 
-Versión: 1.0
+Versión: 1.1
 Etapa: 5.0.4.2
 Estado: ✅ COMPLETADA
 
@@ -94,7 +94,15 @@ Comando: `pnpm exec prisma validate`
 
 Valida el archivo `prisma/schema.prisma` para errores de sintaxis y semántica.
 
-No requiere conexión a base de datos. El datasource en el schema no incluye `url` (se usa el driver adapter en runtime).
+No realiza conexión a base de datos real. Sin embargo, tanto `prisma validate` como `prisma generate` (ejecutado en `postinstall`) leen `prisma.config.ts`, que contiene:
+
+```ts
+datasource: {
+  url: env('DATABASE_URL'),
+}
+```
+
+La función `env()` de Prisma lanza `PrismaConfigEnvError` si la variable no está definida en el entorno — incluso si el comando no abre ninguna conexión. Por esto el workflow define una `DATABASE_URL` dummy a nivel de job (ver sección **DATABASE_URL en CI**).
 
 ## Health Check QA
 
@@ -132,6 +140,35 @@ Esta etapa no requiere secrets adicionales. No hay firma de artefactos ni conexi
 
 ---
 
+# DATABASE_URL en CI
+
+## Por qué se necesita
+
+`prisma generate` (llamado desde `postinstall` al ejecutar `pnpm install`) y `prisma validate` leen `prisma.config.ts` antes de cualquier operación. Ese archivo llama `env('DATABASE_URL')`, y Prisma lanza `PrismaConfigEnvError` si la variable no está definida — incluso cuando no se establece ninguna conexión real.
+
+## Solución implementada
+
+El workflow define `DATABASE_URL` como variable de entorno a nivel de job con un valor dummy:
+
+```yaml
+env:
+  DATABASE_URL: postgresql://prisma:prisma@localhost:5432/ci_dummy
+```
+
+## Por qué es seguro
+
+- `prisma generate` genera el cliente TypeScript leyendo el schema — no abre conexiones.
+- `prisma validate` analiza la sintaxis del schema — no abre conexiones.
+- `pnpm lint` y `pnpm build` no usan `DATABASE_URL`.
+- El valor apunta a `localhost` — nunca alcanza ningún servidor externo.
+- Railway, QA y Producción definen su propia `DATABASE_URL` real en sus entornos — este valor dummy no los afecta.
+
+## Por qué no se usa Secret de GitHub
+
+El valor es intencionalmente falso y sin credenciales reales. Hardcodearlo en el workflow hace evidente su propósito (CI dummy) sin añadir complejidad operativa.
+
+---
+
 # Configuración en el runner
 
 | Componente | Valor |
@@ -140,12 +177,26 @@ Esta etapa no requiere secrets adicionales. No hay firma de artefactos ni conexi
 | Node.js | LTS (`lts/*`) |
 | pnpm | `latest` |
 | Cache | pnpm store (keyed por `pnpm-lock.yaml`) |
-| DATABASE_URL | No requerida |
+| `DATABASE_URL` | `postgresql://prisma:prisma@localhost:5432/ci_dummy` (dummy, sin conexión real) |
 | jq | Pre-instalado en ubuntu-latest |
 
 ---
 
 # Troubleshooting
+
+## Install falla: PrismaConfigEnvError
+
+**Síntoma:** El paso `Install dependencies` falla con:
+
+```txt
+PrismaConfigEnvError: Cannot resolve environment variable DATABASE_URL
+```
+
+**Causa:** `postinstall` ejecuta `prisma generate`, que lee `prisma.config.ts`. La función `env('DATABASE_URL')` de Prisma lanza este error si la variable no está definida en el entorno del runner.
+
+**Solución:** Verificar que el job tiene definida la variable `DATABASE_URL` (valor dummy) en la sección `env:` del job. Ver sección **DATABASE_URL en CI**.
+
+---
 
 ## Lint falla
 
