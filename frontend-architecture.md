@@ -801,14 +801,16 @@ app-production-release-<sha>.aab → push main (30 días)
 
 Ver: repositorio NestJS + `docs/cicd-backend.md`
 
-### Branch Protection — ETAPA 5.0.4.3 🟡 EN PROGRESO
+### Branch Protection — ETAPA 5.0.4.3 ✅ COMPLETADA (2026-05-29)
 
-Status checks requeridos en PR (configuración en GitHub):
+GitHub Rulesets activos en dev, qa y main — ambos repositorios.
 
-| Repositorio | Required check (PR) | Quality gate post-merge |
-|-------------|---------------------|------------------------|
-| Mobile | `Mobile • Lint & TypeCheck` | + builds según rama |
-| Backend | `Backend • Lint, Build & Validate` | + health check en qa |
+| Repositorio | Required check (PR) | Reglas adicionales |
+|-------------|---------------------|--------------------|
+| Mobile | `Mobile • Lint & TypeCheck` | PR required · Block force pushes · Restrict deletions |
+| Backend | `Backend • Lint, Build & Validate` | PR required · Block force pushes · Restrict deletions |
+
+Quality gates post-merge: APK QA (push a qa/main) · AAB Production (push a main) · Health Check QA (push a qa).
 
 Configuración completa: `docs/cicd-governance.md`
 
@@ -820,4 +822,4 @@ Pipelines independientes (repos separados). La coordinación es manual: el backe
 
 ---
 
-*Última actualización: ETAPA 5.0.4.3 🟡 EN PROGRESO — ETAPA 4.5 ✅, ETAPA 4.6 ✅, ETAPA 4.7 ✅, ETAPA 5.0.1 ✅, ETAPA 5.0.3 ✅, ETAPA 5.0.4.1 ✅, ETAPA 5.0.4.2 ✅ completadas.*
+*Última actualización: ETAPA 5.0.4.3 ✅ COMPLETADA (2026-05-29) — ETAPA 4.5 ✅, ETAPA 4.6 ✅, ETAPA 4.7 ✅, ETAPA 5.0.1 ✅, ETAPA 5.0.3 ✅, ETAPA 5.0.4.1 ✅, ETAPA 5.0.4.2 ✅, ETAPA 5.0.4.3 ✅ completadas.*

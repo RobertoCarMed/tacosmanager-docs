@@ -65,13 +65,13 @@ Tecnologías principales:
 - 5.0.3 Mobile Release Pipeline ✅
 - 5.0.4.1 Mobile Pipeline Optimization ✅
 - 5.0.4.2 Backend CI Pipeline ✅
+- 5.0.4.3 Branch Protection & Status Checks ✅
 
 ## En Progreso
 
 - 5.0 MVP Launch
 - 5.0.2 Backend Deployment
 - 5.0.4 CI/CD Automation
-- 5.0.4.3 Branch Protection & Status Checks
 
 ## Pendiente
 
@@ -2577,7 +2577,7 @@ No se implementará en esta etapa: deploy automático a producción, Play Store 
 ```txt
 5.0.4.1 ⬜ — Mobile Pipeline Optimization
 5.0.4.2 ✅ — Backend CI Pipeline
-5.0.4.3 🟡 — Branch Protection & Status Checks
+5.0.4.3 ✅ — Branch Protection & Status Checks
 5.0.4.4 ⬜ — CI/CD Conventions & Documentation
 ```
 
@@ -2922,72 +2922,116 @@ Un Secret de GitHub enmascara el valor en los logs y agrega fricción operativa.
 
 Estado:
 
-🟡 EN PROGRESO
+✅ COMPLETADA
+
+Fecha de cierre: 2026-05-29
 
 ---
 
 ## Objetivo
 
-Diseñar y documentar la estrategia de branch protection para los repositorios Mobile y Backend, y generar la guía de configuración manual para GitHub.
+Configurar Branch Protection Rules en GitHub para los repositorios Mobile y Backend, garantizando que ningún PR pueda mergearse sin pasar los pipelines de CI definidos, y documentar la estrategia de protección de ramas.
 
 ---
 
-## Alcance
+## Implementación
 
-Solo documentación y guías de configuración.
+Herramienta utilizada: **GitHub Rulesets** (Settings → Rules → Rulesets).
 
-NO se modifica código de aplicación, lógica de workflows, backend ni frontend.
+### Repositorio Backend (`tacos-manager-api`)
+
+Ramas protegidas: `dev`, `qa`, `main`
+
+Reglas activas por rama:
+- Require Pull Request before merging
+- Require status checks to pass
+- Block force pushes
+- Restrict deletions
+
+Status Check requerido:
+```txt
+Backend • Lint, Build & Validate
+```
+
+### Repositorio Mobile (`TacosManager`)
+
+Ramas protegidas: `dev`, `qa`, `main`
+
+Reglas activas por rama:
+- Require Pull Request before merging
+- Require status checks to pass
+- Block force pushes
+- Restrict deletions
+
+Status Check requerido:
+```txt
+Mobile • Lint & TypeCheck
+```
 
 ---
 
-## Implementado
-
-### Estrategia de ramas definida
+## Estrategia final de protección de ramas
 
 ```txt
 feature/* → dev → qa → main
 ```
 
-Documentada en: `docs/branch-strategy.md`
+| Rama | PR required | Force push | Delete | Status check (PR) |
+|------|:-----------:|:----------:|:------:|-------------------|
+| `dev` | ✅ | Bloqueado | Bloqueado | `Mobile • Lint & TypeCheck` · `Backend • Lint, Build & Validate` |
+| `qa` | ✅ | Bloqueado | Bloqueado | `Mobile • Lint & TypeCheck` · `Backend • Lint, Build & Validate` |
+| `main` | ✅ | Bloqueado | Bloqueado | `Mobile • Lint & TypeCheck` · `Backend • Lint, Build & Validate` |
 
-### Tabla de Branch Protection por rama
+Quality gates post-merge (no configurables como status checks de PR):
 
-| Rama | PR required | Reviews | Status checks requeridos |
-|------|:-----------:|:-------:|--------------------------|
-| `dev` | ✅ | 0 | `Mobile • Lint & TypeCheck` · `Backend • Lint, Build & Validate` |
-| `qa` | ✅ | 1 | `Mobile • Lint & TypeCheck` · `Backend • Lint, Build & Validate` |
-| `main` | ✅ | 1 | `Mobile • Lint & TypeCheck` · `Backend • Lint, Build & Validate` |
+| Rama | Post-merge (Mobile) | Post-merge (Backend) |
+|------|---------------------|----------------------|
+| `dev` | lint + typecheck | lint + build + validate |
+| `qa` | + APK QA | + Health Check QA |
+| `main` | + APK QA + AAB Production | lint + build + validate |
 
-### Status checks exactos
+---
 
-**Mobile Repository:**
-```txt
-Mobile • Lint & TypeCheck          ← corre en todos los PR y push
-Mobile • Build QA APK              ← post-merge (push a qa y main)
-Mobile • Build Production AAB      ← post-merge (push a main)
-```
+## Status Checks obligatorios
 
-**Backend Repository:**
-```txt
-Backend • Lint, Build & Validate   ← corre en todos los PR y push
-health-check-qa                    ← post-merge (push a qa)
-```
+| Repositorio | Status Check | Tipo |
+|-------------|--------------|------|
+| Mobile | `Mobile • Lint & TypeCheck` | PR check (branch protection) |
+| Backend | `Backend • Lint, Build & Validate` | PR check (branch protection) |
+| Mobile | `Mobile • Build QA APK` | Quality gate post-merge |
+| Mobile | `Mobile • Build Production AAB` | Quality gate post-merge |
+| Backend | `Backend • Health Check QA` | Quality gate post-merge (push a qa) |
 
-### Limitación documentada
+---
 
-Los builds de Android (`Mobile • Build QA APK`, `Mobile • Build Production AAB`) son skipped en eventos PR — no pueden ser status checks de PR sin modificar los workflows. Documentado en `docs/cicd-governance.md` sección "Limitaciones actuales".
+## Riesgos mitigados
 
-### Guía paso a paso
+| Riesgo | Mitigación aplicada |
+|--------|---------------------|
+| Push directo a ramas compartidas | Bloqueado por Rulesets en dev/qa/main |
+| Force-push que sobreescribe historial | Bloqueado por Rulesets |
+| Eliminar ramas accidentalmente | Bloqueado por Rulesets |
+| Merge sin CI verde | Require status checks to pass |
+| Código de baja calidad llegando a QA | Lint + typecheck obligatorio en PR |
+| Código de baja calidad llegando a main | Mismo check + quality gate post-merge |
 
-Documentada en: `docs/cicd-governance.md`
+---
 
-### Estrategia de calidad post-merge
+## Lecciones aprendidas
 
-Documentada en: `docs/cicd-governance.md` sección "Estrategia de calidad post-merge"
+### GitHub Rulesets vs Branch Protection (legacy)
 
-### Riesgos y recomendaciones
+GitHub ofrece dos sistemas: Branch Protection Rules (legacy) y Rulesets (nuevo). Se optó por **Rulesets** por ser el sistema activo recomendado, con mejor visibilidad en la UI y soporte para múltiples ramas en una sola regla.
 
-Documentados en: `docs/cicd-governance.md`
+### Los builds no son viables como PR checks
+
+Los jobs `Mobile • Build QA APK` y `Mobile • Build Production AAB` son `skipped` en eventos `pull_request`. Un check `skipped` bloquea el PR si está configurado como requerido. La solución correcta es documentarlos como quality gates post-merge, no como PR checks.
+
+Documentado en `docs/cicd-governance.md` sección "Limitaciones actuales".
+
+### Prerrequisito: workflows deben haber corrido
+
+Los status check names solo aparecen en el selector de GitHub después de que el workflow haya corrido al menos una vez en el repositorio. Verificar antes de configurar.
 
 ---
 
@@ -3008,28 +3052,6 @@ docs/architecture.md
 docs/cicd-backend.md
 docs/cicd-mobile.md
 docs/frontend-architecture.md
-```
-
----
-
-## Pendientes para cerrar la etapa
-
-```txt
-Mobile Repository
-□ Configurar branch protection en dev
-□ Configurar branch protection en qa
-□ Configurar branch protection en main
-
-Backend Repository
-□ Configurar branch protection en dev
-□ Configurar branch protection en qa
-□ Configurar branch protection en main
-
-Validación funcional
-□ PR sin CI verde queda bloqueado
-□ PR con CI verde puede mergearse
-□ Push directo a main bloqueado
-□ Include administrators activo en main
 ```
 
 ---

@@ -236,7 +236,7 @@ Mobile • Build Production AAB   ← solo en push a main (skipped en PR)
 
 Los jobs de build son `skipped` en eventos `pull_request` — requerirlos como status checks de PR bloquearía todos los PRs. Son quality gates que corren post-merge.
 
-### Configuración recomendada en Branch Protection
+### Configuración implementada — GitHub Rulesets (✅ 2026-05-29)
 
 | Rama | Required Status Check (PR) | Quality gate post-merge |
 |------|---------------------------|------------------------|
@@ -244,7 +244,9 @@ Los jobs de build son `skipped` en eventos `pull_request` — requerirlos como s
 | `qa` | `Mobile • Lint & TypeCheck` | + APK QA |
 | `main` | `Mobile • Lint & TypeCheck` | + APK QA + AAB Production |
 
-Configuración completa y guía paso a paso: `docs/cicd-governance.md`
+Reglas activas: Require Pull Request · Require status checks · Block force pushes · Restrict deletions.
+
+Configuración completa: `docs/cicd-governance.md`
 
 Estrategia de ramas: `docs/branch-strategy.md`
 

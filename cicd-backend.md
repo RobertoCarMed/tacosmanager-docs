@@ -456,13 +456,17 @@ PrismaConfigEnvError: Cannot resolve environment variable DATABASE_URL
 
 # Branch Protection
 
-El nombre exacto del status check para configurar en branch protection rules:
+Estado: ✅ CONFIGURADA (2026-05-29) — GitHub Rulesets activos en dev, qa y main.
+
+El nombre exacto del status check configurado en los Rulesets:
 
 ```txt
 Backend • Lint, Build & Validate
 ```
 
-Aplica como required status check en dev, qa y main para el repositorio Backend.
+Reglas activas: Require Pull Request · Require status checks · Block force pushes · Restrict deletions.
+
+Aplica en dev, qa y main del repositorio Backend.
 
 Configuración completa: ver `docs/cicd-governance.md`
 

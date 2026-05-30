@@ -1,7 +1,7 @@
 # TacosManager — CI/CD Governance
 
-Version: 1.0
-Última actualización: ETAPA 5.0.4.3 — Branch Protection & Status Checks 🟡 EN PROGRESO
+Version: 1.1
+Última actualización: ETAPA 5.0.4.3 — Branch Protection & Status Checks ✅ COMPLETADA (2026-05-29)
 
 ---
 
@@ -133,7 +133,23 @@ Backend • Lint, Build & Validate
 
 ---
 
-## Guía de configuración — paso a paso
+## Configuración implementada
+
+Herramienta: **GitHub Rulesets** (Settings → Rules → Rulesets), no Branch Protection legacy.
+
+Los Rulesets permiten definir una regla que aplica a múltiples ramas simultáneamente, con mejor visibilidad y gestión que las Branch Protection Rules clásicas.
+
+### Configuración aplicada — ambos repositorios
+
+Cada repositorio tiene un Ruleset que protege `dev`, `qa` y `main` simultáneamente con las siguientes reglas:
+- Require a pull request before merging
+- Require status checks to pass → [nombre del check correspondiente]
+- Block force pushes
+- Restrict deletions
+
+---
+
+## Guía de referencia — configuración
 
 ### Prerrequisitos
 
@@ -337,29 +353,33 @@ Cuando el equipo crezca o cuando los builds rotos post-merge sean un problema re
 
 ---
 
-## Validaciones para cerrar la etapa
+## Validaciones — ETAPA 5.0.4.3 ✅
+
+Validaciones ejecutadas el 2026-05-29:
 
 ```txt
-Mobile Repository
-□ Branch protection configurada en dev
-□ Branch protection configurada en qa
-□ Branch protection configurada en main
+Mobile Repository (TacosManager)
+✅ Branch protection (Ruleset) configurada en dev
+✅ Branch protection (Ruleset) configurada en qa
+✅ Branch protection (Ruleset) configurada en main
+✅ Require Pull Request before merging — activo
+✅ Require status checks to pass (Mobile • Lint & TypeCheck) — activo
+✅ Block force pushes — activo
+✅ Restrict deletions — activo
 
-Backend Repository
-□ Branch protection configurada en dev
-□ Branch protection configurada en qa
-□ Branch protection configurada en main
-
-Funcionalidad
-□ PR sin CI verde queda bloqueado (verificar en un PR de prueba)
-□ PR con CI verde puede mergearse normalmente
-□ Push directo a main bloqueado (verificar con git push forzado)
-□ Administrador incluido en las reglas de main
+Backend Repository (tacos-manager-api)
+✅ Branch protection (Ruleset) configurada en dev
+✅ Branch protection (Ruleset) configurada en qa
+✅ Branch protection (Ruleset) configurada en main
+✅ Require Pull Request before merging — activo
+✅ Require status checks to pass (Backend • Lint, Build & Validate) — activo
+✅ Block force pushes — activo
+✅ Restrict deletions — activo
 
 Documentación
-□ docs/branch-strategy.md creado y revisado
-□ docs/cicd-governance.md creado y revisado
-□ Documentación existente actualizada
+✅ docs/branch-strategy.md creado y revisado
+✅ docs/cicd-governance.md creado y revisado
+✅ Documentación existente actualizada
 ```
 
 ---

@@ -1,7 +1,7 @@
 # TacosManager — Branch Strategy
 
-Version: 1.0
-Última actualización: ETAPA 5.0.4.3 — Branch Protection & Status Checks 🟡 EN PROGRESO
+Version: 1.1
+Última actualización: ETAPA 5.0.4.3 — Branch Protection & Status Checks ✅ COMPLETADA (2026-05-29)
 
 ---
 
@@ -172,7 +172,7 @@ Los status checks se verifican en el momento del PR. Los builds corren post-merg
 | `qa` | `Mobile • Lint & TypeCheck` · `Backend • Lint, Build & Validate` | + APK QA + Health Check QA |
 | `main` | `Mobile • Lint & TypeCheck` · `Backend • Lint, Build & Validate` | + APK QA + AAB Production |
 
-Para la configuración completa y la guía paso a paso: ver `docs/cicd-governance.md`.
+Implementado con GitHub Rulesets el 2026-05-29. Para la configuración completa: ver `docs/cicd-governance.md`.
 
 ---
 
