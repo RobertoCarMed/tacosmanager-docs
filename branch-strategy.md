@@ -189,6 +189,9 @@ Implementado con GitHub Rulesets el 2026-05-29. Para la configuración completa:
 
 ## Documentos relacionados
 
+- `docs/cicd-strategy.md` — convenciones completas (commits, PRs, hotfix, ambientes, IA)
+- `docs/contributing.md` — guía de onboarding para nuevos contribuidores
+- `docs/deployment-runbook.md` — runbooks de deploy, rollback y emergencias
 - `docs/cicd-mobile.md` — pipeline mobile completo
 - `docs/cicd-backend.md` — pipeline backend completo
-- `docs/cicd-governance.md` — branch protection y status checks (configuración)
+- `docs/cicd-governance.md` — branch protection y status checks

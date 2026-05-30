@@ -386,6 +386,9 @@ Documentación
 
 ## Documentos relacionados
 
+- `docs/cicd-strategy.md` — convenciones completas de CI/CD (commits, PRs, hotfix, IA)
 - `docs/branch-strategy.md` — propósito de ramas, flujo de promoción, reglas
+- `docs/contributing.md` — guía de onboarding para contribuidores
+- `docs/deployment-runbook.md` — runbooks de deploy, rollback y emergencias
 - `docs/cicd-mobile.md` — pipeline mobile (workflow, jobs, artifacts)
 - `docs/cicd-backend.md` — pipeline backend (workflow, jobs, health check)

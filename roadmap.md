@@ -72,13 +72,13 @@ Tecnologías principales:
 - 5.0 MVP Launch
 - 5.0.2 Backend Deployment
 - 5.0.4 CI/CD Automation
+- 5.0.4.4 CI/CD Conventions & Documentation
 
 ## Pendiente
 
 - 4.8 History & Filters
 - 4.9 Performance Optimization
 - 4.10 Product Management Improvements
-- 5.0.4.4 CI/CD Conventions & Documentation
 
 ## Post-Lanzamiento
 
@@ -2578,7 +2578,7 @@ No se implementará en esta etapa: deploy automático a producción, Play Store 
 5.0.4.1 ⬜ — Mobile Pipeline Optimization
 5.0.4.2 ✅ — Backend CI Pipeline
 5.0.4.3 ✅ — Branch Protection & Status Checks
-5.0.4.4 ⬜ — CI/CD Conventions & Documentation
+5.0.4.4 🟡 — CI/CD Conventions & Documentation
 ```
 
 ---
@@ -3068,43 +3068,88 @@ docs/frontend-architecture.md
 
 Estado:
 
-⬜ PENDIENTE
+🟡 EN PROGRESO
 
 ---
 
 ## Objetivo
 
-Documentar la estrategia CI/CD completa del proyecto para que sea mantenible sin depender del conocimiento tácito del desarrollador.
+Formalizar y documentar completamente las convenciones CI/CD del proyecto para que sea operable sin depender de conocimiento tácito, y para facilitar el onboarding de nuevos desarrolladores e IAs.
 
 ---
 
-## Alcance
+## Implementado
 
-- Documento `docs/cicd-strategy.md` con:
-  - Flujo PR → QA → Production (Mobile y Backend)
-  - Relación entre repositorios Mobile ↔ Backend en CI
-  - Convenciones de naming para workflows, jobs y artefactos
-  - Guía de mantenimiento: cuándo actualizar secrets, cuándo tocar workflows
-  - Riesgos identificados y mitigaciones
-  - Decisiones arquitectónicas (por qué no Fastlane, por qué no Docker en CI, etc.)
-
----
-
-## Flujo CI/CD Objetivo (post-5.0.4)
+### Documentos creados
 
 ```txt
-Pull Request abierto
-  ├── Mobile:  lint → typecheck → build:qa  ──→ ✅/❌ Status Check
-  └── Backend: lint → typecheck → tests → prisma validate ──→ ✅/❌ Status Check
-
-Merge a main
-  ├── Mobile:  validate + build:qa (APK artifact) → build:prod (AAB artifact)
-  └── Backend: validate + tests + build dist
-
-Artifacts disponibles en GitHub Actions:
-  ├── app-qa-release-<sha>.apk      (30 días)
-  └── app-production-release-<sha>.aab  (30 días)
+docs/cicd-strategy.md       — convenciones completas: ramas, commits, PRs,
+                               releases, ambientes, GitHub Actions, hotfix, IA
+docs/contributing.md        — guía de onboarding para contribuidores
+docs/deployment-runbook.md  — runbooks operativos: deploy QA/Prod, rollback,
+                               distribución de APK/AAB, emergencias
 ```
+
+### Convenciones definidas
+
+- **Commits:** Conventional Commits (feat/fix/docs/ci/chore/refactor/test/perf)
+- **Ramas:** `feature/*`, `fix/*`, `hotfix/*`, `chore/*`, `docs/*`, `ci/*`
+- **PRs:** mismo formato que commits, descripción estructurada obligatoria
+- **Releases:** QA (APK en push a qa) + Production (AAB en push a main)
+- **Ambientes:** Development / QA / Production con variables centralizadas
+- **GitHub Actions:** naming `Repositorio • Descripción`
+- **Hotfix:** `hotfix/* → main (PR) → sync a qa → sync a dev`
+- **IA:** reglas de uso, documentación obligatoria, convenciones de prompts
+
+### Documentos actualizados
+
+```txt
+docs/roadmap.md
+docs/architecture.md
+docs/branch-strategy.md
+docs/cicd-governance.md
+docs/cicd-backend.md
+docs/cicd-mobile.md
+docs/frontend-architecture.md
+```
+
+---
+
+## Flujo CI/CD implementado
+
+```txt
+Pull Request (→ dev / qa / main):
+  Mobile:  Mobile • Lint & TypeCheck  ──→ ✅/❌ Status Check (branch protection)
+  Backend: Backend • Lint, Build & Validate ──→ ✅/❌ Status Check (branch protection)
+
+Push a qa (post-merge):
+  Mobile:  Mobile • Build QA APK → app-qa-release-<sha>.apk
+  Backend: Backend • Health Check QA → GET /health
+
+Push a main (post-merge):
+  Mobile:  Mobile • Build QA APK → app-qa-release-<sha>.apk
+           Mobile • Build Production AAB → app-production-release-<sha>.aab
+  Backend: Backend • Lint, Build & Validate
+```
+
+---
+
+## Pendientes para cerrar la etapa
+
+```txt
+□ Review de los tres documentos creados (cicd-strategy, contributing, deployment-runbook)
+□ Confirmar que deployment-runbook refleja el proceso real del proyecto
+□ Confirmar que las URLs de Railway están correctamente documentadas
+□ Smoke test: un nuevo desarrollador puede seguir contributing.md desde cero
+```
+
+---
+
+## Documentación
+
+- `docs/cicd-strategy.md` — documento central de convenciones
+- `docs/contributing.md` — guía de onboarding
+- `docs/deployment-runbook.md` — runbooks operativos
 
 ---
 
