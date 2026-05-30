@@ -66,13 +66,13 @@ Tecnologías principales:
 - 5.0.4.1 Mobile Pipeline Optimization ✅
 - 5.0.4.2 Backend CI Pipeline ✅
 - 5.0.4.3 Branch Protection & Status Checks ✅
+- 5.0.4.4 CI/CD Conventions & Documentation ✅
+- 5.0.4 CI/CD Automation ✅
 
 ## En Progreso
 
 - 5.0 MVP Launch
 - 5.0.2 Backend Deployment
-- 5.0.4 CI/CD Automation
-- 5.0.4.4 CI/CD Conventions & Documentation
 
 ## Pendiente
 
@@ -2551,34 +2551,149 @@ clean:android       → cd android && ./gradlew clean
 
 Estado:
 
-🟡 EN PROGRESO
+✅ COMPLETADA
+
+Fecha de cierre: 2026-05-29
 
 ---
 
-## Objetivo
+## Resumen ejecutivo
 
-Expandir el pipeline CI/CD existente para cubrir validaciones técnicas completas de Mobile y Backend, con enfoque MVP Production Ready: simple, mantenible, económico y profesional.
+La ETAPA 5.0.4 implementó el sistema completo de CI/CD para TacosManager. Partiendo del pipeline Mobile básico de la ETAPA 5.0.3.3, se construyó una infraestructura profesional que cubre:
 
----
-
-## Contexto
-
-La ETAPA 5.0.3.3 entregó un pipeline Mobile funcional en GitHub Actions. La ETAPA 5.0.4 extiende ese trabajo en dos frentes:
-
-1. **Mobile** — optimizar y estructurar mejor el pipeline existente.
-2. **Backend** — crear pipeline CI para el repositorio NestJS.
-
-No se implementará en esta etapa: deploy automático a producción, Play Store publishing, Fastlane, Docker registry, Kubernetes, Terraform, AWS, Sentry ni Analytics.
+- **Automatización** de validación de código en cada PR y push
+- **Generación automática** de artefactos QA y Production
+- **Branch Protection** que garantiza el flujo `feature/* → dev → qa → main`
+- **Convenciones documentadas** para operación sin conocimiento tácito
 
 ---
 
 ## Subetapas
 
 ```txt
-5.0.4.1 ⬜ — Mobile Pipeline Optimization
-5.0.4.2 ✅ — Backend CI Pipeline
-5.0.4.3 ✅ — Branch Protection & Status Checks
-5.0.4.4 🟡 — CI/CD Conventions & Documentation
+5.0.4.1 ✅ — Mobile Pipeline Optimization     (2026-05-28)
+5.0.4.2 ✅ — Backend CI Pipeline              (2026-05-28)
+5.0.4.3 ✅ — Branch Protection & Status Checks (2026-05-29)
+5.0.4.4 ✅ — CI/CD Conventions & Documentation (2026-05-29)
+```
+
+---
+
+## Entregables completados
+
+### Mobile CI/CD (`TacosManager` repository)
+
+Pipeline: `.github/workflows/mobile-ci.yml`
+
+| Job | Nombre | Trigger | Artefacto |
+|-----|--------|---------|-----------|
+| `lint-typecheck` | Mobile • Lint & TypeCheck | Todos los triggers | — |
+| `build-qa` | Mobile • Build QA APK | Push a qa, main | `app-qa-release-<sha>.apk` |
+| `build-production` | Mobile • Build Production AAB | Push a main | `app-production-release-<sha>.aab` |
+
+Estrategia por rama:
+- PRs y push a dev → solo lint + typecheck
+- Push a qa → lint + APK QA
+- Push a main → lint + APK QA + AAB Production
+
+GitHub Variables: `QA_API_URL`, `QA_SOCKET_URL`, `PROD_API_URL`, `PROD_SOCKET_URL`
+
+GitHub Secrets: `KEYSTORE_PASSWORD`, `KEY_PASSWORD`
+
+Cache: npm (por lockfile) + Gradle (por dependencias Android)
+
+### Backend CI/CD (`tacos-manager-api` repository)
+
+Pipeline: `.github/workflows/backend-ci.yml`
+
+| Job | Nombre | Trigger |
+|-----|--------|---------|
+| `validate` | Backend • Lint, Build & Validate | Todos los triggers |
+| `health-check-qa` | Backend • Health Check QA | Push a qa |
+
+Validaciones: ESLint + `nest build` + `prisma validate`
+
+`DATABASE_URL` dummy en CI para `prisma generate`/`prisma validate` sin conexión real.
+
+### Branch Protection (GitHub Rulesets)
+
+Activo en `dev`, `qa`, `main` — ambos repositorios.
+
+| Regla | Estado |
+|-------|--------|
+| Require Pull Request | ✅ Activo |
+| Require status checks | ✅ Activo |
+| Block force pushes | ✅ Activo |
+| Restrict deletions | ✅ Activo |
+
+Status checks requeridos en PR:
+- Mobile: `Mobile • Lint & TypeCheck`
+- Backend: `Backend • Lint, Build & Validate`
+
+### Documentación generada
+
+| Documento | Descripción |
+|-----------|-------------|
+| `docs/cicd-strategy.md` | Convenciones: commits, PRs, releases, ambientes, hotfix, IA |
+| `docs/contributing.md` | Guía de onboarding para contribuidores |
+| `docs/deployment-runbook.md` | Runbooks: deploy QA/Prod, APK/AAB, rollback, emergencias |
+| `docs/branch-strategy.md` | Estrategia de ramas y reglas de merge |
+| `docs/cicd-governance.md` | Branch protection y status checks |
+| `docs/cicd-mobile.md` | Pipeline mobile completo |
+| `docs/cicd-backend.md` | Pipeline backend completo |
+
+---
+
+## Métricas
+
+| Métrica | Valor |
+|---------|-------|
+| Subetapas completadas | 4 / 4 |
+| Pipelines CI activos | 2 (Mobile + Backend) |
+| Jobs de CI activos | 5 (3 Mobile + 2 Backend) |
+| Ramas protegidas | 6 (3 Mobile + 3 Backend) |
+| GitHub Variables configuradas | 4 |
+| GitHub Secrets activos | 2 |
+| Documentos creados | 5 nuevos |
+| Documentos actualizados | 7+ |
+
+---
+
+## Lecciones aprendidas
+
+### 1. Builds de Android no son viables como PR checks
+
+Los jobs de Android son `skipped` en eventos `pull_request`. Requerirlos en branch protection bloquea todos los PRs. La solución es documentarlos como quality gates post-merge.
+
+### 2. GitHub Rulesets > Branch Protection legacy
+
+Los Rulesets permiten proteger múltiples ramas con una sola regla, tienen mejor visibilidad en la UI y son el sistema activo recomendado por GitHub.
+
+### 3. Submodule en detached HEAD genera conflictos
+
+Al trabajar con el submódulo `docs` en detached HEAD y luego hacer `checkout main` con cambios pendientes, se generan conflictos de merge. Verificar siempre que el submódulo está en `main` antes de crear archivos.
+
+### 4. `prisma.config.ts` requiere `DATABASE_URL` aunque no haya conexión
+
+`prisma generate` y `prisma validate` leen `prisma.config.ts` y la función `env()` lanza error si la variable no está definida. Solución: `DATABASE_URL` dummy hardcodeado en el workflow (no como Secret — es intencionalmente falso).
+
+### 5. `needs` + `if` en GitHub Actions
+
+La condición `if` en un job se evalúa de forma independiente al resultado del `needs`. Si un job es skipped por su `if`, los dependientes también son skipped. Este patrón permite la ejecución condicional por rama sin lógica adicional.
+
+---
+
+## Validación final
+
+```txt
+✅ Mobile CI funcional — Mobile • Lint & TypeCheck en todos los PRs
+✅ Backend CI funcional — Backend • Lint, Build & Validate en todos los PRs
+✅ Branch Protection funcional — GitHub Rulesets activos en dev/qa/main
+✅ GitHub Variables configuradas — QA_API_URL, QA_SOCKET_URL, PROD_API_URL, PROD_SOCKET_URL
+✅ QA Pipeline funcional — APK QA generado en push a qa y main
+✅ Production Pipeline funcional — AAB Production generado en push a main
+✅ Health Check QA funcional — GET /health validado en push a qa
+✅ Documentación sincronizada — 7+ documentos actualizados
 ```
 
 ---
@@ -3068,80 +3183,40 @@ docs/frontend-architecture.md
 
 Estado:
 
-🟡 EN PROGRESO
+✅ COMPLETADA
+
+Fecha de cierre: 2026-05-29
 
 ---
 
 ## Objetivo
 
-Formalizar y documentar completamente las convenciones CI/CD del proyecto para que sea operable sin depender de conocimiento tácito, y para facilitar el onboarding de nuevos desarrolladores e IAs.
+Formalizar y documentar completamente las convenciones CI/CD del proyecto para que sea operable sin depender de conocimiento tácito, y facilitar el onboarding de nuevos desarrolladores e IAs.
 
 ---
 
-## Implementado
+## Entregables
 
 ### Documentos creados
 
-```txt
-docs/cicd-strategy.md       — convenciones completas: ramas, commits, PRs,
-                               releases, ambientes, GitHub Actions, hotfix, IA
-docs/contributing.md        — guía de onboarding para contribuidores
-docs/deployment-runbook.md  — runbooks operativos: deploy QA/Prod, rollback,
-                               distribución de APK/AAB, emergencias
-```
+| Documento | Contenido |
+|-----------|-----------|
+| `docs/cicd-strategy.md` | Convenciones: commits, PRs, releases, ambientes, GitHub Actions, hotfix, IA, sync docs |
+| `docs/contributing.md` | Onboarding: setup, branch naming, workflow, commits, PRs, CI, documentación |
+| `docs/deployment-runbook.md` | Runbooks: deploy QA/Prod, APK/AAB, rollback, emergencias, checklist pre-release |
 
 ### Convenciones definidas
 
-- **Commits:** Conventional Commits (feat/fix/docs/ci/chore/refactor/test/perf)
-- **Ramas:** `feature/*`, `fix/*`, `hotfix/*`, `chore/*`, `docs/*`, `ci/*`
-- **PRs:** mismo formato que commits, descripción estructurada obligatoria
-- **Releases:** QA (APK en push a qa) + Production (AAB en push a main)
-- **Ambientes:** Development / QA / Production con variables centralizadas
-- **GitHub Actions:** naming `Repositorio • Descripción`
-- **Hotfix:** `hotfix/* → main (PR) → sync a qa → sync a dev`
-- **IA:** reglas de uso, documentación obligatoria, convenciones de prompts
-
-### Documentos actualizados
-
-```txt
-docs/roadmap.md
-docs/architecture.md
-docs/branch-strategy.md
-docs/cicd-governance.md
-docs/cicd-backend.md
-docs/cicd-mobile.md
-docs/frontend-architecture.md
-```
-
----
-
-## Flujo CI/CD implementado
-
-```txt
-Pull Request (→ dev / qa / main):
-  Mobile:  Mobile • Lint & TypeCheck  ──→ ✅/❌ Status Check (branch protection)
-  Backend: Backend • Lint, Build & Validate ──→ ✅/❌ Status Check (branch protection)
-
-Push a qa (post-merge):
-  Mobile:  Mobile • Build QA APK → app-qa-release-<sha>.apk
-  Backend: Backend • Health Check QA → GET /health
-
-Push a main (post-merge):
-  Mobile:  Mobile • Build QA APK → app-qa-release-<sha>.apk
-           Mobile • Build Production AAB → app-production-release-<sha>.aab
-  Backend: Backend • Lint, Build & Validate
-```
-
----
-
-## Pendientes para cerrar la etapa
-
-```txt
-□ Review de los tres documentos creados (cicd-strategy, contributing, deployment-runbook)
-□ Confirmar que deployment-runbook refleja el proceso real del proyecto
-□ Confirmar que las URLs de Railway están correctamente documentadas
-□ Smoke test: un nuevo desarrollador puede seguir contributing.md desde cero
-```
+| Área | Convención |
+|------|-----------|
+| Commits | Conventional Commits: `feat/fix/docs/ci/chore/refactor/test/perf` |
+| Ramas | `feature/*` `fix/*` `hotfix/*` `chore/*` `docs/*` `ci/*` |
+| PRs | Formato Conventional Commits + descripción estructurada obligatoria |
+| Releases | QA = APK (push a qa/main) · Production = AAB (push a main) |
+| Jobs CI | Naming: `Repositorio • Descripción` |
+| Artefactos | Naming: `app-<flavor>-<type>-<sha>` |
+| Hotfix | `hotfix/* → main (PR) → sync qa → sync dev` |
+| IA | Reglas de uso, docs obligatorias post-cambio, convenciones de prompts |
 
 ---
 

@@ -940,14 +940,14 @@ MVP Launch — despliegue productivo en Railway + Play Store.
 
 ---
 
-Etapa 5.0.4 🟡 EN PROGRESO
+Etapa 5.0.4 ✅ COMPLETADA (2026-05-29)
 
-CI/CD Automation — expandir pipeline existente a Mobile + Backend con enfoque MVP Production Ready.
+CI/CD Automation — pipeline CI/CD completo para Mobile y Backend, branch protection, convenciones y runbooks operativos.
 
-5.0.4.1 ✅ Mobile Pipeline Optimization — `.github/workflows/mobile-ci.yml` reestructurado en 3 jobs: `Mobile • Lint & TypeCheck` → `Mobile • Build QA APK` → `Mobile • Build Production AAB`. Estrategia por rama: PRs y push a dev → solo lint+typecheck; push a qa → APK QA; push a main → pipeline completo. GitHub Repository Variables para URLs (`QA_API_URL`, `QA_SOCKET_URL`, `PROD_API_URL`, `PROD_SOCKET_URL`). Sin URLs hardcodeadas. Nombres de jobs listos para Branch Protection. Validado 2026-05-28. Ver `docs/cicd-mobile.md`.
-5.0.4.2 ✅ Backend CI Pipeline — `.github/workflows/backend-ci.yml` alineado al flujo `feature/* → dev → qa → main`. Job `validate` (lint + build + prisma validate) en todos los triggers. Job `health-check-qa` solo en `push → qa`. `DATABASE_URL` dummy en CI para `prisma generate`/`prisma validate`. Variable requerida: `QA_API_URL`. Placeholder para Production Health Check (`push → main`) pendiente de infraestructura. Ver `docs/cicd-backend.md`.
-5.0.4.3 ✅ Branch Protection & Status Checks — GitHub Rulesets activos en dev/qa/main para ambos repositorios (Mobile y Backend). Reglas: PR required, status checks required (`Mobile • Lint & TypeCheck` / `Backend • Lint, Build & Validate`), block force pushes, restrict deletions. Builds como quality gates post-merge. Ver `docs/branch-strategy.md` y `docs/cicd-governance.md`.
-5.0.4.4 🟡 CI/CD Conventions & Documentation — `docs/cicd-strategy.md` (convenciones: ramas, commits, PRs, releases, ambientes, GitHub Actions, hotfix, IA), `docs/contributing.md` (onboarding), `docs/deployment-runbook.md` (deploy QA/Prod, rollback, APK/AAB, emergencias).
+5.0.4.1 ✅ Mobile Pipeline Optimization — `.github/workflows/mobile-ci.yml` reestructurado en 3 jobs: `Mobile • Lint & TypeCheck` → `Mobile • Build QA APK` → `Mobile • Build Production AAB`. Estrategia por rama: PRs y push a dev → solo lint+typecheck; push a qa → APK QA; push a main → pipeline completo. GitHub Repository Variables para URLs. Validado 2026-05-28. Ver `docs/cicd-mobile.md`.
+5.0.4.2 ✅ Backend CI Pipeline — `.github/workflows/backend-ci.yml`. Job `validate` (lint + build + prisma validate) en todos los triggers. Job `health-check-qa` solo en `push → qa`. `DATABASE_URL` dummy en CI. Ver `docs/cicd-backend.md`.
+5.0.4.3 ✅ Branch Protection & Status Checks — GitHub Rulesets activos en dev/qa/main para ambos repositorios. Reglas: PR required, status checks, block force pushes, restrict deletions. Ver `docs/cicd-governance.md`.
+5.0.4.4 ✅ CI/CD Conventions & Documentation — `docs/cicd-strategy.md` (commits, PRs, releases, hotfix, IA), `docs/contributing.md` (onboarding), `docs/deployment-runbook.md` (deploy, rollback, emergencias).
 
 Flujo CI/CD objetivo post-5.0.4:
 
