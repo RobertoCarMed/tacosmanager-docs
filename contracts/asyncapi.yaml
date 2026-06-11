@@ -1,0 +1,139 @@
+asyncapi: 2.6.0
+info:
+  title: TacosManager Realtime
+  version: "1.0.0"
+  description: |
+    Eventos Socket.IO emitidos por el backend de TacosManager.
+    Autenticación: JWT en handshake (`auth.token` o `Authorization: Bearer`).
+    Aislamiento: cada usuario se une automáticamente al room `taqueria:<taqueriaId>`.
+
+defaultContentType: application/json
+
+servers:
+  production:
+    url: ws://api.tacosmanager.example
+    protocol: socketio
+    description: Socket.IO v4
+
+channels:
+  taqueria/{taqueriaId}:
+    parameters:
+      taqueriaId:
+        description: UUID de la taquería; deriva del JWT del usuario.
+        schema:
+          type: string
+          format: uuid
+    description: Room privado por taquería. Aislamiento multi-tenant.
+    subscribe:
+      summary: Eventos servidor → cliente
+      operationId: subscribeTaqueriaEvents
+      message:
+        oneOf:
+          - $ref: "#/components/messages/OrderCreated"
+          - $ref: "#/components/messages/OrderUpdated"
+          - $ref: "#/components/messages/OrderStatusChanged"
+
+  client/join-taqueria:
+    description: Evento idempotente cliente → servidor que confirma la room activa.
+    publish:
+      summary: Cliente confirma room
+      operationId: joinTaqueria
+      message:
+        $ref: "#/components/messages/JoinTaqueria"
+
+components:
+  messages:
+    OrderCreated:
+      name: order-created
+      title: Orden creada
+      summary: Emitido cuando un WAITER crea una orden (POST /orders).
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/OrderEnvelope"
+
+    OrderUpdated:
+      name: order-updated
+      title: Orden actualizada (append)
+      summary: Emitido cuando un WAITER hace append (PATCH /orders/:id). revision++.
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/OrderEnvelope"
+
+    OrderStatusChanged:
+      name: order-status-changed
+      title: Status de orden cambió
+      summary: Emitido cuando un COOK cambia el status (PATCH /orders/:id/status). Si pasa a READY, isNew se limpia.
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/OrderEnvelope"
+
+    JoinTaqueria:
+      name: join-taqueria
+      title: Confirmar room
+      summary: Cliente solicita confirmar la room activa.
+      payload:
+        type: object
+        properties: {}
+
+  schemas:
+    OrderEnvelope:
+      type: object
+      required: [order]
+      properties:
+        order:
+          $ref: "#/components/schemas/Order"
+
+    OrderType:
+      type: string
+      enum: [DINE_IN, TAKEAWAY, DELIVERY]
+
+    OrderStatus:
+      type: string
+      enum: [PENDING, PREPARING, READY, DELIVERED, CANCELLED]
+
+    Order:
+      type: object
+      required: [id, taqueriaId, waiterId, type, status, revision, priorityTimestamp, createdAt, updatedAt, plates]
+      properties:
+        id: { type: string, format: uuid }
+        taqueriaId: { type: string, format: uuid }
+        waiterId: { type: string, format: uuid }
+        type: { $ref: "#/components/schemas/OrderType" }
+        reference: { type: string, nullable: true }
+        deliveryAddress: { type: string, nullable: true }
+        status: { $ref: "#/components/schemas/OrderStatus" }
+        revision: { type: integer, minimum: 1 }
+        priorityTimestamp: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        plates:
+          type: array
+          items: { $ref: "#/components/schemas/Plate" }
+
+    Plate:
+      type: object
+      required: [id, plateNumber, isClosed, createdInRevision, createdAt, items]
+      properties:
+        id: { type: string, format: uuid }
+        plateNumber: { type: integer }
+        isClosed: { type: boolean }
+        createdInRevision: { type: integer }
+        createdAt: { type: string, format: date-time }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Item" }
+
+    Item:
+      type: object
+      required: [id, productId, quantity, isNew, createdInRevision, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        productId: { type: string, format: uuid }
+        quantity: { type: integer }
+        selectedComplements:
+          type: array
+          items: { type: string }
+        notes: { type: string, nullable: true }
+        isNew: { type: boolean }
+        createdInRevision: { type: integer }
+        createdAt: { type: string, format: date-time }

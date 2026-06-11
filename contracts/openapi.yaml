@@ -1,0 +1,516 @@
+openapi: 3.1.0
+info:
+  title: TacosManager API
+  version: "1.0.0"
+  description: |
+    API REST de TacosManager. Multi-tenant por taquería.
+    Toda ruta excepto /health y /auth/* requiere JWT.
+  contact:
+    name: TacosManager
+servers:
+  - url: /api
+    description: Base URL
+
+tags:
+  - name: System
+  - name: Auth
+  - name: Products
+  - name: Orders
+
+security:
+  - bearerAuth: []
+
+paths:
+  /health:
+    get:
+      tags: [System]
+      summary: Health check
+      security: []
+      responses:
+        "200":
+          description: Servicio operativo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login con email y password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login exitoso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Registro inteligente (crea o une a taquería)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: Usuario y/o taquería creados
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Devuelve user y taquería del token actual
+      responses:
+        "200":
+          description: Contexto del usuario
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /products:
+    get:
+      tags: [Products]
+      summary: Lista productos de la taquería actual
+      responses:
+        "200":
+          description: Catálogo
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+    post:
+      tags: [Products]
+      summary: Crear producto (COOK)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProduct"
+      responses:
+        "201":
+          description: Creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /products/{id}:
+    parameters:
+      - $ref: "#/components/parameters/IdPath"
+    get:
+      tags: [Products]
+      summary: Obtener producto
+      responses:
+        "200":
+          description: Producto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Products]
+      summary: Actualizar producto (COOK)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProduct"
+      responses:
+        "200":
+          description: Actualizado
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    delete:
+      tags: [Products]
+      summary: Eliminar producto (COOK)
+      responses:
+        "204":
+          description: Eliminado
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /orders:
+    get:
+      tags: [Orders]
+      summary: Lista órdenes. COOK ve todas; WAITER ve solo las propias.
+      responses:
+        "200":
+          description: Órdenes ordenadas por status + FIFO
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Order"
+    post:
+      tags: [Orders]
+      summary: Crear orden (WAITER)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrder"
+      responses:
+        "201":
+          description: Orden creada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /orders/{id}:
+    parameters:
+      - $ref: "#/components/parameters/IdPath"
+    get:
+      tags: [Orders]
+      summary: Obtener orden (ownership obligatorio)
+      responses:
+        "200":
+          description: Orden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Orders]
+      summary: Append a la orden (WAITER) — solo agrega plates/items
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AppendOrder"
+      responses:
+        "200":
+          description: Orden actualizada (revision incrementada)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          description: Transición ilegal (orden CANCELLED/DELIVERED)
+
+  /orders/{id}/status:
+    parameters:
+      - $ref: "#/components/parameters/IdPath"
+    patch:
+      tags: [Orders]
+      summary: Cambiar status (COOK)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  $ref: "#/components/schemas/OrderStatus"
+      responses:
+        "200":
+          description: Status actualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "400":
+          description: Status inválido (ej. UPDATED rechazado)
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    IdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    BadRequest:
+      description: Validación fallida
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Unauthorized:
+      description: Token ausente/inválido
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Forbidden:
+      description: Rol insuficiente
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Recurso no encontrado o de otra taquería
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  schemas:
+    Health:
+      type: object
+      required: [status, timestamp, environment]
+      properties:
+        status: { type: string, example: ok }
+        timestamp: { type: string, format: date-time }
+        environment: { type: string, enum: [development, qa, production] }
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password, minLength: 6 }
+
+    LoginResponse:
+      type: object
+      required: [accessToken, user, taqueria]
+      properties:
+        accessToken: { type: string, description: JWT, expira en 24h }
+        user: { $ref: "#/components/schemas/User" }
+        taqueria: { $ref: "#/components/schemas/Taqueria" }
+
+    RegisterRequest:
+      type: object
+      required: [email, password, name, taqueria]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+        name: { type: string }
+        role: { $ref: "#/components/schemas/Role" }
+        taqueria:
+          type: object
+          required: [name]
+          properties:
+            name: { type: string }
+            address: { type: string }
+            city: { type: string }
+            state: { type: string }
+
+    MeResponse:
+      type: object
+      required: [user, taqueria]
+      properties:
+        user: { $ref: "#/components/schemas/User" }
+        taqueria: { $ref: "#/components/schemas/Taqueria" }
+
+    Role:
+      type: string
+      enum: [COOK, WAITER]
+
+    User:
+      type: object
+      required: [id, email, name, role, taqueriaId]
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        name: { type: string }
+        role: { $ref: "#/components/schemas/Role" }
+        taqueriaId: { type: string, format: uuid }
+
+    Taqueria:
+      type: object
+      required: [id, name, restaurantCode]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        restaurantCode: { type: string, example: TM-4821, description: "Identificador público inmutable" }
+        address: { type: string }
+        city: { type: string }
+        state: { type: string }
+
+    Product:
+      type: object
+      required: [id, taqueriaId, name, price]
+      properties:
+        id: { type: string, format: uuid }
+        taqueriaId: { type: string, format: uuid }
+        name: { type: string }
+        price: { type: number, format: float, minimum: 0 }
+        complements:
+          type: array
+          items: { type: string }
+
+    CreateProduct:
+      type: object
+      required: [name, price]
+      properties:
+        name: { type: string }
+        price: { type: number, minimum: 0 }
+        complements:
+          type: array
+          items: { type: string }
+
+    UpdateProduct:
+      type: object
+      properties:
+        name: { type: string }
+        price: { type: number, minimum: 0 }
+        complements:
+          type: array
+          items: { type: string }
+
+    OrderType:
+      type: string
+      enum: [DINE_IN, TAKEAWAY, DELIVERY]
+      description: Modalidad de consumo. Independiente de OrderStatus.
+
+    OrderStatus:
+      type: string
+      enum: [PENDING, PREPARING, READY, DELIVERED, CANCELLED]
+      description: |
+        Etapa de cocina. UPDATED está DEPRECADO (ETAPA 4.5.6.1) y no puede asignarse manualmente.
+
+    CreateOrder:
+      type: object
+      required: [type, plates]
+      properties:
+        type: { $ref: "#/components/schemas/OrderType" }
+        reference:
+          type: string
+          description: Obligatorio para DINE_IN y TAKEAWAY; opcional para DELIVERY.
+        deliveryAddress:
+          type: string
+          description: Obligatorio para DELIVERY; null en otros casos.
+        plates:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/CreatePlate" }
+
+    CreatePlate:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/CreateItem" }
+
+    CreateItem:
+      type: object
+      required: [productId, quantity]
+      properties:
+        productId: { type: string, format: uuid }
+        quantity: { type: integer, minimum: 1 }
+        selectedComplements:
+          type: array
+          items: { type: string }
+        notes: { type: string, nullable: true }
+
+    AppendOrder:
+      type: object
+      description: Solo permite agregar plates/items nuevos (append-only ADR-0005)
+      properties:
+        plates:
+          type: array
+          items: { $ref: "#/components/schemas/CreatePlate" }
+
+    Order:
+      type: object
+      required: [id, taqueriaId, waiterId, type, status, revision, priorityTimestamp, createdAt, updatedAt, plates]
+      properties:
+        id: { type: string, format: uuid }
+        taqueriaId: { type: string, format: uuid }
+        waiterId: { type: string, format: uuid }
+        type: { $ref: "#/components/schemas/OrderType" }
+        reference: { type: string, nullable: true }
+        deliveryAddress: { type: string, nullable: true }
+        status: { $ref: "#/components/schemas/OrderStatus" }
+        revision: { type: integer, minimum: 1 }
+        priorityTimestamp: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        plates:
+          type: array
+          items: { $ref: "#/components/schemas/Plate" }
+
+    Plate:
+      type: object
+      required: [id, plateNumber, isClosed, createdInRevision, createdAt, items]
+      properties:
+        id: { type: string, format: uuid }
+        plateNumber: { type: integer }
+        isClosed: { type: boolean }
+        createdInRevision: { type: integer }
+        createdAt: { type: string, format: date-time }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Item" }
+
+    Item:
+      type: object
+      required: [id, productId, quantity, isNew, createdInRevision, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        productId: { type: string, format: uuid }
+        quantity: { type: integer, minimum: 1 }
+        selectedComplements:
+          type: array
+          items: { type: string }
+        notes: { type: string, nullable: true }
+        isNew: { type: boolean, description: "true si fue agregado en revisión posterior. Se limpia al pasar a READY." }
+        createdInRevision: { type: integer }
+        createdAt: { type: string, format: date-time }
+
+    Error:
+      type: object
+      required: [statusCode, message]
+      properties:
+        statusCode: { type: integer }
+        message:
+          oneOf:
+            - { type: string }
+            - { type: array, items: { type: string } }
+        error: { type: string }
