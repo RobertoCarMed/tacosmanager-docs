@@ -1,6 +1,7 @@
 # Spec: Products Management
 
 - ID: SPEC-products-management
+- Versión: 1.0
 - Estado: Implementada
 - ETAPA asociada: 4.5.2
 

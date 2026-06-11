@@ -1,0 +1,30 @@
+name: Traceability Check
+
+on:
+  pull_request:
+    paths:
+      - 'specs/**'
+      - 'traceability.md'
+      - 'scripts/build-traceability.js'
+      - '.github/workflows/traceability.yml'
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run traceability check
+        run: node scripts/build-traceability.js check
+
+      - name: Upload JSON report
+        if: always()
+        run: node scripts/build-traceability.js json > traceability-report.json
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: traceability-report
+          path: traceability-report.json

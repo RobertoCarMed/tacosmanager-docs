@@ -1,6 +1,7 @@
 # Spec: Create Order
 
 - ID: SPEC-create-order
+- Versión: 1.0
 - Estado: Implementada (spec piloto SDD retroactiva)
 - Autores: Equipo TacosManager
 - Fecha: 2026-06-11

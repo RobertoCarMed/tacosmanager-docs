@@ -1,6 +1,7 @@
 # Spec: <Nombre de la feature>
 
 - ID: SPEC-<slug>
+- Versión: 1.0
 - Estado: Borrador | Aprobada | Implementada | Deprecada
 - Autores:
 - Fecha:

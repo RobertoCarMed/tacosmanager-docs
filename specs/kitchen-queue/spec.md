@@ -1,6 +1,7 @@
 # Spec: Kitchen Queue
 
 - ID: SPEC-kitchen-queue
+- Versión: 1.0
 - Estado: Implementada
 - ETAPA asociada: 4.5.6.1, 4.5.6.2, 4.6.3
 

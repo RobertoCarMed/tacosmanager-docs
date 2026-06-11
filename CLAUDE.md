@@ -55,6 +55,37 @@ Los comandos viven en `.claude/commands/`. Cada uno tiene su propio prompt.
 
 Conventional Commits. Ver `cicd-strategy.md`. Cuerpo del commit DEBE referenciar `REQ-IDs` afectados.
 
+## Versionado de specs y REQ-IDs
+
+Ver ADR-0009. Reglas duras:
+
+- Una vez `✅ Implementado`, un `REQ-NNNN` es **inmutable**.
+- Cambios de comportamiento → nuevo REQ-ID + deprecación del viejo en `traceability.md`.
+- Specs siguen SemVer `MAJOR.MINOR`. Breaking → MAJOR. Aditivo → MINOR.
+
+## Convención de nombres de tests (backend + mobile)
+
+Los tests DEBEN ser detectables automáticamente por `scripts/build-traceability.js`. Usa una de estas formas:
+
+```ts
+// Backend (Jest)
+describe('REQ-0020: crear orden DINE_IN con reference', () => { ... });
+
+// O comentario inline arriba del it()
+it('returns 201 with full order payload', () => {
+  // @REQ-0020 @REQ-0026
+  ...
+});
+```
+
+```feature
+# Gherkin: usar tag justo encima del Escenario
+@REQ-0020
+Escenario: WAITER crea orden DINE_IN con reference
+```
+
+Mobile (Detox/Playwright) sigue el mismo patrón. Un test PUEDE cubrir múltiples REQ — listar todos.
+
 ## Cuando dudes
 
 Pregunta antes de inventar. Es mejor un mensaje aclaratorio que una spec divergente.

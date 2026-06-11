@@ -1,0 +1,43 @@
+name: SDD Traceability Gate
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, labeled, unlabeled]
+  workflow_call:
+    inputs:
+      docs_ref:
+        description: Branch/tag of tacosmanager-docs to use for validation script
+        required: false
+        type: string
+        default: main
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout consumer repo
+        uses: actions/checkout@v4
+
+      - name: Checkout tacosmanager-docs (for script + traceability.md)
+        if: ${{ github.event_name == 'workflow_call' }}
+        uses: actions/checkout@v4
+        with:
+          repository: RobertoCarMed/tacosmanager-docs
+          ref: ${{ inputs.docs_ref }}
+          path: .sdd-docs
+
+      - name: Resolve docs path
+        id: docs
+        run: |
+          if [ -d ".sdd-docs" ]; then
+            echo "path=.sdd-docs" >> "$GITHUB_OUTPUT"
+          else
+            echo "path=." >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Validate PR body
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+          GITHUB_WORKSPACE: ${{ github.workspace }}/${{ steps.docs.outputs.path }}
+        run: node ${{ steps.docs.outputs.path }}/scripts/validate-pr-body.js
