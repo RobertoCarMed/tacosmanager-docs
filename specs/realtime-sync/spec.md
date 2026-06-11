@@ -1,6 +1,7 @@
 # Spec: Realtime Sync
 
 - ID: SPEC-realtime-sync
+- Versión: 1.0
 - Estado: Implementada
 - ETAPA asociada: 4.5.4, 4.7.1, 4.7.2, 4.7.3
 

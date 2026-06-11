@@ -64,9 +64,10 @@ código + tests
 
 1. Toda feature nueva o cambio funcional inicia con una spec en `specs/<feature>/spec.md`.
 2. La spec contiene: user stories, acceptance criteria en Gherkin, edge cases, requerimientos no funcionales.
-3. Cada criterio Gherkin tiene un ID `REQ-XXXX` único, persistente, jamás reutilizado.
-4. Los tests automatizados se trazan a `REQ-XXXX` y aparecen en `traceability.md`.
-5. PRs sin spec asociada (`Closes REQ-XXXX` o `Spec: specs/<feature>/`) son rechazados.
+3. Cada criterio Gherkin tiene un ID `REQ-XXXX` único, persistente, jamás reutilizado. Una vez `✅ Implementado` es **inmutable** (ver ADR-0009).
+4. Las specs siguen SemVer `MAJOR.MINOR` declarado en su header. Cambios breaking bumpean MAJOR (ADR-0009).
+5. Los tests automatizados se trazan a `REQ-XXXX` y aparecen en `traceability.md`.
+6. PRs sin spec asociada (`Closes REQ-XXXX` o `Spec: specs/<feature>/`) son rechazados.
 
 ## Artículo VII — Decisiones Documentadas
 

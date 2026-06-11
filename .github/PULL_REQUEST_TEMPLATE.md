@@ -2,11 +2,20 @@
 
 ## Spec asociada
 
-<!-- Obligatorio. Sin spec, sin PR. -->
+<!--
+  Obligatorio. Sin spec, sin PR.
+  El gate de CI "SDD Traceability" valida que este cuerpo contenga
+  uno de:
+    - "Closes REQ-NNNN" listando los requirements cubiertos
+    - "Spec: specs/<feature>/spec.md"
+    - El label "docs-only" / "chore" / "release" / "sdd-bootstrap" si no aplica
+  Los REQ-IDs deben existir en traceability.md o agregarse en este mismo PR.
+-->
 
 - Spec: `specs/<feature>/spec.md`
-- REQ cubiertos: `REQ-XXXX`, `REQ-YYYY`
+- Closes REQ-XXXX, REQ-YYYY
 - ETAPA: `X.Y.Z` (referencia a `roadmap.md`)
+- Versión de spec tras este PR: `X.Y` (bump si cambia comportamiento de REQ implementado — ver ADR-0009)
 
 ## Tipo de cambio
 
@@ -28,11 +37,13 @@
 
 ## Trazabilidad
 
-- [ ] `traceability.md` actualizado con los REQ cubiertos
-- [ ] Tests referencian `REQ-XXXX` en su nombre/cuerpo
+- [ ] `traceability.md` actualizado con los REQ cubiertos (gate de CI lo valida)
+- [ ] Tests referencian `REQ-XXXX` en su nombre/cuerpo (`@REQ-XXXX` o `describe('REQ-XXXX: …')`)
+- [ ] `scripts/build-traceability.js check` pasa sin huérfanos
 - [ ] Si tocó contratos: `contracts/openapi.yaml` o `contracts/asyncapi.yaml` actualizado
 - [ ] Si introdujo término nuevo: `glossary.md` actualizado
 - [ ] Si tomó decisión arquitectónica: ADR agregado
+- [ ] Si cambió comportamiento de REQ implementado: REQ nuevo + spec bumpeada (ADR-0009)
 
 ## Verificación constitucional
 

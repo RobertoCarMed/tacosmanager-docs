@@ -1,6 +1,7 @@
 # Spec: Authentication
 
 - ID: SPEC-authentication
+- Versión: 1.0
 - Estado: Implementada
 - Fecha: 2026-06-11
 - ETAPA asociada: 4.5.1
