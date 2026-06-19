@@ -3398,16 +3398,16 @@ Una etapa se considera completada cuando:
 
 # Próxima Etapa
 
-ETAPA 5.0.4 🟡 CI/CD Automation — etapa activa actual.
+ETAPA 5.0.2 🟡 Backend Deployment — etapa activa actual.
 
-Expandir pipeline CI/CD para Mobile y Backend con enfoque MVP Production Ready.
+Provisionar Railway QA, migrar la base de datos y ejecutar smoke test de los endpoints principales. El backend ya quedó production-ready (health check, `railway.json`, sin valores hardcodeados — ver ETAPA 5.0.2).
 
-Paralelo activo: ETAPA 5.0.2 Backend Deployment (Railway + PostgreSQL).
+Siguiente: ETAPA 5.0.5 Monitoring & Recovery → 5.0.6 Production Validation → 5.0.7 Play Store Release.
 
 Sin nuevas funcionalidades de negocio — el foco es infraestructura y despliegue.
 
 Ver estrategia comercial y costos en: docs/business-model.md
-Ver estrategia CI/CD en: docs/cicd-strategy.md (se crea en ETAPA 5.0.4.4)
+Ver estrategia CI/CD en: docs/cicd-strategy.md
 
 ETAPA 4.5 ✅ completada. ETAPA 4.6 ✅ completada. ETAPA 4.7 ✅ completada.
-ETAPA 5.0.3 ✅ completada (2026-05-27).
+ETAPA 5.0.3 ✅ completada (2026-05-27). ETAPA 5.0.4 ✅ completada (2026-05-29).

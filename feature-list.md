@@ -158,7 +158,7 @@ Notes:
 
 ---
 
-## ⬜ Product Edit — Complement editing from UI (Pendiente — ETAPA 4.9)
+## ⬜ Product Edit — Complement editing from UI (Pendiente — ETAPA 4.10 Product Management Improvements)
 
 The backend supports updating `complements` via `PATCH /products/:id`.
 
@@ -168,7 +168,7 @@ This is a known pending feature — the service layer already supports it.
 
 ---
 
-## ⬜ Product Delete from UI (Pendiente — ETAPA 4.9)
+## ⬜ Product Delete from UI (Pendiente — ETAPA 4.10 Product Management Improvements)
 
 `DELETE /products/:id` is fully implemented in the service layer (`productService.deleteProduct`).
 
@@ -367,10 +367,13 @@ Optimized for:
 
 Current states:
 
-- PENDIENTE
-- ACTUALIZADA
-- PREPARANDO
-- LISTO
+- PENDIENTE (PENDING)
+- PREPARANDO (PREPARING)
+- LISTO (READY)
+- ENTREGADO (DELIVERED)
+- CANCELADO (CANCELLED)
+
+> `ACTUALIZADA` (UPDATED) fue deprecado en ETAPA 4.5.6.1 — ver "Order Priority System" más abajo. Las modificaciones ahora se señalan con `isNew: boolean` por item, no con un estado.
 
 ---
 
@@ -535,23 +538,6 @@ The `READY` status means the same thing for all order types:
 - Delivery person takes it out (DELIVERY)
 
 No additional statuses (e.g. "OUT FOR DELIVERY") in ETAPA 4.6.
-
----
-
-## ✅ MVP Delivery Scope — Captura interna (4.6.1 / 4.6.2 — COMPLETADA)
-
-`DELIVERY` orders are captured by internal staff only.
-
-```
-Customer calls the restaurant
-      ↓
-Waiter captures the order in the system
-      ↓
-System registers DELIVERY order with deliveryAddress
-```
-
-No customer-facing portals, QR ordering, or self-ordering in ETAPA 4.6.
-These features may be evaluated after production launch.
 
 ---
 
