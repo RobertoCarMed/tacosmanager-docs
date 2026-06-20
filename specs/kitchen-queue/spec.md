@@ -1,9 +1,13 @@
 # Spec: Kitchen Queue
 
 - ID: SPEC-kitchen-queue
-- Versión: 1.0
+- Versión: 2.0
 - Estado: Implementada
 - ETAPA asociada: 4.5.6.1, 4.5.6.2, 4.6.3
+
+> **Changelog 2.0 (2026-06-20):** la clave FIFO dentro de un mismo status pasa de
+> `createdAt` a `priorityTimestamp` (ADR-0010, que reemplaza a ADR-0006). REQ-0044 queda
+> deprecado; su sucesor es REQ-0047. Breaking → bump MAJOR (ADR-0009).
 
 ## 1. Problema
 
@@ -62,11 +66,25 @@ Cuando un COOK hace GET /orders
 Entonces el orden devuelto es: PREPARING > PENDING > READY > DELIVERED > CANCELLED
 ```
 
-### REQ-0044 — FIFO dentro del mismo status
+### REQ-0044 — FIFO dentro del mismo status `[🗑️ DEPRECADO — sucesor REQ-0047]`
+
+> Deprecado en spec 2.0 (ADR-0010). El ordenamiento ya no es por `createdAt` sino por
+> `priorityTimestamp`. Se conserva como histórico inmutable (ADR-0009). Ver REQ-0047.
+
 ```gherkin
 Dado 3 órdenes en PENDING creadas en distinto createdAt
 Cuando se hace GET /orders
 Entonces las PENDING vienen ordenadas por createdAt ASC
+```
+
+### REQ-0047 — FIFO dentro del mismo status por priorityTimestamp
+```gherkin
+Dado 3 órdenes en PENDING con priorityTimestamp 10:00, 10:05, 10:10
+Cuando un COOK hace GET /orders
+Entonces las PENDING vienen ordenadas por priorityTimestamp ASC (10:00 → 10:05 → 10:10)
+Y al crear una orden priorityTimestamp = createdAt
+Y un append en PENDING NO altera priorityTimestamp (conserva su posición)
+Y un append en PREPARING actualiza priorityTimestamp = now
 ```
 
 ### REQ-0045 — Cambio de status emite order-status-changed
@@ -94,7 +112,7 @@ Entonces la respuesta es 403
 
 ## 9. Dependencias
 
-- ADRs: ADR-0004 (backend source of truth), ADR-0005 (append), ADR-0006 (ordering).
+- ADRs: ADR-0004 (backend source of truth), ADR-0005 (append), ADR-0010 (ordering por priorityTimestamp; reemplaza a ADR-0006).
 
 ## 10. Referencias
 

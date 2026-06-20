@@ -1,7 +1,7 @@
 asyncapi: 2.6.0
 info:
   title: TacosManager Realtime
-  version: "1.0.0"
+  version: "1.1.0"
   description: |
     Eventos Socket.IO emitidos por el backend de TacosManager.
     Autenticación: JWT en handshake (`auth.token` o `Authorization: Bearer`).
@@ -89,7 +89,10 @@ components:
 
     OrderStatus:
       type: string
-      enum: [PENDING, PREPARING, READY, DELIVERED, CANCELLED]
+      enum: [PENDING, PREPARING, READY, DELIVERED, CANCELLED, UPDATED]
+      description: |
+        UPDATED está DEPRECADO (read-only): puede aparecer en órdenes históricas pero
+        no se asigna manualmente. Coherente con openapi.yaml. Ver business-rules §13.
 
     Order:
       type: object

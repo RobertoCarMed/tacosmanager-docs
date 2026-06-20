@@ -26,11 +26,27 @@ Característica: Kitchen Queue (cola de cocina)
     Cuando un COOK hace GET /orders
     Entonces el orden devuelto es: PREPARING > PENDING > READY > DELIVERED > CANCELLED
 
+  # DEPRECADO (spec 2.0, ADR-0010): sucesor @REQ-0047. Se conserva como regresión histórica.
   @REQ-0044
-  Escenario: FIFO dentro del mismo status
+  Escenario: FIFO dentro del mismo status (por createdAt — histórico)
     Dado 3 órdenes en PENDING creadas en 10:00, 10:05, 10:10
     Cuando se hace GET /orders
     Entonces las PENDING aparecen en orden 10:00 → 10:05 → 10:10
+
+  @REQ-0047
+  Escenario: FIFO dentro del mismo status por priorityTimestamp
+    Dado 3 órdenes en PENDING con priorityTimestamp 10:00, 10:05, 10:10
+    Cuando se hace GET /orders
+    Entonces las PENDING aparecen en orden 10:00 → 10:05 → 10:10
+
+  @REQ-0047
+  Escenario: append en PENDING conserva posición; append en PREPARING reprioriza
+    Dado una orden A en PENDING con priorityTimestamp 10:00 y una orden B en PENDING con 10:05
+    Cuando el WAITER hace append a la orden A estando en PENDING
+    Entonces priorityTimestamp de A sigue siendo 10:00
+    Y la cola sigue siendo A, B
+    Pero si A estuviera en PREPARING al hacer el append
+    Entonces priorityTimestamp de A se actualiza a la hora del append
 
   @REQ-0045
   Escenario: Cambio de status emite order-status-changed

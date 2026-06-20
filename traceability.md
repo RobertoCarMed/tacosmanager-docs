@@ -47,20 +47,22 @@ Reglas:
 | REQ-0025 | Orden creada con revision = 1 y status = PENDING | specs/create-order | 1.0 | orders.e2e-spec.ts::initial_revision | backend/src/orders/* | 4.6.1 | ✅ |   |
 | REQ-0026 | Crear orden emite order-created al room taqueria:<id> | specs/create-order | 1.0 | orders.e2e-spec.ts::emit_order_created | backend/src/orders/* | 4.5.4 | ✅ |   |
 | REQ-0027 | COOK NO puede crear órdenes | specs/create-order | 1.0 | orders.e2e-spec.ts::cook_cannot_create | backend/src/orders/* | 4.6.1 | ✅ |   |
-| REQ-0030 | PATCH /orders/:id agrega plates/items nuevos | specs/edit-order | 1.0 | orders.e2e-spec.ts::append_items | backend/src/orders/* | 4.6.2 | ✅ |   |
+| REQ-0030 | PATCH /orders/:id agrega plates/items nuevos | specs/edit-order | 1.0 | orders.e2e-spec.ts::append_items | backend/src/orders/* | 4.6.2 | 🗑️ | REQ-0048 |
 | REQ-0031 | PATCH no permite modificar items históricos | specs/edit-order | 1.0 | orders.e2e-spec.ts::cannot_modify_history | backend/src/orders/* | 4.6.2 | ✅ |   |
 | REQ-0032 | revision se incrementa en cada append | specs/edit-order | 1.0 | orders.e2e-spec.ts::revision_increments | backend/src/orders/* | 4.6.2 | ✅ |   |
 | REQ-0033 | Items nuevos llegan con isNew = true | specs/edit-order | 1.0 | orders.e2e-spec.ts::new_items_flagged | backend/src/orders/* | 4.5.6.2 | ✅ |   |
 | REQ-0034 | Append en READY transiciona status a PENDING | specs/edit-order | 1.0 | orders.e2e-spec.ts::ready_to_pending | backend/src/orders/* | 4.5.6.1 | ✅ |   |
 | REQ-0035 | Append en PREPARING mantiene PREPARING | specs/edit-order | 1.0 | orders.e2e-spec.ts::preparing_stays | backend/src/orders/* | 4.5.6.1 | ✅ |   |
 | REQ-0036 | Append emite order-updated | specs/edit-order | 1.0 | orders.e2e-spec.ts::emit_order_updated | backend/src/orders/* | 4.5.4 | ✅ |   |
+| REQ-0048 | PATCH agrega plate nuevo; plateNumber existente → 400 (sucede a REQ-0030) | specs/edit-order | 2.0 | orders.e2e-spec.ts::append_new_plate | backend/src/orders/orders.service.ts (updateOrder) | 4.6.2 | 🟡 |   |
 | REQ-0040 | COOK cambia status a valores válidos | specs/kitchen-queue | 1.0 | orders.e2e-spec.ts::status_change | backend/src/orders/* | 4.5.6.1 | ✅ |   |
 | REQ-0041 | Asignar UPDATED manualmente → 400 | specs/kitchen-queue | 1.0 | orders.e2e-spec.ts::updated_rejected | backend/src/orders/* | 4.5.6.1 | ✅ |   |
 | REQ-0042 | Transición a READY limpia isNew | specs/kitchen-queue | 1.0 | orders.e2e-spec.ts::ready_clears_isnew | backend/src/orders/* | 4.5.6.2 | ✅ |   |
 | REQ-0043 | Ordenamiento Kitchen: PREPARING > PENDING > READY > DELIVERED > CANCELLED | specs/kitchen-queue | 1.0 | orders.e2e-spec.ts::queue_ordering | backend/src/orders/* | 4.5.6.1 | ✅ |   |
-| REQ-0044 | Dentro del mismo status, FIFO por createdAt | specs/kitchen-queue | 1.0 | orders.e2e-spec.ts::fifo_within_status | backend/src/orders/* | 4.5.6.1 | ✅ |   |
+| REQ-0044 | Dentro del mismo status, FIFO por createdAt | specs/kitchen-queue | 1.0 | orders.e2e-spec.ts::fifo_within_status | backend/src/orders/* | 4.5.6.1 | 🗑️ | REQ-0047 |
 | REQ-0045 | Cambio de status emite order-status-changed | specs/kitchen-queue | 1.0 | orders.e2e-spec.ts::emit_status_changed | backend/src/orders/* | 4.5.4 | ✅ |   |
 | REQ-0046 | WAITER NO puede cambiar status | specs/kitchen-queue | 1.0 | orders.e2e-spec.ts::waiter_cannot_change_status | backend/src/orders/* | 4.5.6.1 | ✅ |   |
+| REQ-0047 | Dentro del mismo status, FIFO por priorityTimestamp (sucede a REQ-0044) | specs/kitchen-queue | 2.0 | orders.e2e-spec.ts::fifo_by_priority_timestamp | backend/src/orders/orders.service.ts (getOrders, updateOrder) | 4.5.6.1 | 🟡 |   |
 | REQ-0050 | Socket sin JWT es rechazado | specs/realtime-sync | 1.0 | realtime.e2e-spec.ts::no_jwt_rejected | backend/src/realtime/* | 4.5.4 | ✅ |   |
 | REQ-0051 | Socket conectado se une a taqueria:<taqueriaId> | specs/realtime-sync | 1.0 | realtime.e2e-spec.ts::auto_join_room | backend/src/realtime/* | 4.5.4 | ✅ |   |
 | REQ-0052 | Usuarios de distintas taquerías nunca comparten room | specs/realtime-sync | 1.0 | realtime.e2e-spec.ts::room_isolation | backend/src/realtime/* | 4.5.4 | ✅ |   |

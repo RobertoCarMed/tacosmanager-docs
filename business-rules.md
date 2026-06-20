@@ -517,6 +517,19 @@ Estado utilizado en implementaciones anteriores para señalar que un pedido reci
 
 UPDATED no forma parte del flujo oficial a partir de ETAPA 4.5.6.1. No debe usarse en nuevas implementaciones.
 
+> **Estado en contratos (2026-06-20):** `UPDATED` se conserva en los enums de
+> `openapi.yaml`, `asyncapi.yaml` y `prisma/schema.prisma` como valor **deprecado de solo
+> lectura**. Verificado contra el backend: ningún code path lo asigna; `PATCH /status` con
+> `UPDATED` → 400 (doble barrera: DTO `@NotEquals` + guard en service, REQ-0041); el
+> ordenamiento de cocina lo trata como prioridad 1 (igual que PREPARING) para registros
+> legacy.
+> **Tarea de cleanup pendiente (bloqueada por acceso a BD):**
+> 1. Correr `SELECT COUNT(*) FROM "Order" WHERE status = 'UPDATED';` en dev/qa/prod.
+> 2. Si hay registros, backfill data-only: `UPDATE "Order" SET status = 'PREPARING' WHERE status = 'UPDATED';`
+> 3. Eliminar el valor del enum **NO es trivial** en Postgres (no soporta `DROP VALUE`):
+>    requiere recrear el tipo (crear enum nuevo, migrar columna, swap). Recomendación del
+>    backend: backfill primero y dejar el valor como *tombstone* hasta una ventana segura.
+
 ---
 
 # 14. Prioridad de Cocina
