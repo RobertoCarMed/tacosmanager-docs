@@ -77,6 +77,13 @@ Reglas:
 | REQ-0059 | Register crea nueva taquería con confirmación explícita | specs/authentication | 2.0 | auth.e2e-spec.ts::register_create_confirmed | backend/src/auth/* | 4.5.1 | 🟡 |   |
 | REQ-0060 | Register con email duplicado devuelve 409 antes del discovery | specs/authentication | 2.0 | auth.e2e-spec.ts::register_duplicate_email | backend/src/auth/* | 4.5.1 | 🟡 |   |
 | REQ-0061 | Register rechaza combinaciones inválidas de flags con 400 | specs/authentication | 2.0 | auth.e2e-spec.ts::register_invalid_flags | backend/src/auth/* | 4.5.1 | 🟡 |   |
+| REQ-0063 | Filtro por defecto es `active` en mesero y cocina | specs/order-filters | 1.0 | mobile/e2e/order-filters.e2e.ts::default_active | mobile WaiterOrdersScreen, KitchenScreen | 4.8 | 🟡 |   |
+| REQ-0064 | `active` muestra status no terminal sin límite de fecha | specs/order-filters | 1.0 | mobile/e2e/order-filters.e2e.ts::active_excludes_terminal | mobile predicado de filtro | 4.8 | 🟡 |   |
+| REQ-0065 | Pedido activo de ayer no desaparece a medianoche | specs/order-filters | 1.0 | mobile/e2e/order-filters.e2e.ts::active_midnight_edge | mobile predicado de filtro | 4.8 | 🟡 |   |
+| REQ-0066 | Filtro `today` usa medianoche en hora local del dispositivo | specs/order-filters | 1.0 | mobile/e2e/order-filters.e2e.ts::today_local_midnight | mobile predicado de filtro | 4.8 | 🟡 |   |
+| REQ-0067 | Filtros `7d`/`1m`/`3m` son ventanas móviles en hora local | specs/order-filters | 1.0 | mobile/e2e/order-filters.e2e.ts::rolling_windows | mobile predicado de filtro | 4.8 | 🟡 |   |
+| REQ-0068 | Filtros históricos incluyen todos los statuses (DELIVERED/CANCELLED) | specs/order-filters | 1.0 | mobile/e2e/order-filters.e2e.ts::historical_all_statuses | mobile predicado de filtro | 4.8 | 🟡 |   |
+| REQ-0069 | Filtrado client-side preserva orden base y aislamiento | specs/order-filters | 1.0 | mobile/e2e/order-filters.e2e.ts::clientside_preserves_order | mobile screens + store selector | 4.8 | 🟡 |   |
 
 ---
 

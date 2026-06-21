@@ -824,6 +824,8 @@ Validated with multiple simultaneous devices connected to the same taquería:
 
 # 📅 Order Filters
 
+> Spec: `specs/order-filters/` (REQ-0063–REQ-0069, ETAPA 4.8). Filtrado client-side.
+
 ## ✅ Active Filter (Filtro por defecto — post-ETAPA 4.5.3)
 
 Both cook and waiter screens default to the `active` filter.

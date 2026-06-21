@@ -1052,6 +1052,8 @@ No se requiere intervención manual.
 
 # 31. Visibilidad de Pedidos — Filtro Activo
 
+> Spec: `specs/order-filters/` (REQ-0063–REQ-0069). Filtrado client-side; los históricos muestran todos los statuses, `active` excluye terminales.
+
 ## Problema
 
 Un pedido creado a las 23:55 con status PENDING desaparece automáticamente a las 00:00 si el filtro utilizado es "Hoy" (`today`), ya que ese filtro excluye pedidos cuyo `createdAt` sea anterior al inicio del día actual.

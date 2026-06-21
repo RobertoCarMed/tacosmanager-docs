@@ -30,6 +30,7 @@ Plantillas en `specs/_templates/`.
 | `edit-order` | ✅ implementada | 4.5.3, 4.5.6.2, 4.6.2 |
 | `kitchen-queue` | ✅ implementada | 4.5.6.1, 4.6.3 |
 | `realtime-sync` | ✅ implementada | 4.5.4, 4.7.1, 4.7.2, 4.7.3 |
+| `order-filters` | ✅ implementada | 4.8 |
 
 ## Reglas
 

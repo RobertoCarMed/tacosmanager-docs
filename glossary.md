@@ -81,6 +81,12 @@ Dirección de entrega. Obligatorio si `OrderType = DELIVERY`. Nulo en otros caso
 ### isNew (highlight)
 Flag a nivel Item. `true` cuando el item fue agregado en una revisión posterior a la creación de la orden. Genera highlight verde en cocina. Se limpia automáticamente al transicionar a `READY`.
 
+### Filtro Activo (`active`)
+Filtro por defecto de las listas de órdenes (mesero y cocina). Muestra los pedidos en curso —status ∉ {`DELIVERED`, `CANCELLED`}— **sin límite de fecha**. Resuelve el edge case en que un pedido activo desaparecía al cambiar de día. Ver `specs/order-filters/` (REQ-0063–REQ-0065).
+
+### Filtros Históricos
+Filtros por rango de fecha sobre `createdAt`: `today`, `7d`, `1m`, `3m`. Calculados en hora local del dispositivo (ventana móvil). A diferencia de `active`, muestran **todos los statuses** del rango, incluidos `DELIVERED` y `CANCELLED`. Ver `specs/order-filters/` (REQ-0066–REQ-0068).
+
 ---
 
 ## Productos
