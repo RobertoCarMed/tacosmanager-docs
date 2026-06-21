@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: TacosManager API
-  version: "2.0.0"
+  version: "2.1.0"
   description: |
     API REST de TacosManager. Multi-tenant por taquería.
     Toda ruta excepto /health y /auth/* requiere JWT.
@@ -225,7 +225,7 @@ paths:
           $ref: "#/components/responses/NotFound"
     patch:
       tags: [Orders]
-      summary: Append a la orden (WAITER) — solo agrega plates/items
+      summary: Editar orden (WAITER) — agrega plates nuevos y/o corrige clasificación
       requestBody:
         required: true
         content:
@@ -509,12 +509,23 @@ components:
     AppendOrder:
       type: object
       description: |
-        Append-only (ADR-0005): solo agrega plates NUEVOS. Cada plate se identifica por
-        plateNumber; si el plateNumber ya existe en la orden → 400 (inmutabilidad a nivel
-        plate, REQ-0048). NO permite modificar plates/items históricos ni agregar items a
-        un plate existente.
-      required: [plates]
+        Edición de orden (ADR-0005 + ADR-0011). Dos operaciones combinables, al menos una
+        debe estar presente:
+        1. Agregar plates NUEVOS (`plates`): cada plate se identifica por plateNumber; un
+           plateNumber ya existente → 400 (inmutabilidad a nivel plate, REQ-0048). NO permite
+           modificar plates/items históricos ni agregar items a un plate existente.
+        2. Corregir la clasificación (`type`/`reference`/`deliveryAddress`, REQ-0062): se valida
+           el estado efectivo resultante (tipo nuevo + reference/deliveryAddress coherentes);
+           combinación inválida → 400. No crea items ni marca isNew.
+      minProperties: 1
       properties:
+        type: { $ref: "#/components/schemas/OrderType" }
+        reference:
+          type: string
+          description: Requerido si el type efectivo ≠ DELIVERY (DINE_IN/TAKEAWAY).
+        deliveryAddress:
+          type: string
+          description: Requerido si el type efectivo = DELIVERY.
         plates:
           type: array
           minItems: 1

@@ -4,6 +4,12 @@
 - Fecha: 2026-06-11
 - Autores: Equipo TacosManager
 
+> ℹ️ **Aclaración por [ADR-0011](0011-order-classification-edit.md) (2026-06-21).**
+> "Modificación" en este ADR se refiere al **trabajo de cocina** (plates/items históricos),
+> que sigue siendo inmutable. La **clasificación** de la orden (`type`/`reference`/
+> `deliveryAddress`) SÍ puede corregirse vía `PATCH /orders/:id` (REQ-0062). El punto 2 de la
+> Decisión ("PATCH SOLO permite agregar plates/items nuevos") debe leerse con ese matiz.
+
 ## Contexto
 
 Una orden en una taquería va cambiando: el mesero agrega más tacos, la cocina avanza el estado. Hubo que decidir si las ediciones modifican lo existente o si solo se agrega.

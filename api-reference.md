@@ -5,8 +5,10 @@ Version: 1.0
 Base URL
 
 ```txt
-/api
+/
 ```
+
+No hay prefijo global. Los endpoints son directamente `/auth/...`, `/products/...`, `/orders/...` (ver `backend-api.md`).
 
 ---
 
@@ -73,9 +75,13 @@ Response:
 
 ```json
 {
-  "accessToken": "jwt"
+  "accessToken": "jwt",
+  "user": { "id": "uuid", "name": "...", "email": "...", "role": "WAITER", "taqueriaId": "uuid" },
+  "taqueria": { "id": "uuid", "name": "...", "restaurantCode": "TM-4821" }
 }
 ```
+
+Ver el shape completo en `backend-api.md` → `POST /auth/login`.
 
 ---
 
@@ -190,20 +196,17 @@ Ownership obligatorio.
 
 Editar pedido.
 
-Regla:
-
-Append Only.
+Reglas (ADR-0005 + ADR-0011):
 
 Permitido:
 
-- agregar plates
-- agregar items
+- agregar plates nuevos
+- agregar items en plates nuevos
+- corregir la clasificación: `type` / `reference` / `deliveryAddress` (REQ-0062)
 
 Prohibido:
 
-- modificar historial
-- modificar items anteriores
-- modificar plates anteriores
+- modificar plates/items históricos (productos, cantidades, complementos, notas)
 
 ---
 
@@ -514,8 +517,6 @@ Payload: misma estructura que `order-created`. Campos clave:
   }
 }
 ```
-
-> **Nota — pre-4.5.6.1:** `status` siempre es `"UPDATED"` en la implementación actual.
 
 ---
 

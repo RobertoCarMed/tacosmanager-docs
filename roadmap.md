@@ -284,7 +284,7 @@ Se agregan nuevos Plates.
 
 Estado:
 
-🟡 EN VALIDACIÓN
+✅ COMPLETADA (diseño original basado en `UPDATED`, superado por ETAPA 4.5.6.1 — ver notas abajo)
 
 ---
 

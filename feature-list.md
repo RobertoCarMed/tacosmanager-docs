@@ -339,12 +339,13 @@ Waiter can:
 ## ✅ Edit Restrictions
 
 Waiter CANNOT:
-- modify table/client
+- modify historical plates/items (products, quantities, complements, notes)
 - remove existing closed items
 
 Waiter CAN:
 - add new products
 - add new plates
+- correct the order classification: type / reference / deliveryAddress (REQ-0062, ADR-0011)
 
 ---
 
@@ -1714,7 +1715,7 @@ The backend does **not** filter by role — the frontend decides how to handle e
 
 # Backend Progress (ETAPA 4.6.1 - Order Classification System)
 
-## Status: 🟡 En validación
+## Status: ✅ COMPLETADA
 
 ## Implemented: OrderType enum + conditional field validation
 
@@ -1747,8 +1748,8 @@ The backend does **not** filter by role — the frontend decides how to handle e
 
 - `plates` is now optional in `PATCH /orders/:id`
 - `type`, `reference`, `deliveryAddress` are all optional (patch semantics)
-- Validation uses merged state: type/reference/deliveryAddress are resolved against existing order before validating
-- Status still changes to `UPDATED` and revision increments regardless
+- Validation uses merged state: type/reference/deliveryAddress are resolved against existing order before validating (REQ-0062, ADR-0011)
+- Revision increments on every PATCH. Status follows the conditional rules CASO 1/2/3 (ETAPA 4.5.6.1) — `UPDATED` is no longer assigned (deprecated 4.5.6.1)
 
 ### Completion criteria met
 
@@ -1766,6 +1767,13 @@ The backend does **not** filter by role — the frontend decides how to handle e
 ---
 
 # Backend Migration Progress (ETAPA 4.2 - Kitchen Queue Logic)
+
+> ⚠️ **Log histórico (superado por ETAPA 4.5.6.1).** Esta sección describe la implementación
+> ORIGINAL basada en el estado `UPDATED` (prioridad de cola con UPDATED, status→UPDATED al
+> hacer append, `priorityTimestamp` refrescado en todo append). Todo eso fue reemplazado:
+> `UPDATED` está deprecado, el status al hacer append es condicional (CASO 1/2/3) y
+> `priorityTimestamp` solo se refresca en appends sobre PREPARING. Ver business-rules §13/§16/§17,
+> ADR-0010 y la sección "Order Priority System" de este documento. Se conserva como historia.
 
 ## Implemented: Backend as the Single Source of Truth for Kitchen Priority
 
