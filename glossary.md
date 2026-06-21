@@ -87,6 +87,15 @@ Filtro por defecto de las listas de órdenes (mesero y cocina). Muestra los pedi
 ### Filtros Históricos
 Filtros por rango de fecha sobre `createdAt`: `today`, `7d`, `1m`, `3m`. Calculados en hora local del dispositivo (ventana móvil). A diferencia de `active`, muestran **todos los statuses** del rango, incluidos `DELIVERED` y `CANCELLED`. Ver `specs/order-filters/` (REQ-0066–REQ-0068).
 
+### unitPrice
+Precio unitario **congelado** (snapshot) de un `Item`, copiado de `Product.price` en el momento de crear/editar el pedido. Inmutable: un cambio posterior del catálogo no lo altera. Es la base autoritativa para calcular la cuenta. Ver `specs/ticket-printing/` (REQ-0070–REQ-0073).
+
+### Cuenta (Ticket)
+Documento informativo —no fiscal— que se imprime para el cliente con el desglose de un pedido completado: líneas (`cantidad × producto × unitPrice = subtotal`) y total. La imprime el WAITER dueño del pedido. Ver `specs/ticket-printing/`.
+
+### ESC/POS
+Conjunto estándar de comandos para impresoras térmicas (texto, alineación, corte, etc.). El ticket se renderiza como un flujo de bytes ESC/POS que el frontend envía a la impresora (ej. POS-8370). No es un PDF ni una imagen.
+
 ---
 
 ## Productos

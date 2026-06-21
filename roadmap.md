@@ -79,6 +79,7 @@ Tecnologías principales:
 
 - 4.9 Performance Optimization
 - 4.10 Product Management Improvements
+- 4.11 Ticket Printing
 
 ## Post-Lanzamiento
 
@@ -1659,6 +1660,42 @@ Se trata de funcionalidades pendientes de UI que nunca fueron implementadas en e
 - productService.updateProduct() admite complements en el payload — solo requiere exponer el campo en el formulario.
 - productService.deleteProduct() está implementado y listo — solo requiere UI.
 - No se requieren cambios en backend ni en el service layer.
+
+---
+
+# ETAPA 4.11
+# Ticket Printing
+
+Estado:
+
+⬜ PENDIENTE
+
+Spec: `specs/ticket-printing/` (REQ-0070–REQ-0080). ADR-0012 (snapshot de precio), ADR-0013 (impresión Wi-Fi/LAN ESC/POS).
+
+---
+
+## Objetivo
+
+Imprimir la cuenta del cliente de un pedido completado en una impresora térmica POS-8370
+(80mm, ESC/POS) vía Wi-Fi/LAN.
+
+---
+
+## Alcance
+
+- Backend: snapshot de `unitPrice` por item (congelado al crear/editar) + migración backfill.
+- Mobile: botón "Imprimir ticket" (WAITER dueño, pedido READY/DELIVERED), renderizado ESC/POS
+  y envío por socket TCP:9100; configuración de impresora por dispositivo.
+- Total derivado en el frontend sobre precios congelados (Artículo II).
+
+Fuera de alcance: comanda de cocina, impresión automática, comprobante fiscal.
+
+---
+
+## Orden de implementación
+
+1. Backend (precio snapshot + migración) — para que los pedidos nuevos ya lleven `unitPrice`.
+2. Mobile (impresión).
 
 ---
 

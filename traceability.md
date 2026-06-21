@@ -84,6 +84,17 @@ Reglas:
 | REQ-0067 | Filtros `7d`/`1m`/`3m` son ventanas móviles en hora local | specs/order-filters | 1.0 | mobile/e2e/order-filters.e2e.ts::rolling_windows | mobile predicado de filtro | 4.8 | 🟡 |   |
 | REQ-0068 | Filtros históricos incluyen todos los statuses (DELIVERED/CANCELLED) | specs/order-filters | 1.0 | mobile/e2e/order-filters.e2e.ts::historical_all_statuses | mobile predicado de filtro | 4.8 | 🟡 |   |
 | REQ-0069 | Filtrado client-side preserva orden base y aislamiento | specs/order-filters | 1.0 | mobile/e2e/order-filters.e2e.ts::clientside_preserves_order | mobile screens + store selector | 4.8 | 🟡 |   |
+| REQ-0070 | POST /orders congela unitPrice por item (snapshot) | specs/ticket-printing | 1.0 | orders.e2e-spec.ts::create_snapshots_unitprice | backend/src/orders/orders.service.ts (createOrder), prisma/schema.prisma | 4.11 | 🔴 |   |
+| REQ-0071 | PATCH append congela unitPrice en items nuevos | specs/ticket-printing | 1.0 | orders.e2e-spec.ts::append_snapshots_unitprice | backend/src/orders/orders.service.ts (updateOrder) | 4.11 | 🔴 |   |
+| REQ-0072 | unitPrice inmutable ante cambios posteriores del catálogo | specs/ticket-printing | 1.0 | orders.e2e-spec.ts::unitprice_frozen | backend/src/orders/orders.service.ts | 4.11 | 🔴 |   |
+| REQ-0073 | Migración backfill best-effort de unitPrice (null si producto borrado) | specs/ticket-printing | 1.0 | orders.e2e-spec.ts::backfill_unitprice | prisma/migrations/*_ticket_pricing_snapshot | 4.11 | 🔴 |   |
+| REQ-0074 | WAITER imprime cuenta de pedido completado (READY/DELIVERED), manual | specs/ticket-printing | 1.0 | mobile/e2e/ticket-printing.e2e.ts::print_completed | mobile order detail screen, print service | 4.11 | 🔴 |   |
+| REQ-0075 | Solo el WAITER dueño imprime; COOK no | specs/ticket-printing | 1.0 | mobile/e2e/ticket-printing.e2e.ts::owner_only | mobile order detail screen | 4.11 | 🔴 |   |
+| REQ-0076 | Contenido de la cuenta (taquería, referencia, líneas, total, fecha) | specs/ticket-printing | 1.0 | mobile/e2e/ticket-printing.e2e.ts::ticket_content | mobile ticket renderer (ESC/POS) | 4.11 | 🔴 |   |
+| REQ-0077 | Total = Σ(unitPrice × quantity) en frontend sobre precios congelados | specs/ticket-printing | 1.0 | mobile/e2e/ticket-printing.e2e.ts::total_from_snapshots | mobile ticket renderer | 4.11 | 🔴 |   |
+| REQ-0078 | Sin unitPrice completo no se emite la cuenta | specs/ticket-printing | 1.0 | mobile/e2e/ticket-printing.e2e.ts::block_without_prices | mobile ticket renderer | 4.11 | 🔴 |   |
+| REQ-0079 | Fallo de impresión no altera el pedido; reintento | specs/ticket-printing | 1.0 | mobile/e2e/ticket-printing.e2e.ts::print_failure_safe | mobile print service | 4.11 | 🔴 |   |
+| REQ-0080 | Config de impresora LAN (host:puerto) requerida y persistida | specs/ticket-printing | 1.0 | mobile/e2e/ticket-printing.e2e.ts::printer_config | mobile print service, config storage | 4.11 | 🔴 |   |
 
 ---
 
