@@ -58,6 +58,7 @@ Tecnologías principales:
 - 4.7.2 Resync After Reconnect
 - 4.7.3 Multi-device Validation
 - 4.7 Realtime Reliability
+- 4.8 History & Filters
 - 5.0.1 Environment Strategy
 - 5.0.3.1 Android Flavors
 - 5.0.3.2 Build Automation
@@ -76,7 +77,6 @@ Tecnologías principales:
 
 ## Pendiente
 
-- 4.8 History & Filters
 - 4.9 Performance Optimization
 - 4.10 Product Management Improvements
 
@@ -1541,7 +1541,9 @@ Validado end-to-end en múltiples dispositivos:
 
 Estado:
 
-⬜ PENDIENTE
+✅ COMPLETADA
+
+Spec: `specs/order-filters/` (REQ-0063–REQ-0069). Implementación client-side (post-4.5.3). La paginación y optimización de queries son ETAPA 4.9.
 
 ---
 
