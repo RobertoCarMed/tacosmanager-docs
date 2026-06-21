@@ -1,9 +1,15 @@
 # Spec: Edit Order (Append)
 
 - ID: SPEC-edit-order
-- Versión: 2.0
-- Estado: Implementada
+- Versión: 2.1
+- Estado: Implementada (con incumplimiento conocido en backend — ver REQ-0049)
 - ETAPA asociada: 4.5.3, 4.5.6.2, 4.6.2
+
+> **Changelog 2.1 (2026-06-20):** se formaliza como criterio testeable (REQ-0049) la
+> inmutabilidad de `type`/`reference`/`deliveryAddress` en append, que el §3 No-objetivos
+> ya prohibía en prosa. Verificación doc↔backend detectó que el service **muta** esos
+> campos en `PATCH /orders/:id` (viola Artículo V). REQ-0049 nace `🔴 Pendiente` hasta el
+> fix de backend. Aditivo → bump MINOR (ADR-0009).
 
 > **Changelog 2.0 (2026-06-20):** verificación doc↔backend reveló que el append agrega
 > **plates nuevos** (identificados por `plateNumber`; un `plateNumber` existente → 400,
@@ -64,6 +70,23 @@ Y la orden tiene 2 plates
 Y el plate nuevo tiene createdInRevision=2 y su item isNew=true
 Y si el WAITER envía un plateNumber ya existente (plateNumber=1) la respuesta es 400
 ```
+
+### REQ-0049 — PATCH no muta type/reference/deliveryAddress (append-only, Artículo V)
+
+```gherkin
+Dado una orden DINE_IN existente con reference="Mesa 4"
+Cuando el WAITER hace PATCH /orders/:id incluyendo type, reference o deliveryAddress
+Entonces la respuesta es 400 (campos no permitidos en un append)
+Y la orden conserva su type, reference y deliveryAddress originales sin mutar
+```
+
+> **Estado:** 🔴 Pendiente. El backend actualmente **escribe** estos campos en el append
+> (`orders.service.ts` updateOrder incluye `type`/`reference`/`deliveryAddress` en el
+> `data` de `prisma.order.update`), violando el Artículo V. Fix requerido (dos capas):
+> (1) quitar esos campos de `UpdateOrderDto` — con `forbidNonWhitelisted` global enviarlos
+> da 400 automático; (2) eliminar del service la lógica `effective*`/`validateClassification`
+> en `updateOrder` (queda solo para `createOrder`). El contrato `AppendOrder` ya es correcto
+> (solo expone `plates`).
 
 ### REQ-0031 — PATCH no permite modificar items históricos
 

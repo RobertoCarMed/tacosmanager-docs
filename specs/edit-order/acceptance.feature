@@ -26,6 +26,15 @@ Característica: Editar orden (append)
     Entonces la respuesta es 400
     Y la orden no cambia (inmutabilidad a nivel plate)
 
+  # 🔴 PENDIENTE: el backend hoy MUTA estos campos (viola Artículo V). Test debe fallar
+  # hasta el fix; documenta el comportamiento correcto esperado.
+  @REQ-0049
+  Escenario: Append no muta type/reference/deliveryAddress
+    Dado una orden DINE_IN existente O con reference="Mesa 4"
+    Cuando el WAITER hace PATCH /orders/<id-de-O> incluyendo type/reference/deliveryAddress
+    Entonces la respuesta es 400
+    Y O conserva su type, reference y deliveryAddress originales sin mutar
+
   @REQ-0031
   Escenario: No se permite modificar items históricos
     Cuando el WAITER intenta PATCH cambiando quantity del item original
