@@ -26,14 +26,29 @@ Característica: Editar orden (append)
     Entonces la respuesta es 400
     Y la orden no cambia (inmutabilidad a nivel plate)
 
-  # 🔴 PENDIENTE: el backend hoy MUTA estos campos (viola Artículo V). Test debe fallar
-  # hasta el fix; documenta el comportamiento correcto esperado.
-  @REQ-0049
-  Escenario: Append no muta type/reference/deliveryAddress
+  # DEPRECADO (spec 3.0, ADR-0011): sucesor @REQ-0062. La edición de clasificación se
+  # legitimó; este escenario se conserva como regresión histórica y ya no debe ejecutarse.
+  @REQ-0049 @deprecated
+  Escenario: Append no muta type/reference/deliveryAddress (histórico)
     Dado una orden DINE_IN existente O con reference="Mesa 4"
     Cuando el WAITER hace PATCH /orders/<id-de-O> incluyendo type/reference/deliveryAddress
     Entonces la respuesta es 400
     Y O conserva su type, reference y deliveryAddress originales sin mutar
+
+  @REQ-0062
+  Escenario: Append puede corregir la clasificación de la orden
+    Dado una orden DINE_IN existente O con reference="Mesa 4"
+    Cuando el WAITER hace PATCH /orders/<id-de-O> con type="DELIVERY" y deliveryAddress="Av. Juárez #123"
+    Entonces la respuesta es 200
+    Y O queda con type="DELIVERY" y deliveryAddress="Av. Juárez #123"
+    Y revision se incrementa
+    Y los plates/items históricos no cambian
+
+  @REQ-0062
+  Escenario: Clasificación resultante inválida es rechazada
+    Cuando el WAITER hace PATCH /orders/<id-de-O> con type="DELIVERY" sin deliveryAddress
+    Entonces la respuesta es 400
+    Y O conserva su clasificación original
 
   @REQ-0031
   Escenario: No se permite modificar items históricos

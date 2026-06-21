@@ -55,7 +55,8 @@ Reglas:
 | REQ-0035 | Append en PREPARING mantiene PREPARING | specs/edit-order | 1.0 | orders.e2e-spec.ts::preparing_stays | backend/src/orders/* | 4.5.6.1 | ✅ |   |
 | REQ-0036 | Append emite order-updated | specs/edit-order | 1.0 | orders.e2e-spec.ts::emit_order_updated | backend/src/orders/* | 4.5.4 | ✅ |   |
 | REQ-0048 | PATCH agrega plate nuevo; plateNumber existente → 400 (sucede a REQ-0030) | specs/edit-order | 2.0 | orders.e2e-spec.ts::append_new_plate | backend/src/orders/orders.service.ts (updateOrder) | 4.6.2 | 🟡 |   |
-| REQ-0049 | PATCH no muta type/reference/deliveryAddress en append → 400 (Artículo V) | specs/edit-order | 2.1 | orders.e2e-spec.ts::append_rejects_classification_change | backend/src/orders/orders.service.ts (updateOrder), backend/src/orders/dto/update-order.dto.ts | 4.6.2 | 🔴 |   |
+| REQ-0049 | PATCH no muta type/reference/deliveryAddress en append → 400 (sucedido por REQ-0062) | specs/edit-order | 2.1 | orders.e2e-spec.ts::append_rejects_classification_change | backend/src/orders/orders.service.ts (updateOrder), backend/src/orders/dto/update-order.dto.ts | 4.6.2 | 🗑️ | REQ-0062 |
+| REQ-0062 | PATCH puede corregir clasificación type/reference/deliveryAddress (sucede a REQ-0049, ADR-0011) | specs/edit-order | 3.0 | orders.e2e-spec.ts::append_edits_classification | backend/src/orders/orders.service.ts (updateOrder, validateClassification), backend/src/orders/dto/update-order.dto.ts | 4.6.2 | 🟡 |   |
 | REQ-0040 | COOK cambia status a valores válidos | specs/kitchen-queue | 1.0 | orders.e2e-spec.ts::status_change | backend/src/orders/* | 4.5.6.1 | ✅ |   |
 | REQ-0041 | Asignar UPDATED manualmente → 400 | specs/kitchen-queue | 1.0 | orders.e2e-spec.ts::updated_rejected | backend/src/orders/* | 4.5.6.1 | ✅ |   |
 | REQ-0042 | Transición a READY limpia isNew | specs/kitchen-queue | 1.0 | orders.e2e-spec.ts::ready_clears_isnew | backend/src/orders/* | 4.5.6.2 | ✅ |   |

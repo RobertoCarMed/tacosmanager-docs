@@ -1,15 +1,19 @@
 # Spec: Edit Order (Append)
 
 - ID: SPEC-edit-order
-- Versión: 2.1
-- Estado: Implementada (con incumplimiento conocido en backend — ver REQ-0049)
+- Versión: 3.0
+- Estado: Implementada
 - ETAPA asociada: 4.5.3, 4.5.6.2, 4.6.2
 
-> **Changelog 2.1 (2026-06-20):** se formaliza como criterio testeable (REQ-0049) la
-> inmutabilidad de `type`/`reference`/`deliveryAddress` en append, que el §3 No-objetivos
-> ya prohibía en prosa. Verificación doc↔backend detectó que el service **muta** esos
-> campos en `PATCH /orders/:id` (viola Artículo V). REQ-0049 nace `🔴 Pendiente` hasta el
-> fix de backend. Aditivo → bump MINOR (ADR-0009).
+> **Changelog 3.0 (2026-06-21):** se **legitima** la edición de clasificación de la orden
+> (`type`/`reference`/`deliveryAddress`) post-creación (ADR-0011, que enmienda el alcance del
+> Artículo V). Era la feature 4.6.2 ya construida; el corpus estaba dividido. `REQ-0049`
+> (que la prohibía, nunca implementado) queda `🗑️ Deprecado`; su sucesor es `REQ-0062`
+> (clasificación editable). El Artículo V sigue protegiendo plates/items históricos.
+> Reversión de comportamiento → bump MAJOR (ADR-0009).
+
+> **Changelog 2.1 (2026-06-20):** se formalizó como criterio testeable (REQ-0049) la
+> inmutabilidad de `type`/`reference`/`deliveryAddress` en append. Revertido en 3.0 (ver arriba).
 
 > **Changelog 2.0 (2026-06-20):** verificación doc↔backend reveló que el append agrega
 > **plates nuevos** (identificados por `plateNumber`; un `plateNumber` existente → 400,
@@ -24,6 +28,7 @@ Un mesero necesita agregar tacos/items a una orden ya enviada a cocina sin perde
 ## 2. Objetivos
 
 - Permitir agregar plates/items a una orden existente respetando append-only (ADR-0005).
+- Permitir corregir la clasificación (`type`/`reference`/`deliveryAddress`) post-creación, con o sin agregar plates (ADR-0011).
 - Incrementar `revision` en cada append.
 - Marcar items nuevos con `isNew=true` para highlight verde en cocina.
 - Recalcular status según estado previo (CASO 1/2/3 de business-rules §16).
@@ -31,9 +36,9 @@ Un mesero necesita agregar tacos/items a una orden ya enviada a cocina sin perde
 
 ## 3. No-objetivos
 
-- Modificar items históricos (PROHIBIDO).
+- Modificar plates/items históricos: productos, cantidades, complementos, notas (PROHIBIDO, Artículo V).
 - Cancelar items individuales (futuro spec).
-- Cambiar `type`, `reference`, `deliveryAddress` post-creación.
+- Conservar histórico del valor anterior de la clasificación al corregirla (futuro ADR).
 
 ## 4. Actores
 
@@ -71,7 +76,11 @@ Y el plate nuevo tiene createdInRevision=2 y su item isNew=true
 Y si el WAITER envía un plateNumber ya existente (plateNumber=1) la respuesta es 400
 ```
 
-### REQ-0049 — PATCH no muta type/reference/deliveryAddress (append-only, Artículo V)
+### REQ-0049 — PATCH no muta type/reference/deliveryAddress `[🗑️ DEPRECADO — sucesor REQ-0062]`
+
+> Deprecado en spec 3.0 (ADR-0011). Documentaba la prohibición de editar la clasificación;
+> nunca se implementó (`🔴`). El proyecto decidió **legitimar** la edición de clasificación
+> (ADR-0011 enmienda el alcance del Artículo V). Se conserva como histórico. Ver REQ-0062.
 
 ```gherkin
 Dado una orden DINE_IN existente con reference="Mesa 4"
@@ -80,13 +89,22 @@ Entonces la respuesta es 400 (campos no permitidos en un append)
 Y la orden conserva su type, reference y deliveryAddress originales sin mutar
 ```
 
-> **Estado:** 🔴 Pendiente. El backend actualmente **escribe** estos campos en el append
-> (`orders.service.ts` updateOrder incluye `type`/`reference`/`deliveryAddress` en el
-> `data` de `prisma.order.update`), violando el Artículo V. Fix requerido (dos capas):
-> (1) quitar esos campos de `UpdateOrderDto` — con `forbidNonWhitelisted` global enviarlos
-> da 400 automático; (2) eliminar del service la lógica `effective*`/`validateClassification`
-> en `updateOrder` (queda solo para `createOrder`). El contrato `AppendOrder` ya es correcto
-> (solo expone `plates`).
+### REQ-0062 — PATCH puede corregir la clasificación (type/reference/deliveryAddress)
+
+```gherkin
+Dado una orden DINE_IN existente con reference="Mesa 4"
+Cuando el WAITER hace PATCH /orders/:id con type="DELIVERY" y deliveryAddress="Av. Juárez #123"
+Entonces la respuesta es 200 con la orden completa
+Y la orden queda con type="DELIVERY", deliveryAddress="Av. Juárez #123"
+Y revision se incrementa
+Y los plates/items históricos no cambian (no se crean items ni se marca isNew)
+Y si la clasificación resultante es inválida (ej. DELIVERY sin deliveryAddress) la respuesta es 400
+```
+
+> **Estado:** 🟡 Implementado, falta test automatizado dedicado. El backend escribe
+> `type`/`reference`/`deliveryAddress` en `updateOrder` validando el estado efectivo con
+> `validateClassification`. El contrato `AppendOrder` (openapi 2.1.0) acepta estos campos
+> como opcionales.
 
 ### REQ-0031 — PATCH no permite modificar items históricos
 
@@ -152,7 +170,7 @@ Y el payload incluye la orden completa con items nuevos marcados isNew=true
 ## 9. Dependencias
 
 - Spec: create-order.
-- ADRs: ADR-0005 (append-only), ADR-0006 (kitchen ordering).
+- ADRs: ADR-0005 (append-only), ADR-0010 (kitchen ordering), ADR-0011 (edición de clasificación).
 
 ## 10. Referencias
 

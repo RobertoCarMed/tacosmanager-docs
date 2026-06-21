@@ -584,7 +584,7 @@ Los plates se ordenan por `plateNumber ASC`.
 | `READY`     | COOK vía `PATCH /orders/:id/status` | Lista para entregar. Limpia `isNew` automáticamente. |
 | `DELIVERED` | COOK vía `PATCH /orders/:id/status` | Entregada                                   |
 | `CANCELLED` | COOK vía `PATCH /orders/:id/status` | Cancelada                                   |
-| ~~`UPDATED`~~ | ~~Sistema (al hacer append)~~ | **`[DEPRECADO — ETAPA 4.5.6.1]`** El mesero agregó items. No puede asignarse manualmente. Será eliminado en ETAPA 4.5.6 y reemplazado por un mecanismo de seguimiento de cambios. |
+| ~~`UPDATED`~~ | ~~Sistema (al hacer append)~~ | **`[DEPRECADO — ETAPA 4.5.6.1]`** No puede asignarse manualmente. Reemplazado en ETAPA 4.5.6.1 por el mecanismo `isNew`; el valor del enum se conserva en DB solo para registros históricos (ver business-rules §13). |
 
 **`UPDATED` nunca puede enviarse en `PATCH /orders/:id/status`** — el servidor lo rechaza con `400` a nivel de DTO y de servicio.
 
@@ -724,7 +724,7 @@ Dentro de cada grupo: FIFO por `priorityTimestamp ASC`. La orden que lleva más 
 
 ### `PATCH /orders/:id`
 
-**Append-only editing.** Solo se pueden agregar **nuevos** plates con **nuevos** plateNumbers. Los plates e items existentes son inmutables.
+**Edición de orden.** Dos operaciones combinables (ADR-0005 + ADR-0011): (1) agregar **nuevos** plates con **nuevos** plateNumbers — los plates e items históricos son inmutables; (2) corregir la **clasificación** (`type`/`reference`/`deliveryAddress`, REQ-0062). Al menos una debe estar presente.
 
 **Requiere JWT.** Rol: `WAITER` exclusivamente. Solo el mesero que creó la orden.
 

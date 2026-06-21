@@ -1,8 +1,8 @@
 # Constitución TacosManager
 
-Versión: 1.0
+Versión: 1.1
 Estado: Vigente
-Última actualización: 2026-06-11
+Última actualización: 2026-06-21
 
 Este documento es la **Constitución del proyecto**. Define principios inmutables que toda spec, ADR, plan o commit DEBE respetar. Cualquier desviación requiere modificar primero esta constitución mediante un ADR explícito.
 
@@ -55,10 +55,11 @@ código + tests
 
 ## Artículo V — Append-Only en Órdenes
 
-1. Una orden existente NUNCA puede modificarse retroactivamente. Solo se permite agregar plates/items nuevos.
-2. La `revision` de la orden se incrementa monotónicamente con cada `PATCH /orders/:id`.
-3. Los items nuevos se marcan `isNew: true` y se limpian automáticamente al transicionar a `READY`.
-4. Modificar items históricos es bug. Tests de regresión DEBEN cubrirlo.
+1. El **trabajo de cocina** de una orden es inmutable: los plates e items históricos (productos, cantidades, complementos, notas) NUNCA se modifican retroactivamente. Solo se permite agregar plates/items nuevos.
+2. La **clasificación** de la orden (`type`, `reference`, `deliveryAddress`) es metadata corregible y queda fuera del alcance restrictivo de este artículo: `PATCH /orders/:id` PUEDE actualizarla, validando el estado efectivo resultante (ver ADR-0011).
+3. La `revision` de la orden se incrementa monotónicamente con cada `PATCH /orders/:id`.
+4. Los items nuevos se marcan `isNew: true` y se limpian automáticamente al transicionar a `READY`. Editar clasificación no crea items ni marca `isNew`.
+5. Modificar items/plates históricos es bug. Tests de regresión DEBEN cubrirlo.
 
 ## Artículo VI — Spec-Driven Development
 

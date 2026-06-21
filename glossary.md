@@ -61,7 +61,10 @@ Línea individual dentro de un Plate. Referencia un `Product`, cantidad, complem
 Contador monotónico de la Order. Inicia en `1` al crear. Se incrementa en cada `PATCH /orders/:id` (append).
 
 ### Append-Only
-Principio constitucional (Artículo V). Una orden existente NUNCA se modifica retroactivamente: solo se agregan plates/items nuevos.
+Principio constitucional (Artículo V). El **trabajo de cocina** de una orden es inmutable: los plates/items históricos nunca se modifican retroactivamente, solo se agregan nuevos. La **clasificación** de la orden (`type`/`reference`/`deliveryAddress`) sí puede corregirse post-creación (ver [Edición de Clasificación] y ADR-0011).
+
+### Edición de Clasificación
+Corrección de `type`/`reference`/`deliveryAddress` de una orden existente vía `PATCH /orders/:id` (ADR-0011, REQ-0062). No toca plates/items históricos. La validación se aplica sobre el estado efectivo resultante (tipo nuevo + reference/deliveryAddress coherentes).
 
 ### priorityTimestamp
 Timestamp usado para ordenamiento en Kitchen Queue. FIFO dentro del mismo `OrderStatus`.
@@ -164,6 +167,6 @@ Los siguientes términos NO se usan en este proyecto:
 |---|---|
 | Restaurant, Store | Taquería |
 | Order Status `UPDATED` (en lógica nueva) | Status condicional (CASO 1/2/3 de business-rules §16) |
-| Modificar order (sentido retroactivo) | Append items / append plates |
+| Modificar plates/items históricos | Append items / append plates |
 | Cliente final | (no es entidad del modelo actual) |
 | Inventory, Stock | (fuera de scope hasta nuevo ADR) |

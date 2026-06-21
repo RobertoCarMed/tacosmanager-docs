@@ -1013,7 +1013,9 @@ El mesero puede cambiar el tipo de un pedido existente:
 DINE_IN ↔ TAKEAWAY ↔ DELIVERY
 ```
 
-Validaciones correspondientes al nuevo tipo seleccionado se aplican al momento de editar.
+Validaciones correspondientes al nuevo tipo seleccionado se aplican sobre el estado efectivo al momento de editar (tipo nuevo + `reference`/`deliveryAddress` coherentes).
+
+La clasificación (`type`/`reference`/`deliveryAddress`) es metadata corregible y NO viola el Artículo V: editar clasificación no toca los plates/items históricos. Ver ADR-0011 y REQ-0062.
 
 Implementado en ETAPA 4.6.2.
 
