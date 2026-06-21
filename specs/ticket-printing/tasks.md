@@ -13,23 +13,23 @@
 - Cubre: REQ-0073
 - Archivos: prisma/schema.prisma, prisma/migrations/*_ticket_pricing_snapshot
 - Pasos: agregar `unitPrice Decimal?`; migración con backfill best-effort desde Product.price.
-- Estado: ⬜
+- Estado: ✅
 
 ### TASK-0071 — Congelar unitPrice al crear y al hacer append
 - Cubre: REQ-0070, REQ-0071, REQ-0072
 - Archivos: src/orders/orders.service.ts (createOrder, updateOrder)
 - Pasos: setear `unitPrice = product.price` al construir items; no reescribir en items previos.
-- Estado: ⬜
+- Estado: ✅
 
 ### TASK-0072 — Exponer unitPrice en lectura y realtime
 - Cubre: REQ-0070, REQ-0071
 - Archivos: orders.service.ts (orderSelect), realtime/interfaces/order-payload.interface.ts
-- Estado: ⬜
+- Estado: ✅
 
 ### TASK-0073 — Tests backend de snapshot/inmutabilidad/backfill
 - Cubre: REQ-0070, REQ-0071, REQ-0072, REQ-0073
 - Archivos: backend/test/orders.e2e-spec.ts
-- Estado: ⬜
+- Estado: ✅
 
 ## Mobile — Impresión (ADR-0013)
 
