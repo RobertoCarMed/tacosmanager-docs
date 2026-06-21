@@ -280,10 +280,10 @@ CANCELLED
 
 Dentro de cada grupo:
 
-FIFO
+FIFO (ADR-0010 — clave `priorityTimestamp`, reemplaza a `createdAt` de ADR-0006)
 
 ```txt
-createdAt ASC
+priorityTimestamp ASC
 ```
 
 ---

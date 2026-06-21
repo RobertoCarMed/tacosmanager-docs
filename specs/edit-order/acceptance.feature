@@ -5,12 +5,26 @@ Característica: Editar orden (append)
     Dado un WAITER autenticado de "TM-0001"
     Y una orden existente O con 1 plate y 1 item en revision=1, status="PENDING"
 
+  # DEPRECADO (spec 2.0): sucesor @REQ-0048. Se conserva como regresión histórica.
   @REQ-0030
-  Escenario: Append exitoso agrega item nuevo
+  Escenario: Append agrega item nuevo al plate existente (histórico)
     Cuando el WAITER hace PATCH /orders/<id-de-O> agregando 1 item nuevo
     Entonces la respuesta es 200
     Y la orden tiene 2 items en el plate
     Y el item nuevo tiene createdInRevision=2 e isNew=true
+
+  @REQ-0048
+  Escenario: Append agrega un plate nuevo
+    Cuando el WAITER hace PATCH /orders/<id-de-O> con un plate nuevo (plateNumber=2) con 1 item
+    Entonces la respuesta es 200
+    Y la orden tiene 2 plates
+    Y el plate nuevo tiene createdInRevision=2 y su item isNew=true
+
+  @REQ-0048
+  Escenario: Append con plateNumber existente es rechazado
+    Cuando el WAITER hace PATCH /orders/<id-de-O> con plateNumber=1 (ya existente)
+    Entonces la respuesta es 400
+    Y la orden no cambia (inmutabilidad a nivel plate)
 
   @REQ-0031
   Escenario: No se permite modificar items históricos

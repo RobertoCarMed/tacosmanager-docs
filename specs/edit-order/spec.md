@@ -1,9 +1,15 @@
 # Spec: Edit Order (Append)
 
 - ID: SPEC-edit-order
-- Versión: 1.0
+- Versión: 2.0
 - Estado: Implementada
 - ETAPA asociada: 4.5.3, 4.5.6.2, 4.6.2
+
+> **Changelog 2.0 (2026-06-20):** verificación doc↔backend reveló que el append agrega
+> **plates nuevos** (identificados por `plateNumber`; un `plateNumber` existente → 400,
+> inmutabilidad a nivel plate), NO items a un plate existente. REQ-0030 describía el
+> comportamiento equivocado y queda deprecado; su sucesor es REQ-0048. Breaking → bump
+> MAJOR (ADR-0009).
 
 ## 1. Problema
 
@@ -34,7 +40,11 @@ Un mesero necesita agregar tacos/items a una orden ya enviada a cocina sin perde
 
 ## 6. Acceptance Criteria
 
-### REQ-0030 — PATCH /orders/:id agrega plates/items nuevos
+### REQ-0030 — PATCH /orders/:id agrega plates/items nuevos `[🗑️ DEPRECADO — sucesor REQ-0048]`
+
+> Deprecado en spec 2.0. Describía agregar un item a un plate existente, pero el backend
+> agrega plates nuevos (inmutabilidad a nivel plate). Se conserva como histórico inmutable
+> (ADR-0009). Ver REQ-0048.
 
 ```gherkin
 Dado una orden existente con 1 plate y 1 item en revision=1
@@ -42,6 +52,17 @@ Cuando el WAITER hace PATCH /orders/:id agregando 1 item nuevo al plate existent
 Entonces la respuesta es 200 con la orden completa
 Y la orden tiene 2 items en el plate
 Y el item nuevo tiene createdInRevision=2 e isNew=true
+```
+
+### REQ-0048 — PATCH /orders/:id agrega un plate nuevo (append-only por plate)
+
+```gherkin
+Dado una orden existente con 1 plate (plateNumber=1) en revision=1
+Cuando el WAITER hace PATCH /orders/:id con un plate nuevo (plateNumber=2) con 1 item
+Entonces la respuesta es 200 con la orden completa
+Y la orden tiene 2 plates
+Y el plate nuevo tiene createdInRevision=2 y su item isNew=true
+Y si el WAITER envía un plateNumber ya existente (plateNumber=1) la respuesta es 400
 ```
 
 ### REQ-0031 — PATCH no permite modificar items históricos

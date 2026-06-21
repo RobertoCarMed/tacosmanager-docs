@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: TacosManager API
-  version: "1.0.0"
+  version: "1.1.0"
   description: |
     API REST de TacosManager. Multi-tenant por taquería.
     Toda ruta excepto /health y /auth/* requiere JWT.
@@ -161,10 +161,15 @@ paths:
   /orders:
     get:
       tags: [Orders]
-      summary: Lista órdenes. COOK ve todas; WAITER ve solo las propias.
+      summary: |
+        Lista órdenes. El ordenamiento depende del rol:
+        - COOK: todas las de la taquería, como cola de cocina (prioridad de status +
+          priorityTimestamp ASC dentro del status, ADR-0010).
+        - WAITER: solo las propias (ownership por waiterId), ordenadas por createdAt DESC
+          (historial cronológico inverso). Es una vista distinta, intencional.
       responses:
         "200":
-          description: Órdenes ordenadas por status + FIFO
+          description: Órdenes ordenadas según el rol (ver summary)
           content:
             application/json:
               schema:
@@ -409,9 +414,12 @@ components:
 
     OrderStatus:
       type: string
-      enum: [PENDING, PREPARING, READY, DELIVERED, CANCELLED]
+      enum: [PENDING, PREPARING, READY, DELIVERED, CANCELLED, UPDATED]
       description: |
-        Etapa de cocina. UPDATED está DEPRECADO (ETAPA 4.5.6.1) y no puede asignarse manualmente.
+        Etapa de cocina. UPDATED está DEPRECADO (ETAPA 4.5.6.1): es de SOLO LECTURA —
+        puede aparecer en órdenes históricas persistidas, pero NO puede asignarse
+        manualmente (PATCH /orders/:id/status con UPDATED → 400, REQ-0041). Se conserva
+        en el enum hasta confirmar la migración de datos (ver business-rules §13).
 
     CreateOrder:
       type: object
@@ -451,11 +459,30 @@ components:
 
     AppendOrder:
       type: object
-      description: Solo permite agregar plates/items nuevos (append-only ADR-0005)
+      description: |
+        Append-only (ADR-0005): solo agrega plates NUEVOS. Cada plate se identifica por
+        plateNumber; si el plateNumber ya existe en la orden → 400 (inmutabilidad a nivel
+        plate, REQ-0048). NO permite modificar plates/items históricos ni agregar items a
+        un plate existente.
+      required: [plates]
       properties:
         plates:
           type: array
-          items: { $ref: "#/components/schemas/CreatePlate" }
+          minItems: 1
+          items: { $ref: "#/components/schemas/AppendPlate" }
+
+    AppendPlate:
+      type: object
+      required: [plateNumber, items]
+      properties:
+        plateNumber:
+          type: integer
+          minimum: 1
+          description: Debe ser un plateNumber NUEVO en la orden; uno existente → 400.
+        items:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/CreateItem" }
 
     Order:
       type: object

@@ -1,8 +1,13 @@
 # ADR-0006: Ordenamiento de Kitchen Queue
 
-- Estado: Aceptado
+- Estado: Reemplazado por ADR-0010
 - Fecha: 2026-06-11
 - Autores: Equipo TacosManager
+
+> ⚠️ **Reemplazado por [ADR-0010](0010-priority-timestamp-ordering.md) (2026-06-20).**
+> La clave FIFO dentro de un mismo status ya NO es `createdAt` sino `priorityTimestamp`
+> (automático). El ordenamiento global por prioridad de status se mantiene sin cambios.
+> Este documento se conserva como registro histórico de la decisión original.
 
 ## Contexto
 

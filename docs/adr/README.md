@@ -47,7 +47,8 @@ Usamos [MADR](https://adr.github.io/madr/) (Markdown Architecture Decision Recor
 | ADR-0003 | Socket.IO v4 para realtime | Aceptado | 2026-06-11 |
 | ADR-0004 | Backend como fuente de verdad | Aceptado | 2026-06-11 |
 | ADR-0005 | Modelo append-only para órdenes | Aceptado | 2026-06-11 |
-| ADR-0006 | Ordenamiento de Kitchen Queue | Aceptado | 2026-06-11 |
+| ADR-0006 | Ordenamiento de Kitchen Queue | Reemplazado por ADR-0010 | 2026-06-11 |
 | ADR-0007 | Docs distribuidas vía Git Submodules | Aceptado | 2026-06-11 |
 | ADR-0008 | Spec-Driven Development como flujo de trabajo | Aceptado | 2026-06-11 |
 | ADR-0009 | Política de versionado de specs y REQ-IDs | Aceptado | 2026-06-11 |
+| ADR-0010 | Ordenamiento de Kitchen Queue por priorityTimestamp automático | Aceptado | 2026-06-20 |
