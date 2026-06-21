@@ -11,7 +11,7 @@
 - Estado: ✅
 
 ## TASK-0012 — Endpoint POST /auth/register con smart matching
-- Cubre: REQ-0004, REQ-0005
+- Cubre: REQ-0055, REQ-0056, REQ-0057, REQ-0058, REQ-0059, REQ-0060, REQ-0061
 - Estado: ✅
 
 ## TASK-0013 — Endpoint GET /auth/me
@@ -27,5 +27,5 @@
 - Estado: ✅
 
 ## TASK-0016 — Tests e2e + Gherkin
-- Cubre: REQ-0001 a REQ-0005
+- Cubre: REQ-0001 a REQ-0003, REQ-0055 a REQ-0061
 - Estado: ✅

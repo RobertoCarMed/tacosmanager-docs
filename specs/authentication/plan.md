@@ -5,7 +5,16 @@
 
 ## 1. Resumen
 
-NestJS `AuthModule` con `AuthService` (login, register, validateToken) y `AuthController`. JWT firmado con `JwtService`. Passwords con bcrypt. Guard `JwtAuthGuard` extrae payload y lo adjunta a `request.user`.
+NestJS `AuthModule` con `AuthService` (login, register, validateToken) y
+`AuthController`. JWT firmado con `JwtService`. Passwords con bcrypt. Guard
+`JwtAuthGuard` extrae payload y lo adjunta a `request.user`.
+
+`POST /auth/register` implementa un flujo de 2 fases en un solo endpoint:
+
+1. Discovery sin side effects usando `taqueriaName`
+2. Confirmacion explicita del cliente para:
+   - join: `confirmJoinExistingTaqueria=true` + `selectedRestaurantCode`
+   - create: `createNewTaqueria=true` + `taqueriaData`
 
 ## 2. Arquitectura
 
@@ -26,6 +35,12 @@ NestJS `AuthModule` con `AuthService` (login, register, validateToken) y `AuthCo
 
 - `POST /auth/login`, `POST /auth/register`, `GET /auth/me` — ver `contracts/openapi.yaml`.
 
+### Register request real
+
+- Base requerido: `taqueriaName`, `name`, `email`, `password`, `role`
+- Join confirmado: base + `confirmJoinExistingTaqueria=true` + `selectedRestaurantCode`
+- Create confirmado: base + `createNewTaqueria=true` + `taqueriaData`
+
 ## 5. Decisiones técnicas
 
 - bcrypt rounds = 10.
@@ -34,9 +49,11 @@ NestJS `AuthModule` con `AuthService` (login, register, validateToken) y `AuthCo
 
 ## 6. Testing
 
-- E2E: `backend/test/auth.e2e-spec.ts`.
+- E2E esperado: `backend/test/auth.e2e-spec.ts`.
+- Estado verificado en 2026-06-20: no se encontraron tests auth ejecutables en el
+  repo backend auditado; la implementacion fue reconstruida desde codigo fuente.
 - Gherkin: `specs/authentication/acceptance.feature`.
 
 ## 7. Trazabilidad
 
-Ver `traceability.md` (REQ-0001 a REQ-0005).
+Ver `traceability.md` (`REQ-0001` a `REQ-0003`, `REQ-0055` a `REQ-0061`).

@@ -234,7 +234,7 @@ Agregar `confirmJoinExistingTaqueria: true` y `selectedRestaurantCode`.
 
 #### Fase 2B — Crear nueva taquería
 
-Agregar `createNewTaqueria: true` y opcionalmente `taqueriaData`.
+Agregar `createNewTaqueria: true` y `taqueriaData`.
 
 **Request:**
 ```json
@@ -254,7 +254,11 @@ Agregar `createNewTaqueria: true` y opcionalmente `taqueriaData`.
 }
 ```
 
-`taqueriaData` es opcional. Sus campos son todos opcionales.
+`taqueriaData` es obligatorio cuando `createNewTaqueria: true`.
+Sus campos internos (`phone`, `address`, `city`, `state`) son todos opcionales.
+
+En join, `selectedRestaurantCode` se resuelve globalmente por `restaurantCode`.
+No se cruza contra `taqueriaName`.
 
 **Response `201`:** misma estructura que Fase 2A.
 

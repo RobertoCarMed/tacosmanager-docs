@@ -31,8 +31,8 @@ Reglas:
 | REQ-0001 | Login válido devuelve accessToken + user + taqueria | specs/authentication | 1.0 | auth.e2e-spec.ts::login_success | backend/src/auth/* | 4.5.1 | ✅ |   |
 | REQ-0002 | Login con credenciales inválidas devuelve 401 | specs/authentication | 1.0 | auth.e2e-spec.ts::login_invalid | backend/src/auth/* | 4.5.1 | ✅ |   |
 | REQ-0003 | GET /auth/me valida token y retorna contexto | specs/authentication | 1.0 | auth.e2e-spec.ts::me_valid | backend/src/auth/* | 4.5.1 | ✅ |   |
-| REQ-0004 | Smart register crea taquería si no existe | specs/authentication | 1.0 | auth.e2e-spec.ts::register_new | backend/src/auth/* | 4.5.1 | ✅ |   |
-| REQ-0005 | Smart register une usuario a taquería existente | specs/authentication | 1.0 | auth.e2e-spec.ts::register_join | backend/src/auth/* | 4.5.1 | ✅ |   |
+| REQ-0004 | Smart register crea taquería si no existe | specs/authentication | 1.0 | auth.e2e-spec.ts::register_new | backend/src/auth/* | 4.5.1 | 🗑️ | REQ-0059 |
+| REQ-0005 | Smart register une usuario a taquería existente | specs/authentication | 1.0 | auth.e2e-spec.ts::register_join | backend/src/auth/* | 4.5.1 | 🗑️ | REQ-0058 |
 | REQ-0010 | COOK lista todos los productos de su taquería | specs/products-management | 1.0 | products.e2e-spec.ts::cook_lists_all | backend/src/products/* | 4.5.2 | ✅ |   |
 | REQ-0011 | WAITER lista todos los productos (lectura) | specs/products-management | 1.0 | products.e2e-spec.ts::waiter_lists_all | backend/src/products/* | 4.5.2 | ✅ |   |
 | REQ-0012 | Solo COOK puede crear productos | specs/products-management | 1.0 | products.e2e-spec.ts::waiter_cannot_create | backend/src/products/* | 4.5.2 | ✅ |   |
@@ -69,6 +69,13 @@ Reglas:
 | REQ-0052 | Usuarios de distintas taquerías nunca comparten room | specs/realtime-sync | 1.0 | realtime.e2e-spec.ts::room_isolation | backend/src/realtime/* | 4.5.4 | ✅ |   |
 | REQ-0053 | Tras reconexión, cliente puede resincronizar | specs/realtime-sync | 1.0 | realtime.e2e-spec.ts::reconnect_resync | mobile/src/realtime/* | 4.7.2 | ✅ |   |
 | REQ-0054 | Multi-device: dos dispositivos del mismo user reciben los eventos | specs/realtime-sync | 1.0 | realtime.e2e-spec.ts::multi_device | backend/src/realtime/* | 4.7.3 | ✅ |   |
+| REQ-0055 | Register discovery con 0 coincidencias no crea recursos | specs/authentication | 2.0 | auth.e2e-spec.ts::register_discovery_zero_matches | backend/src/auth/* | 4.5.1 | 🟡 |   |
+| REQ-0056 | Register discovery con 1 coincidencia devuelve la taquería encontrada | specs/authentication | 2.0 | auth.e2e-spec.ts::register_discovery_one_match | backend/src/auth/* | 4.5.1 | 🟡 |   |
+| REQ-0057 | Register discovery con múltiples coincidencias devuelve lista por restaurantCode | specs/authentication | 2.0 | auth.e2e-spec.ts::register_discovery_many_matches | backend/src/auth/* | 4.5.1 | 🟡 |   |
+| REQ-0058 | Register une a taquería existente con confirmación explícita | specs/authentication | 2.0 | auth.e2e-spec.ts::register_join_confirmed | backend/src/auth/* | 4.5.1 | 🟡 |   |
+| REQ-0059 | Register crea nueva taquería con confirmación explícita | specs/authentication | 2.0 | auth.e2e-spec.ts::register_create_confirmed | backend/src/auth/* | 4.5.1 | 🟡 |   |
+| REQ-0060 | Register con email duplicado devuelve 409 antes del discovery | specs/authentication | 2.0 | auth.e2e-spec.ts::register_duplicate_email | backend/src/auth/* | 4.5.1 | 🟡 |   |
+| REQ-0061 | Register rechaza combinaciones inválidas de flags con 400 | specs/authentication | 2.0 | auth.e2e-spec.ts::register_invalid_flags | backend/src/auth/* | 4.5.1 | 🟡 |   |
 
 ---
 

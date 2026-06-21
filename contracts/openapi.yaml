@@ -1,14 +1,14 @@
 openapi: 3.1.0
 info:
   title: TacosManager API
-  version: "1.1.0"
+  version: "2.0.0"
   description: |
     API REST de TacosManager. Multi-tenant por taquería.
     Toda ruta excepto /health y /auth/* requiere JWT.
   contact:
     name: TacosManager
 servers:
-  - url: /api
+  - url: /
     description: Base URL
 
 tags:
@@ -58,7 +58,7 @@ paths:
   /auth/register:
     post:
       tags: [Auth]
-      summary: Registro inteligente (crea o une a taquería)
+      summary: Registro inteligente en 2 fases (discovery, join o create)
       security: []
       requestBody:
         required: true
@@ -68,11 +68,22 @@ paths:
               $ref: "#/components/schemas/RegisterRequest"
       responses:
         "201":
-          description: Usuario y/o taquería creados
+          description: Discovery sin side effects o registro confirmado exitoso
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LoginResponse"
+                oneOf:
+                  - $ref: "#/components/schemas/RegisterDiscoveryNoMatches"
+                  - $ref: "#/components/schemas/RegisterDiscoveryMatches"
+                  - $ref: "#/components/schemas/LoginResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          description: Email ya registrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
   /auth/me:
     get:
@@ -329,20 +340,57 @@ components:
 
     RegisterRequest:
       type: object
-      required: [email, password, name, taqueria]
+      required: [taqueriaName, email, password, name, role]
       properties:
+        taqueriaName: { type: string, minLength: 1 }
         email: { type: string, format: email }
-        password: { type: string, format: password }
-        name: { type: string }
+        password: { type: string, format: password, minLength: 6 }
+        name: { type: string, minLength: 1 }
         role: { $ref: "#/components/schemas/Role" }
-        taqueria:
-          type: object
-          required: [name]
-          properties:
-            name: { type: string }
-            address: { type: string }
-            city: { type: string }
-            state: { type: string }
+        confirmJoinExistingTaqueria: { type: boolean }
+        createNewTaqueria: { type: boolean }
+        selectedRestaurantCode: { type: string, minLength: 1 }
+        taqueriaData:
+          $ref: "#/components/schemas/RegisterTaqueriaData"
+
+    RegisterTaqueriaData:
+      type: object
+      properties:
+        phone: { type: string, minLength: 1 }
+        address: { type: string, minLength: 1 }
+        city: { type: string, minLength: 1 }
+        state: { type: string, minLength: 1 }
+
+    RegisterDiscoveryNoMatches:
+      type: object
+      required: [taqueriaMatches, canCreateNewTaqueria, requiresTaqueriaInfo, message]
+      properties:
+        taqueriaMatches: { type: integer, const: 0 }
+        canCreateNewTaqueria: { type: boolean, const: true }
+        requiresTaqueriaInfo: { type: boolean, const: true }
+        message: { type: string }
+
+    RegisterDiscoveryMatches:
+      type: object
+      required: [taqueriaMatches, canJoinExistingTaqueria, canCreateNewTaqueria, taquerias, message]
+      properties:
+        taqueriaMatches: { type: integer, minimum: 1 }
+        canJoinExistingTaqueria: { type: boolean, const: true }
+        canCreateNewTaqueria: { type: boolean, const: true }
+        taquerias:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/RegisterTaqueriaMatch"
+        message: { type: string }
+
+    RegisterTaqueriaMatch:
+      type: object
+      required: [id, name, restaurantCode]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        restaurantCode: { type: string, example: TM-4821 }
 
     MeResponse:
       type: object
@@ -372,9 +420,10 @@ components:
         id: { type: string, format: uuid }
         name: { type: string }
         restaurantCode: { type: string, example: TM-4821, description: "Identificador público inmutable" }
-        address: { type: string }
-        city: { type: string }
-        state: { type: string }
+        phone: { type: string, nullable: true }
+        address: { type: string, nullable: true }
+        city: { type: string, nullable: true }
+        state: { type: string, nullable: true }
 
     Product:
       type: object
