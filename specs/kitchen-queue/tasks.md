@@ -14,9 +14,9 @@
 - Cubre: REQ-0042
 - Estado: ✅
 
-## TASK-0043 — Ordenamiento por status + createdAt
-- Cubre: REQ-0043, REQ-0044
-- Estado: ✅
+## TASK-0043 — Ordenamiento por status + priorityTimestamp ASC (ADR-0010)
+- Cubre: REQ-0043, REQ-0047 (sucede a REQ-0044 deprecado: era por createdAt)
+- Estado: 🟡 (implementado; falta test dedicado de reprioritización en PREPARING)
 
 ## TASK-0044 — Emit order-status-changed
 - Cubre: REQ-0045
