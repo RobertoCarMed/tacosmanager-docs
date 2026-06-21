@@ -31,6 +31,7 @@ Plantillas en `specs/_templates/`.
 | `kitchen-queue` | ✅ implementada | 4.5.6.1, 4.6.3 |
 | `realtime-sync` | ✅ implementada | 4.5.4, 4.7.1, 4.7.2, 4.7.3 |
 | `order-filters` | ✅ implementada | 4.8 |
+| `ticket-printing` | 🟢 Aprobada (sin implementar) | — (feat, ADR-0014) |
 
 ## Reglas
 

@@ -80,6 +80,10 @@ Tecnologías principales:
 - 4.9 Performance Optimization
 - 4.10 Product Management Improvements
 
+## Características (fuera de la numeración de ETAPAs)
+
+- Ticket Printing — `specs/ticket-printing/` (Aprobada, sin implementar). Ver ADR-0014.
+
 ## Post-Lanzamiento
 
 - 6.0 Post Launch Features
@@ -1659,6 +1663,39 @@ Se trata de funcionalidades pendientes de UI que nunca fueron implementadas en e
 - productService.updateProduct() admite complements en el payload — solo requiere exponer el campo en el formulario.
 - productService.deleteProduct() está implementado y listo — solo requiere UI.
 - No se requieren cambios en backend ni en el service layer.
+
+---
+
+# Características (fuera de la numeración de ETAPAs)
+
+> Features que entran al producto sin pertenecer a la secuencia de ETAPAs (ADR-0014). Su
+> unidad de trabajo es la spec; en `traceability.md` se etiquetan `feat:<slug>`.
+
+## Ticket Printing
+
+Estado: **Aprobada** (spec), sin implementar.
+
+Spec: `specs/ticket-printing/` (REQ-0070–REQ-0080). ADR-0012 (snapshot de precio),
+ADR-0013 (impresión Wi-Fi/LAN ESC/POS), ADR-0014 (feature sin ETAPA).
+
+### Objetivo
+
+Imprimir la cuenta del cliente de un pedido completado en una impresora térmica POS-8370
+(80mm, ESC/POS) vía Wi-Fi/LAN.
+
+### Alcance
+
+- Backend: snapshot de `unitPrice` por item (congelado al crear/editar) + migración backfill.
+- Mobile: botón "Imprimir ticket" (WAITER dueño, pedido READY/DELIVERED), renderizado ESC/POS
+  y envío por socket TCP:9100; configuración de impresora por dispositivo.
+- Total derivado en el frontend sobre precios congelados (Artículo II).
+
+Fuera de alcance: comanda de cocina, impresión automática, comprobante fiscal.
+
+### Orden de implementación
+
+1. Backend (precio snapshot + migración) — para que los pedidos nuevos ya lleven `unitPrice`.
+2. Mobile (impresión).
 
 ---
 

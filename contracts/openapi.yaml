@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: TacosManager API
-  version: "2.1.0"
+  version: "2.2.0"
   description: |
     API REST de TacosManager. Multi-tenant por taquería.
     Toda ruta excepto /health y /auth/* requiere JWT.
@@ -583,6 +583,14 @@ components:
         id: { type: string, format: uuid }
         productId: { type: string, format: uuid }
         quantity: { type: integer, minimum: 1 }
+        unitPrice:
+          type: number
+          nullable: true
+          description: >-
+            Precio unitario CONGELADO (snapshot de Product.price al crear el item, ADR-0012).
+            Inmutable ante cambios del catálogo. Base de la cuenta (REQ-0070..0072).
+            null solo en items legacy cuyo producto fue borrado (REQ-0073). Dinero: tratar
+            como Decimal/centavos.
         selectedComplements:
           type: array
           items: { type: string }
