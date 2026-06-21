@@ -2,14 +2,15 @@
 
 - ID: SPEC-ticket-printing
 - Versión: 1.0
-- Estado: Borrador
+- Estado: Aprobada
 - Fecha: 2026-06-21
-- ETAPA asociada: 4.11 (propuesta — ver roadmap)
+- ETAPA asociada: — (feature fuera de la numeración de ETAPAs; ver ADR-0014)
 
-> **Estado del borrador (2026-06-21):** decisiones cerradas — precios por snapshot (A,
-> ADR-0012) y transporte **Wi-Fi/LAN (socket TCP:9100)** (ADR-0013). Los REQ de impresión
-> son independientes del transporte; el detalle de conexión vive en `plan.md` y ADR-0013.
-> Pendiente solo la aprobación formal de la spec y su agenda (ETAPA 4.11 propuesta).
+> **Aprobada (2026-06-21):** decisiones cerradas — precios por snapshot (A, ADR-0012),
+> transporte **Wi-Fi/LAN TCP:9100** (ADR-0013), formato de ticket (REQ-0076), y MVP de
+> solo-reintento / sin cola offline / config por dispositivo. Es una **feature
+> independiente, sin ETAPA numerada** (ADR-0014). REQ-0070–0080 quedan en 🔴 hasta
+> `/implement` (Aprobada ≠ Implementada).
 
 ## 1. Problema / Oportunidad
 
@@ -123,15 +124,46 @@ Entonces no se ofrece la acción de imprimir cuenta
 Y cuando un WAITER que NO es el dueño del pedido lo ve, tampoco se le ofrece imprimir
 ```
 
-### REQ-0076 — Contenido de la cuenta
+### REQ-0076 — Contenido y formato de la cuenta
 
 ```gherkin
 Dado un pedido con varios items
 Cuando se genera el ticket
-Entonces incluye: nombre de la taquería y restaurantCode, tipo y referencia del pedido,
-  fecha y hora, una línea por item (cantidad, nombre de producto, unitPrice y subtotal),
-  y el total del pedido
+Entonces el encabezado muestra el NOMBRE de la taquería en tamaño destacado (doble alto y doble ancho), centrado
+Y debajo del nombre: restaurantCode, tipo y referencia del pedido, fecha y hora
+Y el cuerpo es una tabla (lista plana, sin agrupar por plate) con columnas: cantidad, descripción (producto), precio unitario, importe
+Y el importe de cada línea es cantidad × precio unitario (unitPrice congelado)
+Y al final una línea "TOTAL: $<total>" en tamaño destacado
+Y el pie muestra "Gracias por su compra" y, en la línea siguiente, "Estamos encantados de atenderte, vuelve cuando quieras y disfruta de nuestros ricos tacos"
+Y se ejecuta el corte de papel
 ```
+
+**Formato del ticket (80mm, ~48 caracteres, Font A):**
+
+```txt
+            LA TAQUERÍA DEL GÜERO          ← nombre, centrado, doble alto+ancho (ESC/POS GS ! 0x11;
+                                              si excede el ancho, cae a solo doble alto 0x01)
+              TM-4821 · 🍽 Mesa 4
+            2026-06-21 15:42
+--------------------------------------------
+CANT  DESCRIPCIÓN          P.UNIT    IMPORTE
+ 1    Limonada              45.00      45.00
+ 2    Taco al Pastor        20.00      40.00
+ 1    Quesadilla            35.00      35.00
+--------------------------------------------
+                       TOTAL:        $120.00   ← destacado (doble alto)
+
+           Gracias por su compra
+  Estamos encantados de atenderte, vuelve
+  cuando quieras y disfruta de nuestros
+              ricos tacos
+            [corte de papel]
+```
+
+- Moneda: MXN, símbolo `$`, 2 decimales.
+- **No** se imprimen complementos ni notas en la cuenta (es para el cliente/cobro; el detalle
+  de cocina vive en la comanda, fuera de alcance).
+- Si el nombre del producto excede la columna, se trunca con `…`.
 
 ### REQ-0077 — Total = suma de unitPrice × quantity (frontend, sobre precios congelados)
 
@@ -211,7 +243,7 @@ Y un host inválido o inalcanzable produce un error claro (no un fallo silencios
 - **ADR-0013** — Integración de impresión de tickets (transporte Wi-Fi/LAN TCP:9100,
   renderizado ESC/POS en frontend, config de impresora por dispositivo).
 
-## 10. Decisiones cerradas y riesgos
+## 10. Decisiones cerradas, riesgos y mejoras futuras
 
 Decisiones tomadas (2026-06-21):
 
@@ -220,20 +252,33 @@ Decisiones tomadas (2026-06-21):
 - ✅ **"Completado" = `READY` o `DELIVERED`** (no `PENDING`/`PREPARING`/`CANCELLED`).
 - ✅ **Total derivado en el frontend** desde `unitPrice`; el contrato agrega solo
   `item.unitPrice` (no se persiste `order.total`).
-- ✅ **Config de impresora: por dispositivo** (host:puerto en almacenamiento local) para el
-  MVP (REQ-0080). Config centralizada por taquería en backend = futuro.
+- ✅ **Config de impresora: por dispositivo** (host:puerto en almacenamiento local).
+- ✅ **Concurrencia: solo-reintento** (sin cola de impresión) para el MVP.
+- ✅ **Red: sin cola offline** para el MVP; fallo → error + reintento manual.
 
-Riesgos / preguntas abiertas:
+Riesgos aceptados para el MVP:
 
-- ❓ **Impresora compartida y concurrencia:** dos meseros imprimiendo a la vez sobre el
-  mismo socket. La POS-8370 procesa en serie; el MVP reintenta ante conexión ocupada
-  (REQ-0079). Si hay contención real, evaluar cola de impresión (futuro).
-- ❓ **Dependencia de red:** sin Wi-Fi/LAN operativa no hay impresión. Bluetooth quedaría
-  como alternativa futura (otro ADR) si la red no es confiable.
-- ❓ **iOS:** por LAN/TCP la POS-8370 sí funcionaría en iOS; el bloqueo de Bluetooth no
-  aplica a esta ruta. Irrelevante mientras el proyecto sea solo Android.
-- ❓ **Cuenta fiscal:** este MVP NO es comprobante fiscal. Si el negocio lo requiere luego,
-  será otra spec + ADR (folios, IVA, timbrado).
+- **Concurrencia en impresora compartida:** dos meseros imprimiendo casi a la vez. La
+  POS-8370 procesa en serie; si el segundo choca, ve error y reintenta (REQ-0079). Aceptado.
+- **Dependencia de red:** sin Wi-Fi/LAN operativa no hay impresión. Aceptado.
+
+Mejoras futuras (post-MVP) — capturadas, no descartadas:
+
+- **Cola de impresión** que serialice los envíos cuando varios meseros imprimen a la vez
+  (evita choques en la impresora compartida).
+- **Cola offline:** guardar tickets pendientes y reimprimirlos automáticamente al recuperar
+  la red, en lugar de error + reintento manual.
+- **Config centralizada por taquería** (IP de impresora en backend) para no configurar cada
+  dispositivo por separado.
+- **Bluetooth Classic SPP** como transporte alternativo si la red local no es confiable
+  (requeriría su propio ADR; no aplica a iOS).
+
+Notas:
+
+- **iOS:** por LAN/TCP la POS-8370 sí funcionaría en iOS; el bloqueo de Bluetooth no aplica
+  a esta ruta. Irrelevante mientras el proyecto sea solo Android.
+- **Cuenta fiscal:** este MVP NO es comprobante fiscal. Si el negocio lo requiere luego, será
+  otra spec + ADR (folios, IVA, timbrado).
 
 ## 11. Referencias
 

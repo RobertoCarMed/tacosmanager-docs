@@ -170,7 +170,10 @@ Architecture Decision Record. Vive en `docs/adr/NNNN-titulo.md`. Inmutable una v
 Identificador estable de un acceptance criterion. Formato `REQ-NNNN`. Nunca se reutiliza.
 
 ### ETAPA
-Hito de desarrollo en `roadmap.md`. Formato `X.Y.Z` (ej. `4.6.1`). Cada ETAPA tiene archivos impactados declarados.
+Hito de desarrollo en `roadmap.md`. Formato `X.Y.Z` (ej. `4.6.1`). Cada ETAPA tiene archivos impactados declarados. La numeración es histórica y no toda feature pertenece a ella (ver [[Feature]]).
+
+### Feature
+Unidad de trabajo SDD: una carpeta `specs/<slug>/` con spec + plan + tasks + acceptance. Una feature **puede existir fuera de la numeración de ETAPAs** (ADR-0014); en ese caso se etiqueta `feat:<slug>` en `traceability.md` y vive en la sección "Características" del roadmap.
 
 ---
 

@@ -3,8 +3,9 @@
 - Spec: `specs/ticket-printing/spec.md`
 - Plan: `specs/ticket-printing/plan.md`
 
-> Feature nueva (ETAPA 4.11 propuesta). Orden de implementación: backend (precio) primero,
-> luego mobile (impresión). Estados: ⬜ pendiente · 🟡 en progreso · ✅ hecho · 🔴 bloqueado
+> Feature nueva (`feat:ticket-printing`, fuera de la numeración de ETAPAs — ADR-0014).
+> Orden de implementación: backend (precio) primero, luego mobile (impresión).
+> Estados: ⬜ pendiente · 🟡 en progreso · ✅ hecho · 🔴 bloqueado
 
 ## Backend — Snapshot de precio (ADR-0012)
 

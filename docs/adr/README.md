@@ -55,3 +55,4 @@ Usamos [MADR](https://adr.github.io/madr/) (Markdown Architecture Decision Recor
 | ADR-0011 | Edición de clasificación de orden post-creación (carve-out del Artículo V) | Aceptado | 2026-06-21 |
 | ADR-0012 | Snapshot de precio unitario (`unitPrice`) en órdenes | Aceptado | 2026-06-21 |
 | ADR-0013 | Integración de impresión de tickets (Wi-Fi/LAN, ESC/POS) | Aceptado | 2026-06-21 |
+| ADR-0014 | Features fuera de la numeración de ETAPAs | Aceptado | 2026-06-21 |
