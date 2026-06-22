@@ -88,13 +88,13 @@ Reglas:
 | REQ-0071 | PATCH append congela unitPrice en items nuevos | specs/ticket-printing | 1.0 | orders.e2e-spec.ts::append_snapshots_unitprice | backend/src/orders/orders.service.ts (updateOrder) | feat:ticket-printing | ✅ |   |
 | REQ-0072 | unitPrice inmutable ante cambios posteriores del catálogo | specs/ticket-printing | 1.0 | orders.e2e-spec.ts::unitprice_frozen | backend/src/orders/orders.service.ts | feat:ticket-printing | ✅ |   |
 | REQ-0073 | Migración backfill best-effort de unitPrice (null si producto borrado) | specs/ticket-printing | 1.0 | orders.e2e-spec.ts::backfill_unitprice | prisma/migrations/*_ticket_pricing_snapshot | feat:ticket-printing | ✅ |   |
-| REQ-0074 | WAITER imprime cuenta de pedido completado (READY/DELIVERED), manual | specs/ticket-printing | 1.0 | mobile/e2e/ticket-printing.e2e.ts::print_completed | mobile order detail screen, print service | feat:ticket-printing | 🔴 |   |
-| REQ-0075 | Solo el WAITER dueño imprime; COOK no | specs/ticket-printing | 1.0 | mobile/e2e/ticket-printing.e2e.ts::owner_only | mobile order detail screen | feat:ticket-printing | 🔴 |   |
-| REQ-0076 | Contenido de la cuenta (taquería, referencia, líneas, total, fecha) | specs/ticket-printing | 1.0 | mobile/e2e/ticket-printing.e2e.ts::ticket_content | mobile ticket renderer (ESC/POS) | feat:ticket-printing | 🔴 |   |
-| REQ-0077 | Total = Σ(unitPrice × quantity) en frontend sobre precios congelados | specs/ticket-printing | 1.0 | mobile/e2e/ticket-printing.e2e.ts::total_from_snapshots | mobile ticket renderer | feat:ticket-printing | 🔴 |   |
-| REQ-0078 | Sin unitPrice completo no se emite la cuenta | specs/ticket-printing | 1.0 | mobile/e2e/ticket-printing.e2e.ts::block_without_prices | mobile ticket renderer | feat:ticket-printing | 🔴 |   |
-| REQ-0079 | Fallo de impresión no altera el pedido; reintento | specs/ticket-printing | 1.0 | mobile/e2e/ticket-printing.e2e.ts::print_failure_safe | mobile print service | feat:ticket-printing | 🔴 |   |
-| REQ-0080 | Config de impresora LAN (host:puerto) requerida y persistida | specs/ticket-printing | 1.0 | mobile/e2e/ticket-printing.e2e.ts::printer_config | mobile print service, config storage | feat:ticket-printing | 🔴 |   |
+| REQ-0074 | WAITER imprime cuenta de pedido completado (READY/DELIVERED), manual | specs/ticket-printing | 1.0 | mobile/e2e/ticket-printing.e2e.ts::print_completed | src/features/orders/screens/WaiterOrdersScreen.tsx, src/services/printing/tcpPrinterService.ts | feat:ticket-printing | 🟡 |   |
+| REQ-0075 | Solo el WAITER dueño imprime; COOK no | specs/ticket-printing | 1.0 | mobile/e2e/ticket-printing.e2e.ts::owner_only | src/features/orders/screens/WaiterOrdersScreen.tsx | feat:ticket-printing | 🟡 |   |
+| REQ-0076 | Contenido de la cuenta (taquería, referencia, líneas, total, fecha) | specs/ticket-printing | 1.0 | mobile/e2e/ticket-printing.e2e.ts::ticket_content | src/services/printing/escposRenderer.ts (buildTicket) | feat:ticket-printing | 🟡 |   |
+| REQ-0077 | Total = Σ(unitPrice × quantity) en frontend sobre precios congelados | specs/ticket-printing | 1.0 | mobile/e2e/ticket-printing.e2e.ts::total_from_snapshots | src/services/printing/escposRenderer.ts (buildTicket) | feat:ticket-printing | 🟡 |   |
+| REQ-0078 | Sin unitPrice completo no se emite la cuenta | specs/ticket-printing | 1.0 | mobile/e2e/ticket-printing.e2e.ts::block_without_prices | src/services/printing/escposRenderer.ts (hasCompleteUnitPrices) | feat:ticket-printing | 🟡 |   |
+| REQ-0079 | Fallo de impresión no altera el pedido; reintento | specs/ticket-printing | 1.0 | mobile/e2e/ticket-printing.e2e.ts::print_failure_safe | src/services/printing/tcpPrinterService.ts | feat:ticket-printing | 🟡 |   |
+| REQ-0080 | Config de impresora LAN (host:puerto) requerida y persistida | specs/ticket-printing | 1.0 | mobile/e2e/ticket-printing.e2e.ts::printer_config | src/services/storage/printerStorage.ts, src/features/orders/screens/PrinterConfigScreen.tsx | feat:ticket-printing | 🟡 |   |
 
 ---
 

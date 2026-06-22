@@ -35,33 +35,33 @@
 
 ### TASK-0074 — Servicio de impresión TCP (socket host:9100)
 - Cubre: REQ-0079
-- Archivos: mobile print service
+- Archivos: src/services/printing/tcpPrinterService.ts
 - Pasos: abrir socket, escribir bytes, cerrar; manejar timeout/error con reintento.
-- Estado: ⬜
+- Estado: ✅
 
 ### TASK-0075 — Renderer ESC/POS de la cuenta (80mm)
 - Cubre: REQ-0076, REQ-0077
-- Archivos: mobile ESC/POS renderer
+- Archivos: src/services/printing/escposRenderer.ts
 - Pasos: header taquería + tipo/referencia + fecha; líneas (cant × producto × unitPrice =
   subtotal); total = Σ subtotales; corte `GS V`.
-- Estado: ⬜
+- Estado: ✅
 
 ### TASK-0076 — Botón "Imprimir ticket" (visibilidad + ownership + status)
 - Cubre: REQ-0074, REQ-0075
-- Archivos: mobile order detail screen
+- Archivos: src/features/orders/screens/WaiterOrdersScreen.tsx
 - Pasos: visible solo a WAITER dueño y en READY/DELIVERED.
-- Estado: ⬜
+- Estado: ✅
 
 ### TASK-0077 — Guard de precios incompletos
 - Cubre: REQ-0078
-- Archivos: ESC/POS renderer / order detail screen
+- Archivos: src/services/printing/escposRenderer.ts (hasCompleteUnitPrices)
 - Pasos: si algún item.unitPrice es null → bloquear e informar.
-- Estado: ⬜
+- Estado: ✅
 
 ### TASK-0078 — Configuración de impresora (host:puerto) persistida
 - Cubre: REQ-0080
-- Archivos: mobile print service, config storage (AsyncStorage)
-- Estado: ⬜
+- Archivos: src/services/storage/printerStorage.ts, src/features/orders/screens/PrinterConfigScreen.tsx
+- Estado: ✅
 
 ### TASK-0079 — Tests mobile e2e de impresión
 - Cubre: REQ-0074 a REQ-0080
